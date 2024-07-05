@@ -1,0 +1,39 @@
+#include "common.h"
+#include "WindowManager.h"
+#include "D3DManager.h"
+
+WindowManager g_window_manager;
+D3DManager g_d3d_manager;
+
+int WINAPI WinMain(HINSTANCE hinstance, HINSTANCE prev_hinstance, LPSTR command_line, int command_show) {
+#if defined(DEBUG) | defined(_DEBUG)
+	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+#endif
+
+	try {
+		if (!g_window_manager.Initialize(hinstance, CLIENT_WIDTH, CLIENT_HEIGHT, L"windowtest")) {
+			return 0;
+		}
+
+		if (!g_d3d_manager.Initialize(g_window_manager.Get_Main_Hwnd(), CLIENT_WIDTH, CLIENT_HEIGHT)) {
+			return 0;
+		}
+
+		MSG message = { 0 };
+
+		while (message.message != WM_QUIT) {
+			if (PeekMessage(&message, 0, 0, 0, PM_REMOVE)) {
+				TranslateMessage(&message);
+				DispatchMessage(&message);
+			}
+			else {
+				g_d3d_manager.Draw();
+			}
+		}
+	}
+	catch (DXException& e) {
+		MessageBox(nullptr, e.To_WStr().c_str(), L"Initialize Failed!!", MB_OK);
+
+		return 0;
+	}
+}

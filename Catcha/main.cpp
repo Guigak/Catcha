@@ -24,8 +24,13 @@ int WINAPI WinMain(HINSTANCE hinstance, HINSTANCE prev_hinstance, LPSTR command_
 		g_d3d_manager.Set_SM(&g_scene_manager);
 
 		g_scene_manager.Set_D3DM(&g_d3d_manager);
-		Scene* dummy = new DummyScene(L"Dummy");
-		g_scene_manager.Chg_Scene(dummy);
+
+		// 1
+		//Scene* dummy = new DummyScene(L"Dummy");
+		//g_scene_manager.Chg_Scene(dummy);
+
+		// 2
+		g_scene_manager.Chg_Scene(L"Dummy");
 
 		MSG message = { 0 };
 

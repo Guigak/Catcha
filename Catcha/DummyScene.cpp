@@ -35,7 +35,7 @@ void DummyScene::Update() {
 
 void DummyScene::Draw(D3DManager* d3d_manager) {
 	d3d_manager->Clr_RTV();
-	d3d_manager->Clr_RTV();
+	d3d_manager->Clr_DSV();
 
 	std::wstring wstr = m_name + L" Draw\n";
 	OutputDebugString(wstr.c_str());

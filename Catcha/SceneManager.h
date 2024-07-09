@@ -22,7 +22,9 @@ public:
 	void Prcs_Input(UINT message, WPARAM wparam, LPARAM lparam);	// Process Input
 
 	void Chg_Scene(Scene* scene);	// Change Scene
-	void Push_Scene(Scene* scene, bool pause);
+	void Chg_Scene(std::wstring scene_name, std::wstring back_scene_name = L"");	// Change Scene
+	void Push_Scene(Scene* scene, bool pause = false);
+	void Push_Scene(std::wstring scene_name, std::wstring back_scene_name = L"", bool pause = false);
 	void Pop_Scene();
 
 	Scene* Crt_Scene(std::wstring scene_name);

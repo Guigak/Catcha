@@ -31,6 +31,23 @@ void SceneManager::Chg_Scene(Scene* scene) {
 	scene->Enter();
 }
 
+void SceneManager::Chg_Scene(std::wstring scene_name, std::wstring back_scene_name) {
+	if (!m_scene_stack.empty()) {
+		m_scene_stack.top()->Exit();
+		m_scene_stack.pop();
+	}
+
+	Scene* scene = Crt_Scene(scene_name);
+	m_scene_stack.push(Add_Scene_2_Map(scene));
+
+	if (back_scene_name != L"") {
+		scene->Set_BS(Get_Scene(back_scene_name));
+	}
+
+	scene->Set_SM(this);
+	scene->Enter();
+}
+
 void SceneManager::Push_Scene(Scene* scene, bool pause) {
 	if (!m_scene_stack.empty()) {
 		if (pause) {
@@ -39,6 +56,24 @@ void SceneManager::Push_Scene(Scene* scene, bool pause) {
 	}
 
 	m_scene_stack.push(Add_Scene_2_Map(scene));
+	scene->Set_SM(this);
+	scene->Enter();
+}
+
+void SceneManager::Push_Scene(std::wstring scene_name, std::wstring back_scene_name, bool pause) {
+	if (!m_scene_stack.empty()) {
+		if (pause) {
+			m_scene_stack.top()->Pause();
+		}
+	}
+
+	Scene* scene = Crt_Scene(scene_name);
+	m_scene_stack.push(Add_Scene_2_Map(scene));
+
+	if (back_scene_name != L"") {
+		scene->Set_BS(Get_Scene(back_scene_name));
+	}
+
 	scene->Set_SM(this);
 	scene->Enter();
 }
@@ -59,6 +94,9 @@ Scene* SceneManager::Crt_Scene(std::wstring scene_name) {
 		Scene* result = new DummyScene(scene_name);
 		return result;
 	}
+
+	OutputDebugString(L"Scene Case Not Found\n");
+	return nullptr;
 }
 
 Scene* SceneManager::Add_Scene_2_Map(Scene* scene) {

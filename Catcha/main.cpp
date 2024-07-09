@@ -1,9 +1,12 @@
 #include "common.h"
 #include "WindowManager.h"
 #include "D3DManager.h"
+#include "SceneManager.h"
+#include "DummyScene.h"
 
 WindowManager g_window_manager;
 D3DManager g_d3d_manager;
+SceneManager g_scene_manager;
 
 int WINAPI WinMain(HINSTANCE hinstance, HINSTANCE prev_hinstance, LPSTR command_line, int command_show) {
 #if defined(DEBUG) | defined(_DEBUG)
@@ -18,6 +21,11 @@ int WINAPI WinMain(HINSTANCE hinstance, HINSTANCE prev_hinstance, LPSTR command_
 		if (!g_d3d_manager.Initialize(g_window_manager.Get_Main_Hwnd(), CLIENT_WIDTH, CLIENT_HEIGHT)) {
 			return 0;
 		}
+		g_d3d_manager.Set_SM(&g_scene_manager);
+
+		g_scene_manager.Set_D3DM(&g_d3d_manager);
+		Scene* dummy = new DummyScene(L"Dummy");
+		g_scene_manager.Chg_Scene(dummy);
 
 		MSG message = { 0 };
 
@@ -27,7 +35,7 @@ int WINAPI WinMain(HINSTANCE hinstance, HINSTANCE prev_hinstance, LPSTR command_
 				DispatchMessage(&message);
 			}
 			else {
-				g_d3d_manager.Draw();
+				g_d3d_manager.Draw_Scene();
 			}
 		}
 	}

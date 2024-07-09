@@ -132,13 +132,18 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="D3DManager.cpp" />
+    <ClCompile Include="DummyScene.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="SceneManager.cpp" />
     <ClCompile Include="Timer.cpp" />
     <ClCompile Include="WindowManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common.h" />
     <ClInclude Include="D3DManager.h" />
+    <ClInclude Include="DummyScene.h" />
+    <ClInclude Include="Scene.h" />
+    <ClInclude Include="SceneManager.h" />
     <ClInclude Include="Timer.h" />
     <ClInclude Include="WindowManager.h" />
   </ItemGroup>

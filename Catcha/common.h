@@ -32,6 +32,7 @@
 #include <algorithm>
 #include <vector>
 #include <array>
+#include <stack>
 #include <unordered_map>
 #include <cstdint>
 #include <fstream>
@@ -78,6 +79,13 @@ inline void D3D_Set_Debug_Name(ID3D12DeviceChild* object, char* name) {
 	if (object) {
 		object->SetPrivateData(WKPDID_D3DDebugObjectName, lstrlenA(name), name);
 	}
+}
+
+inline std::string WStr_2_Str(const std::wstring& wstr) {
+	char str[512];
+	WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, str, 512, NULL, NULL);
+
+	return std::string(str);
 }
 
 inline std::wstring Str_2_WStr(const std::string& str) {

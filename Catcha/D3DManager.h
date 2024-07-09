@@ -1,6 +1,8 @@
 #pragma once
 #include "common.h"
 
+class SceneManager;
+
 class D3DManager {
 private:
 	bool m_paused = false;
@@ -44,6 +46,9 @@ private:
 	int m_client_width;
 	int m_client_height;
 
+	//
+	SceneManager* m_scene_manager = nullptr;
+
 public:
 	D3DManager() {}
 	~D3DManager() {}
@@ -57,15 +62,25 @@ public:
 	void Resize();
 	void Draw();
 
+	void Draw_Scene();
+	void Prepare_Render();
+	void Render_Scene();
+	void Present_Scene();
+
+	void Clr_RTV();	// Clear Render Target View
+	void Clr_DSV();	// Clear Depth Stencil View
+
 	void Flush_Cmd_Q();
 
 	ID3D12Resource* Get_Curr_BB() { return m_swapchain_buffer[m_current_back_buffer].Get(); }	// Ger Current Back Buffer
 	D3D12_CPU_DESCRIPTOR_HANDLE Get_Curr_BBV() { return D3D12_CPU_DESCRIPTOR_HANDLE_EX(m_RTV_heap->GetCPUDescriptorHandleForHeapStart(), m_current_back_buffer, m_RTV_descriptor_size); }	// Get Current Back Buffer View
 	D3D12_CPU_DESCRIPTOR_HANDLE Get_DSV() { return m_DSV_heap->GetCPUDescriptorHandleForHeapStart(); }	// Get Depth Stencil View
 
-
 	void Log_Adapters();
 	void Log_Outputs(IDXGIAdapter* adapter);
 	void Log_Display_Modes(IDXGIOutput* output, DXGI_FORMAT format);
+
+	//
+	void Set_SM(SceneManager* scene_manager) { m_scene_manager = scene_manager; }	// Set SceneManager
 };
 

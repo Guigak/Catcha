@@ -1,4 +1,5 @@
 #include "D3DManager.h"
+#include "SceneManager.h"
 
 bool D3DManager::Initialize(HWND hwnd, int width, int height) {
 #if defined(DEBUG) || defined(_DEBUG)
@@ -193,8 +194,8 @@ void D3DManager::Draw() {
 	m_command_list->RSSetViewports(1, &m_viewport);
 	m_command_list->RSSetScissorRects(1, &m_scissor_rect);
 
-	m_command_list->ClearRenderTargetView(Get_Curr_BBV(), DirectX::Colors::LightSteelBlue, 0, nullptr);
-	m_command_list->ClearDepthStencilView(Get_DSV(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+	Clr_RTV();
+	Clr_DSV();
 
 	m_command_list->OMSetRenderTargets(1, &Get_Curr_BBV(), true, &Get_DSV());
 
@@ -209,6 +210,56 @@ void D3DManager::Draw() {
 	m_current_back_buffer = (m_current_back_buffer + 1) % m_swapchain_buffer_count;
 
 	Flush_Cmd_Q();
+}
+
+void D3DManager::Draw_Scene() {
+	Prepare_Render();
+	Render_Scene();
+	Present_Scene();
+}
+
+void D3DManager::Prepare_Render() {
+	Throw_If_Failed(m_command_allocator->Reset());
+
+	Throw_If_Failed(m_command_list->Reset(m_command_allocator.Get(), nullptr));
+
+	m_command_list->ResourceBarrier(1, &D3D12_RESOURCE_BARRIER_HELPER::Transition(Get_Curr_BB(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
+
+	m_command_list->RSSetViewports(1, &m_viewport);
+	m_command_list->RSSetScissorRects(1, &m_scissor_rect);
+
+	m_command_list->OMSetRenderTargets(1, &Get_Curr_BBV(), true, &Get_DSV());
+}
+
+void D3DManager::Render_Scene() {
+	if (m_scene_manager) {
+		m_scene_manager->Draw();
+	}
+	else {
+		OutputDebugString(L"SceneManager is null\n");
+	}
+}
+
+void D3DManager::Present_Scene() {
+	m_command_list->ResourceBarrier(1, &D3D12_RESOURCE_BARRIER_HELPER::Transition(Get_Curr_BB(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
+
+	Throw_If_Failed(m_command_list->Close());
+
+	ID3D12CommandList* command_lists[] = { m_command_list.Get() };
+	m_command_queue->ExecuteCommandLists(_countof(command_lists), command_lists);
+
+	Throw_If_Failed(m_swapchain->Present(0, 0));
+	m_current_back_buffer = (m_current_back_buffer + 1) % m_swapchain_buffer_count;
+
+	Flush_Cmd_Q();
+}
+
+void D3DManager::Clr_RTV() {
+	m_command_list->ClearRenderTargetView(Get_Curr_BBV(), DirectX::Colors::LightSteelBlue, 0, nullptr);
+}
+
+void D3DManager::Clr_DSV() {
+	m_command_list->ClearDepthStencilView(Get_DSV(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 }
 
 void D3DManager::Flush_Cmd_Q() {
@@ -241,7 +292,7 @@ void D3DManager::Log_Adapters() {
 
 		OutputDebugString(wstr.c_str());
 
-		adapters.push_back(adapter);
+		adapters.emplace_back(adapter);
 
 		++i;
 	}

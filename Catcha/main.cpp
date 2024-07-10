@@ -26,8 +26,8 @@ int WINAPI WinMain(HINSTANCE hinstance, HINSTANCE prev_hinstance, LPSTR command_
 		g_scene_manager.Set_D3DM(&g_d3d_manager);
 
 		// 1
-		//Scene* dummy = new DummyScene(L"Dummy");
-		//g_scene_manager.Chg_Scene(dummy);
+		//auto dummy = std::make_unique<DummyScene>(L"Dummy");
+		//g_scene_manager.Chg_Scene(std::move(dummy));
 
 		// 2
 		g_scene_manager.Chg_Scene(L"Dummy");

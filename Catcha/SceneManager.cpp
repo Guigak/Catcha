@@ -1,5 +1,4 @@
 #include "SceneManager.h"
-#include "Scene.h"
 #include "DummyScene.h"
 
 void SceneManager::Update() {
@@ -20,15 +19,16 @@ void SceneManager::Prcs_Input(UINT message, WPARAM wparam, LPARAM lparam) {
 	}
 }
 
-void SceneManager::Chg_Scene(Scene* scene) {
+void SceneManager::Chg_Scene(std::unique_ptr<Scene> scene) {
 	if (!m_scene_stack.empty()) {
 		m_scene_stack.top()->Exit();
 		m_scene_stack.pop();
 	}
 
-	m_scene_stack.push(Add_Scene_2_Map(scene));
 	scene->Set_SM(this);
 	scene->Enter();
+
+	m_scene_stack.push(Add_Scene_2_Map(std::move(scene)));
 }
 
 void SceneManager::Chg_Scene(std::wstring scene_name, std::wstring back_scene_name) {
@@ -37,8 +37,7 @@ void SceneManager::Chg_Scene(std::wstring scene_name, std::wstring back_scene_na
 		m_scene_stack.pop();
 	}
 
-	Scene* scene = Crt_Scene(scene_name);
-	m_scene_stack.push(Add_Scene_2_Map(scene));
+	auto scene = Crt_Scene(scene_name);
 
 	if (back_scene_name != L"") {
 		scene->Set_BS(Get_Scene(back_scene_name));
@@ -46,18 +45,21 @@ void SceneManager::Chg_Scene(std::wstring scene_name, std::wstring back_scene_na
 
 	scene->Set_SM(this);
 	scene->Enter();
+
+	m_scene_stack.push(Add_Scene_2_Map(std::move(scene)));
 }
 
-void SceneManager::Push_Scene(Scene* scene, bool pause) {
+void SceneManager::Push_Scene(std::unique_ptr<Scene> scene, bool pause) {
 	if (!m_scene_stack.empty()) {
 		if (pause) {
 			m_scene_stack.top()->Pause();
 		}
 	}
 
-	m_scene_stack.push(Add_Scene_2_Map(scene));
 	scene->Set_SM(this);
 	scene->Enter();
+
+	m_scene_stack.push(Add_Scene_2_Map(std::move(scene)));
 }
 
 void SceneManager::Push_Scene(std::wstring scene_name, std::wstring back_scene_name, bool pause) {
@@ -67,8 +69,7 @@ void SceneManager::Push_Scene(std::wstring scene_name, std::wstring back_scene_n
 		}
 	}
 
-	Scene* scene = Crt_Scene(scene_name);
-	m_scene_stack.push(Add_Scene_2_Map(scene));
+	auto scene = Crt_Scene(scene_name);
 
 	if (back_scene_name != L"") {
 		scene->Set_BS(Get_Scene(back_scene_name));
@@ -76,6 +77,8 @@ void SceneManager::Push_Scene(std::wstring scene_name, std::wstring back_scene_n
 
 	scene->Set_SM(this);
 	scene->Enter();
+
+	m_scene_stack.push(Add_Scene_2_Map(std::move(scene)));
 }
 
 void SceneManager::Pop_Scene() {
@@ -89,9 +92,9 @@ void SceneManager::Pop_Scene() {
 	}
 }
 
-Scene* SceneManager::Crt_Scene(std::wstring scene_name) {
+std::unique_ptr<Scene> SceneManager::Crt_Scene(std::wstring scene_name) {
 	if (scene_name == L"Dummy") {
-		Scene* result = new DummyScene(scene_name);
+		auto result = std::make_unique<DummyScene>(scene_name);
 		return result;
 	}
 
@@ -99,13 +102,13 @@ Scene* SceneManager::Crt_Scene(std::wstring scene_name) {
 	return nullptr;
 }
 
-Scene* SceneManager::Add_Scene_2_Map(Scene* scene) {
+Scene* SceneManager::Add_Scene_2_Map(std::unique_ptr<Scene> scene) {
 	std::wstring scene_name = scene->Get_Name();
 
 	if (!m_scene_map.count(scene_name)) {
-		m_scene_map[scene_name] = scene;
+		m_scene_map[scene_name] = std::move(scene);
 
-		return scene;
+		return m_scene_map[scene_name].get();
 	}
 
 	OutputDebugString(L"Scene Already In Map\n");
@@ -114,7 +117,7 @@ Scene* SceneManager::Add_Scene_2_Map(Scene* scene) {
 
 Scene* SceneManager::Get_Scene(std::wstring scene_name) {
 	if (m_scene_map.count(scene_name)) {
-		return m_scene_map[scene_name];
+		return m_scene_map[scene_name].get();
 	}
 
 	OutputDebugString(L"Scene Not Found\n");

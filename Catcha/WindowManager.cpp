@@ -49,6 +49,12 @@ LRESULT CALLBACK Main_Wnd_Proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lp
         PostQuitMessage(0);
 
         return 0;
+    case WM_KEYUP:
+        if (wparam == VK_ESCAPE) {
+            PostQuitMessage(0);
+        }
+
+        return 0;
     default:
         return DefWindowProc(hwnd, message, wparam, lparam);
     }

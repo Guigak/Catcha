@@ -2,7 +2,6 @@
 #include "WindowManager.h"
 #include "D3DManager.h"
 #include "SceneManager.h"
-#include "DummyScene.h"
 
 WindowManager g_window_manager;
 D3DManager g_d3d_manager;
@@ -25,12 +24,7 @@ int WINAPI WinMain(HINSTANCE hinstance, HINSTANCE prev_hinstance, LPSTR command_
 
 		g_scene_manager.Set_D3DM(&g_d3d_manager);
 
-		// 1
-		//auto dummy = std::make_unique<DummyScene>(L"Dummy");
-		//g_scene_manager.Chg_Scene(std::move(dummy));
-
-		// 2
-		g_scene_manager.Chg_Scene(L"Dummy");
+		g_scene_manager.Chg_Scene(L"Box");
 
 		MSG message = { 0 };
 
@@ -40,9 +34,12 @@ int WINAPI WinMain(HINSTANCE hinstance, HINSTANCE prev_hinstance, LPSTR command_
 				DispatchMessage(&message);
 			}
 			else {
-				g_d3d_manager.Draw_Scene();
+				g_scene_manager.Update();
+				g_d3d_manager.Draw_Scene_With_FR();
 			}
 		}
+
+		return 0;
 	}
 	catch (DXException& e) {
 		MessageBox(nullptr, e.To_WStr().c_str(), L"Initialize Failed!!", MB_OK);

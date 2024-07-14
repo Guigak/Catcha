@@ -1,15 +1,22 @@
 #include "SceneManager.h"
 #include "DummyScene.h"
+#include "BoxScene.h"
 
 void SceneManager::Update() {
 	if (!m_scene_stack.empty()) {
-		m_scene_stack.top()->Update();
+		m_scene_stack.top()->Update(m_d3d_manager);
 	}
 }
 
-void SceneManager::Draw() {
+void SceneManager::Resize() {
 	if (!m_scene_stack.empty()) {
-		m_scene_stack.top()->Draw(m_d3d_manager);
+		m_scene_stack.top()->Resize(m_d3d_manager);
+	}
+}
+
+void SceneManager::Draw(ID3D12CommandList** command_lists) {
+	if (!m_scene_stack.empty()) {
+		m_scene_stack.top()->Draw(m_d3d_manager, command_lists);
 	}
 }
 
@@ -26,7 +33,7 @@ void SceneManager::Chg_Scene(std::unique_ptr<Scene> scene) {
 	}
 
 	scene->Set_SM(this);
-	scene->Enter();
+	scene->Enter(m_d3d_manager);
 
 	m_scene_stack.push(Add_Scene_2_Map(std::move(scene)));
 }
@@ -44,7 +51,7 @@ void SceneManager::Chg_Scene(std::wstring scene_name, std::wstring back_scene_na
 	}
 
 	scene->Set_SM(this);
-	scene->Enter();
+	scene->Enter(m_d3d_manager);
 
 	m_scene_stack.push(Add_Scene_2_Map(std::move(scene)));
 }
@@ -57,7 +64,7 @@ void SceneManager::Push_Scene(std::unique_ptr<Scene> scene, bool pause) {
 	}
 
 	scene->Set_SM(this);
-	scene->Enter();
+	scene->Enter(m_d3d_manager);
 
 	m_scene_stack.push(Add_Scene_2_Map(std::move(scene)));
 }
@@ -76,7 +83,7 @@ void SceneManager::Push_Scene(std::wstring scene_name, std::wstring back_scene_n
 	}
 
 	scene->Set_SM(this);
-	scene->Enter();
+	scene->Enter(m_d3d_manager);
 
 	m_scene_stack.push(Add_Scene_2_Map(std::move(scene)));
 }
@@ -95,6 +102,10 @@ void SceneManager::Pop_Scene() {
 std::unique_ptr<Scene> SceneManager::Crt_Scene(std::wstring scene_name) {
 	if (scene_name == L"Dummy") {
 		auto result = std::make_unique<DummyScene>(scene_name);
+		return result;
+	}
+	else if (scene_name == L"Box") {
+		auto result = std::make_unique<BoxScene>(scene_name);
 		return result;
 	}
 

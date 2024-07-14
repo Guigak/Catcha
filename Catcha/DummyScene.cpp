@@ -4,7 +4,7 @@
 DummyScene::DummyScene(std::wstring name, Scene* back_scene) : Scene(name, back_scene) {
 }
 
-void DummyScene::Enter() {
+void DummyScene::Enter(D3DManager* d3d_manager) {
 	std::wstring wstr = m_name + L" Enter\n";
 	OutputDebugString(wstr.c_str());
 }
@@ -28,12 +28,12 @@ void DummyScene::Exit() {
 	OutputDebugString(wstr.c_str());
 }
 
-void DummyScene::Update() {
+void DummyScene::Update(D3DManager* d3d_manager) {
 	std::wstring wstr = m_name + L" Update\n";
 	OutputDebugString(wstr.c_str());
 }
 
-void DummyScene::Draw(D3DManager* d3d_manager) {
+void DummyScene::Draw(D3DManager* d3d_manager, ID3D12CommandList** command_lists) {
 	d3d_manager->Clr_RTV();
 	d3d_manager->Clr_DSV();
 

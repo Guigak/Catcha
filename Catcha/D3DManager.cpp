@@ -62,10 +62,21 @@ void D3DManager::Crt_Cmd_Objs() {
 	Throw_If_Failed(m_device->CreateCommandQueue(&queue_desc, IID_PPV_ARGS(&m_command_queue)));
 
 	Throw_If_Failed(m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(m_command_allocator.GetAddressOf())));
+	Throw_If_Failed(m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(m_additional_command_allocator.GetAddressOf())));
+
+	for (int i = 0; i < FRAME_RESOURCES_NUMBER; ++i) {
+		m_command_allocators.emplace_back(Microsoft::WRL::ComPtr<ID3D12CommandAllocator>());
+		m_additional_command_allocators.emplace_back(Microsoft::WRL::ComPtr<ID3D12CommandAllocator>());
+
+		Throw_If_Failed(m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(m_command_allocators[i].GetAddressOf())));
+		Throw_If_Failed(m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(m_additional_command_allocators[i].GetAddressOf())));
+	}
 
 	Throw_If_Failed(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_command_allocator.Get(), nullptr, IID_PPV_ARGS(m_command_list.GetAddressOf())));
+	Throw_If_Failed(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_additional_command_allocator.Get(), nullptr, IID_PPV_ARGS(m_additional_command_list.GetAddressOf())));
 
 	m_command_list->Close();
+	m_additional_command_list->Close();
 }
 
 void D3DManager::Crt_SwapChain(HWND hwnd, int width, int height) {
@@ -133,7 +144,7 @@ void D3DManager::Resize() {
 	for (UINT i = 0; i < m_swapchain_buffer_count; ++i) {
 		Throw_If_Failed(m_swapchain->GetBuffer(i, IID_PPV_ARGS(&m_swapchain_buffer[i])));
 		m_device->CreateRenderTargetView(m_swapchain_buffer[i].Get(), nullptr, RTV_descriptor_handle);
-		RTV_descriptor_handle.Offset(1, m_RTV_descriptor_size);
+		RTV_descriptor_handle.Get_By_Offset(1, m_RTV_descriptor_size);
 	}
 
 	D3D12_RESOURCE_DESC depth_stencil_desc;
@@ -165,7 +176,7 @@ void D3DManager::Resize() {
 
 	m_device->CreateDepthStencilView(m_depth_stencil_buffer.Get(), &DSV_desc, Get_DSV());
 
-	m_command_list->ResourceBarrier(1, &D3D12_RESOURCE_BARRIER_HELPER::Transition(m_depth_stencil_buffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_DEPTH_WRITE));
+	m_command_list->ResourceBarrier(1, &D3D12_RESOURCE_BARRIER_EX::Transition(m_depth_stencil_buffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_DEPTH_WRITE));
 
 	Throw_If_Failed(m_command_list->Close());
 
@@ -189,7 +200,7 @@ void D3DManager::Draw() {
 
 	Throw_If_Failed(m_command_list->Reset(m_command_allocator.Get(), nullptr));
 
-	m_command_list->ResourceBarrier(1, &D3D12_RESOURCE_BARRIER_HELPER::Transition(Get_Curr_BB(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
+	m_command_list->ResourceBarrier(1, &D3D12_RESOURCE_BARRIER_EX::Transition(Get_Curr_BB(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 
 	m_command_list->RSSetViewports(1, &m_viewport);
 	m_command_list->RSSetScissorRects(1, &m_scissor_rect);
@@ -199,7 +210,7 @@ void D3DManager::Draw() {
 
 	m_command_list->OMSetRenderTargets(1, &Get_Curr_BBV(), true, &Get_DSV());
 
-	m_command_list->ResourceBarrier(1, &D3D12_RESOURCE_BARRIER_HELPER::Transition(Get_Curr_BB(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
+	m_command_list->ResourceBarrier(1, &D3D12_RESOURCE_BARRIER_EX::Transition(Get_Curr_BB(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
 
 	Throw_If_Failed(m_command_list->Close());
 
@@ -223,7 +234,7 @@ void D3DManager::Prepare_Render() {
 
 	Throw_If_Failed(m_command_list->Reset(m_command_allocator.Get(), nullptr));
 
-	m_command_list->ResourceBarrier(1, &D3D12_RESOURCE_BARRIER_HELPER::Transition(Get_Curr_BB(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
+	m_command_list->ResourceBarrier(1, &D3D12_RESOURCE_BARRIER_EX::Transition(Get_Curr_BB(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 
 	m_command_list->RSSetViewports(1, &m_viewport);
 	m_command_list->RSSetScissorRects(1, &m_scissor_rect);
@@ -233,7 +244,7 @@ void D3DManager::Prepare_Render() {
 
 void D3DManager::Render_Scene() {
 	if (m_scene_manager) {
-		m_scene_manager->Draw();
+		m_scene_manager->Draw(nullptr);
 	}
 	else {
 		OutputDebugString(L"SceneManager is null\n");
@@ -241,7 +252,7 @@ void D3DManager::Render_Scene() {
 }
 
 void D3DManager::Present_Scene() {
-	m_command_list->ResourceBarrier(1, &D3D12_RESOURCE_BARRIER_HELPER::Transition(Get_Curr_BB(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
+	m_command_list->ResourceBarrier(1, &D3D12_RESOURCE_BARRIER_EX::Transition(Get_Curr_BB(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
 
 	Throw_If_Failed(m_command_list->Close());
 
@@ -254,12 +265,70 @@ void D3DManager::Present_Scene() {
 	Flush_Cmd_Q();
 }
 
-void D3DManager::Clr_RTV() {
-	m_command_list->ClearRenderTargetView(Get_Curr_BBV(), DirectX::Colors::LightSteelBlue, 0, nullptr);
+void D3DManager::Draw_Scene_With_FR() {
+	//
+	Throw_If_Failed(m_command_allocators[m_current_frameresource_index]->Reset());
+
+	Throw_If_Failed(m_command_list->Reset(m_command_allocators[m_current_frameresource_index].Get(), nullptr));
+
+	m_command_list->ResourceBarrier(1, &D3D12_RESOURCE_BARRIER_EX::Transition(Get_Curr_BB(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
+
+	//m_command_list->ClearRenderTargetView(Get_Curr_BBV(), DirectX::Colors::LightSteelBlue, 0, nullptr);
+	//m_command_list->ClearDepthStencilView(Get_DSV(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+
+	Throw_If_Failed(m_command_list->Close());
+
+	//
+	//ID3D12CommandList** scene_command_lists = nullptr;
+	std::unique_ptr<ID3D12CommandList*> scene_command_lists = std::make_unique<ID3D12CommandList*>();
+	if (m_scene_manager) {
+		m_scene_manager->Draw(scene_command_lists.get());
+	}
+	else {
+		OutputDebugString(L"SceneManager is null\n");
+	}
+
+	//
+	Throw_If_Failed(m_additional_command_allocators[m_current_frameresource_index]->Reset());
+
+	Throw_If_Failed(m_additional_command_list->Reset(m_additional_command_allocators[m_current_frameresource_index].Get(), nullptr));
+
+	m_additional_command_list->ResourceBarrier(1, &D3D12_RESOURCE_BARRIER_EX::Transition(Get_Curr_BB(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
+
+	Throw_If_Failed(m_additional_command_list->Close());
+
+	//
+	ID3D12CommandList* command_lists[] = { m_command_list.Get(), *(scene_command_lists.get()), m_additional_command_list.Get()};
+	m_command_queue->ExecuteCommandLists(_countof(command_lists), command_lists);
+
+	Throw_If_Failed(m_swapchain->Present(0, 0));
+	m_current_back_buffer = (m_current_back_buffer + 1) % m_swapchain_buffer_count;
+
+	m_current_frameresource_index = ++m_current_fence % FRAME_RESOURCES_NUMBER;
+
+	m_command_queue->Signal(m_fence.Get(), m_current_fence);
 }
 
-void D3DManager::Clr_DSV() {
-	m_command_list->ClearDepthStencilView(Get_DSV(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+void D3DManager::BB_RB_Transition(D3D12_RESOURCE_STATES before_state, D3D12_RESOURCE_STATES after_state) {
+	m_command_list->ResourceBarrier(1, &D3D12_RESOURCE_BARRIER_EX::Transition(Get_Curr_BB(), before_state, after_state));
+}
+
+void D3DManager::Clr_RTV(ID3D12GraphicsCommandList* command_list) {
+	if (command_list == nullptr) {
+		m_command_list->ClearRenderTargetView(Get_Curr_BBV(), DirectX::Colors::LightSteelBlue, 0, nullptr);
+	}
+	else {
+		command_list->ClearRenderTargetView(Get_Curr_BBV(), DirectX::Colors::LightSteelBlue, 0, nullptr);
+	}
+}
+
+void D3DManager::Clr_DSV(ID3D12GraphicsCommandList* command_list) {
+	if (command_list == nullptr) {
+		m_command_list->ClearDepthStencilView(Get_DSV(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+	}
+	else {
+		command_list->ClearDepthStencilView(Get_DSV(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+	}
 }
 
 void D3DManager::Flush_Cmd_Q() {

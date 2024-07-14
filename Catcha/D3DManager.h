@@ -23,7 +23,14 @@ private:
 
 	Microsoft::WRL::ComPtr<ID3D12CommandQueue> m_command_queue;
 	Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_command_allocator;
+	std::vector<Microsoft::WRL::ComPtr<ID3D12CommandAllocator>> m_command_allocators;
 	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> m_command_list;
+
+	Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_additional_command_allocator;
+	std::vector<Microsoft::WRL::ComPtr<ID3D12CommandAllocator>> m_additional_command_allocators;
+	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> m_additional_command_list;
+
+	int m_current_frameresource_index = 0;
 
 	static const int m_swapchain_buffer_count = 2;
 	int m_current_back_buffer = 0;
@@ -67,14 +74,49 @@ public:
 	void Render_Scene();
 	void Present_Scene();
 
-	void Clr_RTV();	// Clear Render Target View
-	void Clr_DSV();	// Clear Depth Stencil View
+	void Draw_Scene_With_FR();	// Draw Scene With FrameResource
+
+	void Set_VP(ID3D12GraphicsCommandList* command_list) { command_list->RSSetViewports(1, &m_viewport); }	// Set Viewport
+	void Set_SR(ID3D12GraphicsCommandList* command_list) { command_list->RSSetScissorRects(1, &m_scissor_rect); }	// Set Scissor Rect
+	void Set_RTV_N_DSV(ID3D12GraphicsCommandList* command_list) { command_list->OMSetRenderTargets(1, &Get_Curr_BBV(), true, &Get_DSV()); }	// Set Render Target View And Depth Stencil View
+	
+	void BB_RB_Transition(D3D12_RESOURCE_STATES before_state, D3D12_RESOURCE_STATES after_state);	// Back Buffer Resource Barrier Transition
+
+	void Clr_RTV(ID3D12GraphicsCommandList* command_list = nullptr);	// Clear Render Target View
+	void Clr_DSV(ID3D12GraphicsCommandList* command_list = nullptr);	// Clear Depth Stencil View
+
+	void Rst_Cmd_List() { Throw_If_Failed(m_command_list->Reset(m_command_allocator.Get(), nullptr)); }
+	void Cls_Cmd_List() { Throw_If_Failed(m_command_list->Close()); }
+	void Exct_Cmd_List() {
+		ID3D12CommandList* command_lists[] = { m_command_list.Get() };
+		m_command_queue->ExecuteCommandLists(_countof(command_lists), command_lists);
+	}
 
 	void Flush_Cmd_Q();
 
 	ID3D12Resource* Get_Curr_BB() { return m_swapchain_buffer[m_current_back_buffer].Get(); }	// Ger Current Back Buffer
 	D3D12_CPU_DESCRIPTOR_HANDLE Get_Curr_BBV() { return D3D12_CPU_DESCRIPTOR_HANDLE_EX(m_RTV_heap->GetCPUDescriptorHandleForHeapStart(), m_current_back_buffer, m_RTV_descriptor_size); }	// Get Current Back Buffer View
 	D3D12_CPU_DESCRIPTOR_HANDLE Get_DSV() { return m_DSV_heap->GetCPUDescriptorHandleForHeapStart(); }	// Get Depth Stencil View
+
+	ID3D12Device* Get_Device() { return m_device.Get(); }
+	ID3D12GraphicsCommandList* Get_Cmd_List() { return m_command_list.Get(); }
+	ID3D12Fence* Get_Fence() { return m_fence.Get(); }
+
+	UINT64 Get_Curr_Fence() { return m_current_fence; }	// Get Current Fence
+
+	UINT Get_RTV_Descritpor_Size() { return m_RTV_descriptor_size; }
+	UINT Get_DSV_Descritpor_Size() { return m_DSV_descriptor_size; }
+	UINT Get_CBV_SRV_UAV_Descritpor_Size() { return m_CBV_SRV_UAV_descriptor_size; }
+
+	DXGI_FORMAT Get_BB_Format() { return m_back_buffer_format; }	// Get Back Buffer Format
+	DXGI_FORMAT Get_DS_Format() { return m_depth_stencil_format; }	// Get Depth Stencil Format
+
+	bool Is_4xMSAA() { return m_4xMSAA; }
+	UINT Get_4xMSAA_Qual() { return m_4xMSAA_quality; }	// Get 4x MSAA Quality
+
+	int Get_Client_Width() { return m_client_width; }
+	int Get_Client_Height() { return m_client_height; }
+	float Get_Aspect_Ratio() { return (float)m_client_width / (float)m_client_height; }
 
 	void Log_Adapters();
 	void Log_Outputs(IDXGIAdapter* adapter);

@@ -17,7 +17,8 @@ public:
 	~SceneManager() {}
 
 	void Update();
-	void Draw();
+	void Resize();
+	void Draw(ID3D12CommandList** command_lists);
 
 	void Prcs_Input(UINT message, WPARAM wparam, LPARAM lparam);	// Process Input
 

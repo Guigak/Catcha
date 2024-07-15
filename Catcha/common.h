@@ -43,6 +43,8 @@
 constexpr int CLIENT_WIDTH = 800;
 constexpr int CLIENT_HEIGHT = 600;
 
+constexpr int FRAME_RESOURCES_NUMBER = 3;
+
 // struct
 struct D3D12_DEFAULT;
 struct D3D12_RECT_EX;
@@ -230,7 +232,7 @@ struct ObjectInfo {
 	UINT start_index_location = 0;
 	int base_vertex_location = 0;
 
-	int dirty_frame_number = 1;
+	int dirty_frame_number = FRAME_RESOURCES_NUMBER;
 };
 
 // from d3dx12.h

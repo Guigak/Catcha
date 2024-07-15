@@ -62,7 +62,7 @@ void BoxScene::Update(D3DManager* d3d_manager) {
 	}
 
 	//
-	m_camera_position = DirectX::XMFLOAT3(0.0f, 0.0f, -5.0f);
+	m_camera_position = DirectX::XMFLOAT3(0.0f, 2.5f, -5.0f);
 	DirectX::XMVECTOR pos = DirectX::XMVectorSet(m_camera_position.x, m_camera_position.y, m_camera_position.z, 1.0f);
 	DirectX::XMVECTOR target = DirectX::XMVectorZero();
 	DirectX::XMVECTOR up = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);

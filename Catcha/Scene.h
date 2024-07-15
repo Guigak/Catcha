@@ -5,8 +5,6 @@
 class SceneManager;
 class D3DManager;
 
-constexpr int FRAME_RESOURCES_NUMBER = 3;
-
 class Scene {
 protected:
 	std::wstring m_name = L"name";

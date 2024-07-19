@@ -44,6 +44,8 @@ struct MeshData {
 class MeshCreater {
 public:
 	MeshData Crt_Box(float width, float height, float depth, std::uint32_t subdivisions_number);
+
+	MeshData Crt_Mesh_From_File(std::wstring file_name);
 	
 	void Subdivide(MeshData& mesh);
 	VertexData Calc_Mid_Point(VertexData& a, VertexData& b);

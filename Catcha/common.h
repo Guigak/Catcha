@@ -39,6 +39,9 @@
 #include <sstream>
 #include <cassert>
 
+// fbx sdk
+#include "fbxsdk.h"
+
 // constant
 constexpr int CLIENT_WIDTH = 800;
 constexpr int CLIENT_HEIGHT = 600;
@@ -102,6 +105,24 @@ struct MathHelper {
 		};
 
 		return identity;
+	}
+
+	static DirectX::XMFLOAT2 Multiply(const DirectX::XMFLOAT2& xmfloat2, const DirectX::XMMATRIX& matrix) {
+		DirectX::XMVECTOR vector = DirectX::XMLoadFloat2(&xmfloat2);
+
+		DirectX::XMFLOAT2 result;
+		DirectX::XMStoreFloat2(&result, DirectX::XMVector2Transform(vector, matrix));
+
+		return result;
+	}
+
+	static DirectX::XMFLOAT3 Multiply(const DirectX::XMFLOAT3& xmfloat3, const DirectX::XMMATRIX& matrix) {
+		DirectX::XMVECTOR vector = DirectX::XMLoadFloat3(&xmfloat3);
+
+		DirectX::XMFLOAT3 result;
+		DirectX::XMStoreFloat3(&result, DirectX::XMVector3Transform(vector, matrix));
+
+		return result;
 	}
 };
 

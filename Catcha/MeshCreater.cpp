@@ -1,7 +1,8 @@
 #include "MeshCreater.h"
+#include "FBXManager.h"
 
 MeshData MeshCreater::Crt_Box(float width, float height, float depth, std::uint32_t subdivisions_number) {
-    MeshData mesh;
+    MeshData mesh_data;
 
     VertexData vertices[24];
 
@@ -46,7 +47,7 @@ MeshData MeshCreater::Crt_Box(float width, float height, float depth, std::uint3
     vertices[count++] = VertexData(+half_width, +half_height, +half_depth, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f);
     vertices[count++] = VertexData(+half_width, -half_height, +half_depth, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
 
-    mesh.vertices.assign(&vertices[0], &vertices[count]);
+    mesh_data.vertices.assign(&vertices[0], &vertices[count]);
 
     std::uint32_t indices[36];
 
@@ -105,15 +106,20 @@ MeshData MeshCreater::Crt_Box(float width, float height, float depth, std::uint3
     indices[count++] = 22;
     indices[count++] = 23;
 
-    mesh.indices_32.assign(&indices[0], &indices[count]);
+    mesh_data.indices_32.assign(&indices[0], &indices[count]);
 
     subdivisions_number = std::min<std::uint32_t>(subdivisions_number, 6u);
 
     for (std::uint32_t i = 0; i < subdivisions_number; ++i) {
-        Subdivide(mesh);
+        Subdivide(mesh_data);
     }
 
-    return mesh;
+    return mesh_data;
+}
+
+MeshData MeshCreater::Crt_Mesh_From_File(std::wstring file_name) {
+    FBXManager* fbx_manager = FBXManager::Get_Inst();
+    return fbx_manager->Ipt_Mesh_From_File(file_name);
 }
 
 void MeshCreater::Subdivide(MeshData& mesh) {

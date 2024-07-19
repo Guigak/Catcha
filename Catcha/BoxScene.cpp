@@ -62,7 +62,11 @@ void BoxScene::Update(D3DManager* d3d_manager) {
 	}
 
 	//
-	m_camera_position = DirectX::XMFLOAT3(0.0f, 2.5f, -5.0f);
+	//m_camera_position.x =100.0f * sinf(m_phi) * cosf(m_theta);
+	//m_camera_position.y =100.0f * sinf(m_phi) * sinf(m_theta);
+	//m_camera_position.z =100.0f * cosf(m_phi);
+
+	m_camera_position = DirectX::XMFLOAT3(0.0f, 300.0f, -500.0f);
 	DirectX::XMVECTOR pos = DirectX::XMVectorSet(m_camera_position.x, m_camera_position.y, m_camera_position.z, 1.0f);
 	DirectX::XMVECTOR target = DirectX::XMVectorZero();
 	DirectX::XMVECTOR up = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
@@ -109,12 +113,15 @@ void BoxScene::Draw(D3DManager* d3d_manager, ID3D12CommandList** command_lists) 
 
 	Throw_If_Failed(command_allocator->Reset());
 
-	if (m_wireframe) {
-		Throw_If_Failed(command_list->Reset(command_allocator, m_pipeline_state_map[L"opaque_wireframe"].Get()));
-	}
-	else {
-		Throw_If_Failed(command_list->Reset(command_allocator, m_pipeline_state_map[L"opaque"].Get()));
-	}
+	//if (m_wireframe) {
+	//	Throw_If_Failed(command_list->Reset(command_allocator, m_pipeline_state_map[L"opaque_wireframe"].Get()));
+	//}
+	//else {
+	//	Throw_If_Failed(command_list->Reset(command_allocator, m_pipeline_state_map[L"opaque"].Get()));
+	//}
+
+	Throw_If_Failed(command_list->Reset(command_allocator, m_pipeline_state_map[L"opaque_wireframe"].Get()));
+	//Throw_If_Failed(command_list->Reset(command_allocator, m_pipeline_state_map[L"opaque"].Get()));
 
 	d3d_manager->Clr_RTV(command_list);
 	d3d_manager->Clr_DSV(command_list);
@@ -153,7 +160,10 @@ void BoxScene::Draw(D3DManager* d3d_manager, ID3D12CommandList** command_lists) 
 
 		command_list->SetGraphicsRootDescriptorTable(0, object_CBV_gpu_descriptor_handle);
 
-		command_list->DrawIndexedInstanced(object->index_count, 1, object->start_index_location, object->base_vertex_location, 0);
+		//command_list->DrawIndexedInstanced(object->index_count, 1, object->start_index_location, object->base_vertex_location, 0);
+		for (UINT i = 0; i < object->index_count; ++++++i) {
+			command_list->DrawIndexedInstanced(3, 1, object->start_index_location + i, object->base_vertex_location, 0);
+		}
 	}
 
 	Throw_If_Failed(command_list->Close());
@@ -207,8 +217,15 @@ void BoxScene::Build_S_N_L() {
 
 void BoxScene::Build_M(ID3D12Device* device, ID3D12GraphicsCommandList* command_list) {
 	MeshCreater mesh_creater;
-	MeshData box_mesh = mesh_creater.Crt_Box(1.5f, 0.5f, 1.5f, 3);
-
+	//MeshData box_mesh = mesh_creater.Crt_Box(1.5f, 0.5f, 1.5f, 3);
+	//MeshData box_mesh = mesh_creater.Crt_Mesh_From_File(L"Test_TXT.fbx");
+	//MeshData box_mesh = mesh_creater.Crt_Mesh_From_File(L"testbox.fbx");
+	//MeshData box_mesh = mesh_creater.Crt_Mesh_From_File(L"testplane.fbx");
+	//MeshData box_mesh = mesh_creater.Crt_Mesh_From_File(L"testpyramid.fbx");
+	//MeshData box_mesh = mesh_creater.Crt_Mesh_From_File(L"testbuilding.fbx");
+	MeshData box_mesh = mesh_creater.Crt_Mesh_From_File(L"Mawang_Test.fbx");
+	//MeshData box_mesh = mesh_creater.Crt_Mesh_From_File(L"testpyramids.fbx");
+	
 	UINT box_vertex_offset = 0;
 
 	UINT box_index_offset = 0;
@@ -354,6 +371,7 @@ void BoxScene::Build_PSO(D3DManager* d3d_manager) {
 	opaque_PSO_desc.PS = { reinterpret_cast<BYTE*>(m_shader_map[L"opaque_PS"]->GetBufferPointer()), m_shader_map[L"opaque_PS"]->GetBufferSize() };
 	opaque_PSO_desc.RasterizerState = D3D12_RASTERIZER_DESC_EX(D3D12_DEFAULT());
 	opaque_PSO_desc.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
+	//opaque_PSO_desc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
 	opaque_PSO_desc.BlendState = D3D12_BLEND_DESC_EX(D3D12_DEFAULT());
 	opaque_PSO_desc.DepthStencilState = D3D12_DEPTH_STENCIL_DESC_EX(D3D12_DEFAULT());
 	opaque_PSO_desc.SampleMask = UINT_MAX;

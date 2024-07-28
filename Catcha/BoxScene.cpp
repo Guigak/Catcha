@@ -12,7 +12,8 @@ void BoxScene::Enter(D3DManager* d3d_manager) {
 
 	Build_RS(device);
 	Build_S_N_L();
-	Build_M(device, command_list);
+	Build_Mesh(device, command_list);
+	Build_Material();
 	Build_O();
 	Build_FR(device);
 	Build_DH(device);
@@ -48,16 +49,33 @@ void BoxScene::Update(D3DManager* d3d_manager) {
 	//
 	auto current_object_constant_buffer = m_current_frameresource->object_constant_buffer.get();
 
-	for (auto& o : m_objects) {
-		if (o->dirty_frame_number > 0) {
-			DirectX::XMMATRIX world_matrix = DirectX::XMLoadFloat4x4(&o->world_matrix);
+	for (auto& object : m_objects) {
+		if (object->dirty_frame_count > 0) {
+			DirectX::XMMATRIX world_matrix = DirectX::XMLoadFloat4x4(&object->world_matrix);
 
 			ObjectConstants object_constants;
 			DirectX::XMStoreFloat4x4(&object_constants.world_matrix, DirectX::XMMatrixTranspose(world_matrix));
 
-			current_object_constant_buffer->Copy_Data(o->constant_buffer_index, object_constants);
+			current_object_constant_buffer->Copy_Data(object->constant_buffer_index, object_constants);
 
-			o->dirty_frame_number--;
+			object->dirty_frame_count--;
+		}
+	}
+
+	auto current_material_constant_buffer = m_current_frameresource->material_constant_buffer.get();
+
+	for (auto& m : m_material_map) {
+		MaterialInfo* material = m.second.get();
+
+		if (material->dirty_frame_count > 0) {
+			MaterialConstants material_constants;
+			material_constants.diffuse_albedo = material->diffuse_albedo;
+			material_constants.fresnel = material->fresnel;
+			material_constants.roughness = material->roughness;
+
+			current_material_constant_buffer->Copy_Data(material->constant_buffer_index, material_constants);
+
+			material->dirty_frame_count--;
 		}
 	}
 
@@ -96,6 +114,26 @@ void BoxScene::Update(D3DManager* d3d_manager) {
 	m_main_pass_constant_buffer.far_z = 1000.0f;
 	m_main_pass_constant_buffer.total_time = 0.0f;
 	m_main_pass_constant_buffer.delta_time = 0.0f;
+	m_main_pass_constant_buffer.ambient_light = { 0.25f, 0.25f, 0.35f, 1.0f };
+	//
+	//m_main_pass_constant_buffer.lights[0].direction = { 0.57735f, -0.57735f, 1.0f };
+	m_main_pass_constant_buffer.lights[0].direction = { 1.0f, 0.0f, 1.0f };
+	m_main_pass_constant_buffer.lights[0].strength = { 0.6f, 0.6f, 0.6f };
+	//m_main_pass_constant_buffer.lights[0].strength = { 0.0f, 0.0f, 0.0f };
+	//
+	m_main_pass_constant_buffer.lights[1].position = { 0.0f, 500.0f, -300.0f };
+	//m_main_pass_constant_buffer.lights[1].strength = { 0.6f, 0.6f, 0.6f };
+	m_main_pass_constant_buffer.lights[1].strength = { 0.0f, 0.0f, 0.0f };
+	m_main_pass_constant_buffer.lights[1].falloff_start = 500.0f;
+	m_main_pass_constant_buffer.lights[1].falloff_end = 1000.0f;
+	//
+	m_main_pass_constant_buffer.lights[2].position = { 0.0f, 100.0f, -500.0f };
+	m_main_pass_constant_buffer.lights[2].direction = { 0.0f, 0.0f, 1.0f };
+	//m_main_pass_constant_buffer.lights[2].strength = { 0.6f, 0.6f, 0.6f };
+	m_main_pass_constant_buffer.lights[2].strength = { 0.0f, 0.0f, 0.0f };
+	m_main_pass_constant_buffer.lights[2].falloff_start = 500.0f;
+	m_main_pass_constant_buffer.lights[2].falloff_end = 1000.0f;
+	m_main_pass_constant_buffer.lights[2].spot_power = 256.0f;
 
 	auto current_pass_constant_buffer = m_current_frameresource->pass_constant_buffer.get();
 	current_pass_constant_buffer->Copy_Data(0, m_main_pass_constant_buffer);
@@ -120,8 +158,8 @@ void BoxScene::Draw(D3DManager* d3d_manager, ID3D12CommandList** command_lists) 
 	//	Throw_If_Failed(command_list->Reset(command_allocator, m_pipeline_state_map[L"opaque"].Get()));
 	//}
 
-	Throw_If_Failed(command_list->Reset(command_allocator, m_pipeline_state_map[L"opaque_wireframe"].Get()));
-	//Throw_If_Failed(command_list->Reset(command_allocator, m_pipeline_state_map[L"opaque"].Get()));
+	//Throw_If_Failed(command_list->Reset(command_allocator, m_pipeline_state_map[L"opaque_wireframe"].Get()));
+	Throw_If_Failed(command_list->Reset(command_allocator, m_pipeline_state_map[L"opaque"].Get()));
 
 	d3d_manager->Clr_RTV(command_list);
 	d3d_manager->Clr_DSV(command_list);
@@ -137,10 +175,10 @@ void BoxScene::Draw(D3DManager* d3d_manager, ID3D12CommandList** command_lists) 
 	command_list->SetGraphicsRootSignature(m_root_signature.Get());
 
 	//
-	int pass_CBV_index = m_pass_CBV_offset + m_current_frameresource_index;
+	UINT pass_CBV_index = m_pass_CBV_offset + m_current_frameresource_index;
 	auto pass_CBV_gpu_descriptor_handle = D3D12_GPU_DESCRIPTOR_HANDLE_EX(m_CBV_heap->GetGPUDescriptorHandleForHeapStart());
 	pass_CBV_gpu_descriptor_handle.Get_By_Offset(pass_CBV_index, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size());
-	command_list->SetGraphicsRootDescriptorTable(1, pass_CBV_gpu_descriptor_handle);
+	command_list->SetGraphicsRootDescriptorTable(2, pass_CBV_gpu_descriptor_handle);
 
 	//
 	UINT object_constant_buffer_size = Calc_CB_Size(sizeof(ObjectConstants));
@@ -158,12 +196,17 @@ void BoxScene::Draw(D3DManager* d3d_manager, ID3D12CommandList** command_lists) 
 		auto object_CBV_gpu_descriptor_handle = D3D12_GPU_DESCRIPTOR_HANDLE_EX(m_CBV_heap->GetGPUDescriptorHandleForHeapStart());
 		object_CBV_gpu_descriptor_handle.Get_By_Offset(object_CBV_index, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size());
 
-		command_list->SetGraphicsRootDescriptorTable(0, object_CBV_gpu_descriptor_handle);
+		UINT material_CBV_index = m_material_CBV_offset + m_current_frameresource_index * (UINT)m_material_map.size() + object->material_info->constant_buffer_index;
+		auto material_CBV_gpu_descriptor_handle = D3D12_GPU_DESCRIPTOR_HANDLE_EX(m_CBV_heap->GetGPUDescriptorHandleForHeapStart());
+		material_CBV_gpu_descriptor_handle.Get_By_Offset(material_CBV_index, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size());
 
-		//command_list->DrawIndexedInstanced(object->index_count, 1, object->start_index_location, object->base_vertex_location, 0);
-		for (UINT i = 0; i < object->index_count; ++++++i) {
-			command_list->DrawIndexedInstanced(3, 1, object->start_index_location + i, object->base_vertex_location, 0);
-		}
+		command_list->SetGraphicsRootDescriptorTable(0, object_CBV_gpu_descriptor_handle);
+		command_list->SetGraphicsRootDescriptorTable(1, material_CBV_gpu_descriptor_handle);
+
+		command_list->DrawIndexedInstanced(object->index_count, 1, object->start_index_location, object->base_vertex_location, 0);
+		//for (UINT i = 0; i < object->index_count; ++++++i) {
+		//	command_list->DrawIndexedInstanced(3, 1, object->start_index_location + i, object->base_vertex_location, 0);
+		//}
 	}
 
 	Throw_If_Failed(command_list->Close());
@@ -180,12 +223,16 @@ void BoxScene::Build_RS(ID3D12Device* device) {
 	D3D12_DESCRIPTOR_RANGE_EX desriptor_range_1;
 	desriptor_range_1.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1);
 
-	D3D12_ROOT_PARAMETER_EX root_parameters[2];
+	D3D12_DESCRIPTOR_RANGE_EX desriptor_range_2;
+	desriptor_range_2.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 2);
+
+	D3D12_ROOT_PARAMETER_EX root_parameters[3];
 
 	root_parameters[0].Init_As_DT(1, &desriptor_range_0);
 	root_parameters[1].Init_As_DT(1, &desriptor_range_1);
+	root_parameters[2].Init_As_DT(1, &desriptor_range_2);
 
-	D3D12_ROOT_SIGNATURE_DESC_EX root_signature_desc(2, root_parameters, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+	D3D12_ROOT_SIGNATURE_DESC_EX root_signature_desc(3, root_parameters, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
 	Microsoft::WRL::ComPtr<ID3DBlob> serialized_root_signature = nullptr;
 	Microsoft::WRL::ComPtr<ID3DBlob> error_blob = nullptr;
@@ -211,11 +258,11 @@ void BoxScene::Build_S_N_L() {
 
 	m_input_layouts = {
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 	};
 }
 
-void BoxScene::Build_M(ID3D12Device* device, ID3D12GraphicsCommandList* command_list) {
+void BoxScene::Build_Mesh(ID3D12Device* device, ID3D12GraphicsCommandList* command_list) {
 	MeshCreater mesh_creater;
 	//MeshData box_mesh = mesh_creater.Crt_Box(1.5f, 0.5f, 1.5f, 3);
 	//MeshData box_mesh = mesh_creater.Crt_Mesh_From_File(L"Test_TXT.fbx");
@@ -242,7 +289,7 @@ void BoxScene::Build_M(ID3D12Device* device, ID3D12GraphicsCommandList* command_
 	UINT count = 0;
 	for (size_t i = 0; i < box_mesh.vertices.size(); ++i, ++count) {
 		vertices[count].position = box_mesh.vertices[i].position;
-		vertices[count].color = DirectX::XMFLOAT4(DirectX::Colors::DarkGreen);
+		vertices[count].normal = box_mesh.vertices[i].normal;
 	}
 
 	std::vector<std::uint16_t> indices;
@@ -275,6 +322,18 @@ void BoxScene::Build_M(ID3D12Device* device, ID3D12GraphicsCommandList* command_
 	m_mesh_map[mesh_info->name] = std::move(mesh_info);
 }
 
+void BoxScene::Build_Material() {
+	auto default_material = std::make_unique<MaterialInfo>();
+	default_material->name = L"default";
+	default_material->constant_buffer_index = 0;
+	default_material->diffuse_heap_index = 0;
+	default_material->diffuse_albedo = DirectX::XMFLOAT4(DirectX::Colors::Green);
+	default_material->fresnel = DirectX::XMFLOAT3(0.01f, 0.01f, 0.01f);
+	default_material->roughness = 0.1f;
+
+	m_material_map[L"default"] = std::move(default_material);
+}
+
 void BoxScene::Build_O() {
 	UINT index_count = 0;
 
@@ -282,6 +341,7 @@ void BoxScene::Build_O() {
 	box_object->world_matrix = MathHelper::Identity_4x4();
 	box_object->constant_buffer_index = index_count++;
 	box_object->mesh_info = m_mesh_map[L"meshinfo"].get();
+	box_object->material_info = m_material_map[L"default"].get();
 	box_object->primitive_topology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 	box_object->index_count = box_object->mesh_info->submesh_map[L"box"].index_count;
 	box_object->start_index_location = box_object->mesh_info->submesh_map[L"box"].start_index_location;
@@ -295,16 +355,18 @@ void BoxScene::Build_O() {
 
 void BoxScene::Build_FR(ID3D12Device* device) {
 	for (int i = 0; i < FRAME_RESOURCES_NUMBER; ++i) {
-		m_frameresources.emplace_back(std::make_unique<FrameResorce>(device, 1, (UINT)m_objects.size()));
+		m_frameresources.emplace_back(std::make_unique<FrameResorce>(device, 1, (UINT)m_objects.size(), (UINT)m_material_map.size()));
 	}
 }
 
 void BoxScene::Build_DH(ID3D12Device* device) {
 	UINT object_count = (UINT)m_objects.size();
+	UINT material_count = (UINT)m_material_map.size();
 
-	UINT descriptors_number = (object_count + 1) * FRAME_RESOURCES_NUMBER;
+	UINT descriptors_number = (object_count + material_count + 1) * FRAME_RESOURCES_NUMBER;
 
-	m_pass_CBV_offset = object_count * FRAME_RESOURCES_NUMBER;
+	m_material_CBV_offset = object_count * FRAME_RESOURCES_NUMBER;
+	m_pass_CBV_offset = m_material_CBV_offset + material_count * FRAME_RESOURCES_NUMBER;
 
 	D3D12_DESCRIPTOR_HEAP_DESC CBV_heap_desc;
 	CBV_heap_desc.NumDescriptors = descriptors_number;
@@ -340,6 +402,23 @@ void BoxScene::Build_CBV(D3DManager* d3d_manager) {
 
 			device->CreateConstantBufferView(&constant_buffer_view_desc, cpu_descriptor_handle);
 		}
+	}
+
+	UINT material_constant_buffer_size = Calc_CB_Size(sizeof(MaterialConstants));
+
+	for (int frameresource_index = 0; frameresource_index < FRAME_RESOURCES_NUMBER; ++frameresource_index) {
+		auto material_constant_buffer = m_frameresources[frameresource_index]->material_constant_buffer->Get_Resource();
+		D3D12_GPU_VIRTUAL_ADDRESS constant_buffer_address = material_constant_buffer->GetGPUVirtualAddress();
+
+		int descriptor_heap_index = m_material_CBV_offset + frameresource_index;
+		auto cpu_descriptor_handle = D3D12_CPU_DESCRIPTOR_HANDLE_EX(m_CBV_heap->GetCPUDescriptorHandleForHeapStart());
+		cpu_descriptor_handle.Get_By_Offset(descriptor_heap_index, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size());
+
+		D3D12_CONSTANT_BUFFER_VIEW_DESC constant_buffer_view_desc;
+		constant_buffer_view_desc.BufferLocation = constant_buffer_address;
+		constant_buffer_view_desc.SizeInBytes = material_constant_buffer_size;
+
+		device->CreateConstantBufferView(&constant_buffer_view_desc, cpu_descriptor_handle);
 	}
 
 	UINT pass_constant_buffer_size = Calc_CB_Size(sizeof(PassConstants));

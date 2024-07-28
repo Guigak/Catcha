@@ -6,6 +6,12 @@ struct ObjectConstants {
 	DirectX::XMFLOAT4X4 world_matrix = MathHelper::Identity_4x4();
 };
 
+struct MaterialConstants {
+	DirectX::XMFLOAT4 diffuse_albedo = { 1.0f, 1.0f, 1.0f, 1.0f };
+	DirectX::XMFLOAT3 fresnel = { 0.01f, 0.01f, 0.01f };
+	float roughness = 0.25f;
+};
+
 struct PassConstants {
 	DirectX::XMFLOAT4X4 view_matrix = MathHelper::Identity_4x4();
 	DirectX::XMFLOAT4X4 inverse_view_matrix = MathHelper::Identity_4x4();
@@ -25,11 +31,15 @@ struct PassConstants {
 
 	float total_time = 0.0f;
 	float delta_time = 0.0f;
+
+	DirectX::XMFLOAT4 ambient_light = { 0.0f, 0.0f, 0.0f, 1.0f };
+
+	LightInfo lights[MAX_LIGHTS];
 };
 
 struct Vertex {
 	DirectX::XMFLOAT3 position;
-	DirectX::XMFLOAT4 color;
+	DirectX::XMFLOAT3 normal;
 };
 
 struct FrameResorce {
@@ -38,10 +48,11 @@ struct FrameResorce {
 
 	std::unique_ptr<UploadBuffer<ObjectConstants>> object_constant_buffer = nullptr;
 	std::unique_ptr<UploadBuffer<PassConstants>> pass_constant_buffer = nullptr;
+	std::unique_ptr<UploadBuffer<MaterialConstants>> material_constant_buffer = nullptr;
 
 	UINT64 fence = 0;
 
-	FrameResorce(ID3D12Device* device, UINT pass_count, UINT object_count) {
+	FrameResorce(ID3D12Device* device, UINT pass_count, UINT object_count, UINT material_count) {
 		Throw_If_Failed(device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(command_allocator.GetAddressOf())));
 
 		Throw_If_Failed(device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, command_allocator.Get(), nullptr, IID_PPV_ARGS(command_list.GetAddressOf())));
@@ -50,5 +61,6 @@ struct FrameResorce {
 
 		object_constant_buffer = std::make_unique<UploadBuffer<ObjectConstants>>(device, object_count, true);
 		pass_constant_buffer = std::make_unique<UploadBuffer<PassConstants>>(device, pass_count, true);
+		material_constant_buffer = std::make_unique<UploadBuffer<MaterialConstants>>(device, material_count, true);
 	}
 };

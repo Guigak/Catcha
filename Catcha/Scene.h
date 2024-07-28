@@ -23,6 +23,7 @@ protected:
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_SRV_heap = nullptr;
 
 	std::unordered_map<std::wstring, std::unique_ptr<MeshInfo>> m_mesh_map;
+	std::unordered_map<std::wstring, std::unique_ptr<MaterialInfo>> m_material_map;
 	std::unordered_map<std::wstring, Microsoft::WRL::ComPtr<ID3DBlob>> m_shader_map;
 	std::unordered_map<std::wstring, Microsoft::WRL::ComPtr<ID3D12PipelineState>> m_pipeline_state_map;
 
@@ -35,6 +36,7 @@ protected:
 
 	PassConstants m_main_pass_constant_buffer;
 
+	UINT m_material_CBV_offset = 0;
 	UINT m_pass_CBV_offset = 0;
 
 	bool m_wireframe = false;
@@ -66,7 +68,8 @@ public:
 
 	virtual void Build_RS(ID3D12Device* device) {}	// Build Root Signature
 	virtual void Build_S_N_L() {}	// Build Shaders And Layouts
-	virtual void Build_M(ID3D12Device* device, ID3D12GraphicsCommandList* command_list) {}	// Build Meshs
+	virtual void Build_Mesh(ID3D12Device* device, ID3D12GraphicsCommandList* command_list) {}	// Build Meshs
+	virtual void Build_Material() {}	// Build Materials
 	virtual void Build_O() {}	// Build Objects
 	virtual void Build_FR(ID3D12Device* device) {}	// Build FrameResources
 	virtual void Build_DH(ID3D12Device* device) {}	// Build Descriptor Heaps

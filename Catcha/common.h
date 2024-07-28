@@ -240,12 +240,28 @@ struct MeshInfo {
 	}
 };
 
+struct MaterialInfo {
+	std::wstring name;
+
+	UINT constant_buffer_index = -1;
+
+	UINT diffuse_heap_index = -1;
+	UINT normal_heap_index = -1;
+
+	int dirty_frame_count = FRAME_RESOURCES_NUMBER;
+
+	DirectX::XMFLOAT4 diffuse_albedo = { 1.0f, 1.0f, 1.0f, 1.0f };
+	DirectX::XMFLOAT3 fresnel = { 0.01f, 0.01f, 0.01f };
+	float roughness = 0.25f;
+};
+
 struct ObjectInfo {
 	DirectX::XMFLOAT4X4 world_matrix = MathHelper::Identity_4x4();
 
 	UINT constant_buffer_index = -1;
 
 	MeshInfo* mesh_info = nullptr;
+	MaterialInfo* material_info = nullptr;
 
 	D3D12_PRIMITIVE_TOPOLOGY primitive_topology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 
@@ -253,8 +269,19 @@ struct ObjectInfo {
 	UINT start_index_location = 0;
 	int base_vertex_location = 0;
 
-	int dirty_frame_number = FRAME_RESOURCES_NUMBER;
+	int dirty_frame_count = FRAME_RESOURCES_NUMBER;
 };
+
+struct LightInfo {
+	DirectX::XMFLOAT3 strength = { 0.5f, 0.5f, 0.5f };
+	float falloff_start = 1.0f;
+	DirectX::XMFLOAT3 direction = { 0.0f, -1.0f, 0.0f };
+	float falloff_end = 10.0f;
+	DirectX::XMFLOAT3 position = { 0.0f, 0.0f, 0.0f };
+	float spot_power = 64.0f;
+};
+
+#define MAX_LIGHTS 16
 
 // from d3dx12.h
 struct D3D12_DEFAULT {};

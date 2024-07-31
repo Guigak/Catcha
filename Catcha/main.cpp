@@ -24,7 +24,7 @@ int WINAPI WinMain(HINSTANCE hinstance, HINSTANCE prev_hinstance, LPSTR command_
 
 		g_scene_manager.Set_D3DM(&g_d3d_manager);
 
-		g_scene_manager.Chg_Scene(L"Box");
+		g_scene_manager.Chg_Scene(L"Test");
 
 		MSG message = { 0 };
 

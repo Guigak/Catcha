@@ -1,6 +1,6 @@
 #include "SceneManager.h"
 #include "DummyScene.h"
-#include "BoxScene.h"
+#include "TestScene.h"
 
 void SceneManager::Update() {
 	if (!m_scene_stack.empty()) {
@@ -104,8 +104,8 @@ std::unique_ptr<Scene> SceneManager::Crt_Scene(std::wstring scene_name) {
 		auto result = std::make_unique<DummyScene>(scene_name);
 		return result;
 	}
-	else if (scene_name == L"Box") {
-		auto result = std::make_unique<BoxScene>(scene_name);
+	else if (scene_name == L"Test") {
+		auto result = std::make_unique<TestScene>(scene_name);
 		return result;
 	}
 

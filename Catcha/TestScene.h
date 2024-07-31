@@ -2,9 +2,9 @@
 #include "common.h"
 #include "Scene.h"
 
-class BoxScene : public Scene {
+class TestScene : public Scene {
 public:
-	BoxScene(std::wstring name, Scene* back_scene = nullptr) : Scene(name, back_scene) {}
+	TestScene(std::wstring name, Scene* back_scene = nullptr) : Scene(name, back_scene) {}
 
 	virtual void Enter(D3DManager* d3d_manager);
 	virtual void Exit();

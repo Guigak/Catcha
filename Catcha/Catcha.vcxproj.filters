@@ -36,7 +36,7 @@
     <ClCompile Include="MeshCreater.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="BoxScene.cpp">
+    <ClCompile Include="TestScene.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="FBXManager.cpp">
@@ -74,7 +74,7 @@
     <ClInclude Include="MeshCreater.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="BoxScene.h">
+    <ClInclude Include="TestScene.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="FBXManager.h">

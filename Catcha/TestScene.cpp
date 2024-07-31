@@ -1,8 +1,8 @@
-#include "BoxScene.h"
+#include "TestScene.h"
 #include "D3DManager.h"
 #include "MeshCreater.h"
 
-void BoxScene::Enter(D3DManager* d3d_manager) {
+void TestScene::Enter(D3DManager* d3d_manager) {
 	ID3D12Device* device = d3d_manager->Get_Device();
 	ID3D12GraphicsCommandList* command_list = d3d_manager->Get_Cmd_List();
 
@@ -25,10 +25,10 @@ void BoxScene::Enter(D3DManager* d3d_manager) {
 	d3d_manager->Flush_Cmd_Q();
 }
 
-void BoxScene::Exit() {
+void TestScene::Exit() {
 }
 
-void BoxScene::Update(D3DManager* d3d_manager) {
+void TestScene::Update(D3DManager* d3d_manager) {
 	//
 	// process input
 	//
@@ -118,10 +118,10 @@ void BoxScene::Update(D3DManager* d3d_manager) {
 	//
 	//m_main_pass_constant_buffer.lights[0].direction = { 0.57735f, -0.57735f, 1.0f };
 	m_main_pass_constant_buffer.lights[0].direction = { 1.0f, 0.0f, 1.0f };
-	m_main_pass_constant_buffer.lights[0].strength = { 0.6f, 0.6f, 0.6f };
-	//m_main_pass_constant_buffer.lights[0].strength = { 0.0f, 0.0f, 0.0f };
+	//m_main_pass_constant_buffer.lights[0].strength = { 0.6f, 0.6f, 0.6f };
+	m_main_pass_constant_buffer.lights[0].strength = { 0.0f, 0.0f, 0.0f };
 	//
-	m_main_pass_constant_buffer.lights[1].position = { 0.0f, 500.0f, -300.0f };
+	m_main_pass_constant_buffer.lights[1].position = { 0.0f, 100.0f, -300.0f };
 	//m_main_pass_constant_buffer.lights[1].strength = { 0.6f, 0.6f, 0.6f };
 	m_main_pass_constant_buffer.lights[1].strength = { 0.0f, 0.0f, 0.0f };
 	m_main_pass_constant_buffer.lights[1].falloff_start = 500.0f;
@@ -129,8 +129,8 @@ void BoxScene::Update(D3DManager* d3d_manager) {
 	//
 	m_main_pass_constant_buffer.lights[2].position = { 0.0f, 100.0f, -500.0f };
 	m_main_pass_constant_buffer.lights[2].direction = { 0.0f, 0.0f, 1.0f };
-	//m_main_pass_constant_buffer.lights[2].strength = { 0.6f, 0.6f, 0.6f };
-	m_main_pass_constant_buffer.lights[2].strength = { 0.0f, 0.0f, 0.0f };
+	m_main_pass_constant_buffer.lights[2].strength = { 0.6f, 0.6f, 0.6f };
+	//m_main_pass_constant_buffer.lights[2].strength = { 0.0f, 0.0f, 0.0f };
 	m_main_pass_constant_buffer.lights[2].falloff_start = 500.0f;
 	m_main_pass_constant_buffer.lights[2].falloff_end = 1000.0f;
 	m_main_pass_constant_buffer.lights[2].spot_power = 256.0f;
@@ -139,12 +139,12 @@ void BoxScene::Update(D3DManager* d3d_manager) {
 	current_pass_constant_buffer->Copy_Data(0, m_main_pass_constant_buffer);
 }
 
-void BoxScene::Resize(D3DManager* d3d_manager) {
+void TestScene::Resize(D3DManager* d3d_manager) {
 	DirectX::XMMATRIX projection_view = DirectX::XMMatrixPerspectiveFovLH(0.25f * MathHelper::Pi(), d3d_manager->Get_Aspect_Ratio(), 1.0f, 1000.0f);
 	DirectX::XMStoreFloat4x4(&m_projection_matrix, projection_view);
 }
 
-void BoxScene::Draw(D3DManager* d3d_manager, ID3D12CommandList** command_lists) {
+void TestScene::Draw(D3DManager* d3d_manager, ID3D12CommandList** command_lists) {
 	ID3D12Device* device = d3d_manager->Get_Device();
 	ID3D12CommandAllocator* command_allocator = m_current_frameresource->command_allocator.Get();
 	ID3D12GraphicsCommandList* command_list = m_current_frameresource->command_list.Get();
@@ -216,7 +216,7 @@ void BoxScene::Draw(D3DManager* d3d_manager, ID3D12CommandList** command_lists) 
 	m_current_frameresource->fence = d3d_manager->Get_Curr_Fence() + 1;
 }
 
-void BoxScene::Build_RS(ID3D12Device* device) {
+void TestScene::Build_RS(ID3D12Device* device) {
 	D3D12_DESCRIPTOR_RANGE_EX desriptor_range_0;
 	desriptor_range_0.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);
 
@@ -252,7 +252,7 @@ void BoxScene::Build_RS(ID3D12Device* device) {
 		serialized_root_signature->GetBufferSize(), IID_PPV_ARGS(m_root_signature.GetAddressOf())));
 }
 
-void BoxScene::Build_S_N_L() {
+void TestScene::Build_S_N_L() {
 	m_shader_map[L"standard_VS"] = Compile_Shader(L"shaders\\shaders.hlsl", nullptr, "VS", "vs_5_1");
 	m_shader_map[L"opaque_PS"] = Compile_Shader(L"shaders\\shaders.hlsl", nullptr, "PS", "ps_5_1");
 
@@ -262,7 +262,7 @@ void BoxScene::Build_S_N_L() {
 	};
 }
 
-void BoxScene::Build_Mesh(ID3D12Device* device, ID3D12GraphicsCommandList* command_list) {
+void TestScene::Build_Mesh(ID3D12Device* device, ID3D12GraphicsCommandList* command_list) {
 	MeshCreater mesh_creater;
 	//MeshData box_mesh = mesh_creater.Crt_Box(1.5f, 0.5f, 1.5f, 3);
 	//MeshData box_mesh = mesh_creater.Crt_Mesh_From_File(L"Test_TXT.fbx");
@@ -322,7 +322,7 @@ void BoxScene::Build_Mesh(ID3D12Device* device, ID3D12GraphicsCommandList* comma
 	m_mesh_map[mesh_info->name] = std::move(mesh_info);
 }
 
-void BoxScene::Build_Material() {
+void TestScene::Build_Material() {
 	auto default_material = std::make_unique<MaterialInfo>();
 	default_material->name = L"default";
 	default_material->constant_buffer_index = 0;
@@ -334,7 +334,7 @@ void BoxScene::Build_Material() {
 	m_material_map[L"default"] = std::move(default_material);
 }
 
-void BoxScene::Build_O() {
+void TestScene::Build_O() {
 	UINT index_count = 0;
 
 	auto box_object = std::make_unique<ObjectInfo>();
@@ -353,13 +353,13 @@ void BoxScene::Build_O() {
 	}
 }
 
-void BoxScene::Build_FR(ID3D12Device* device) {
+void TestScene::Build_FR(ID3D12Device* device) {
 	for (int i = 0; i < FRAME_RESOURCES_NUMBER; ++i) {
 		m_frameresources.emplace_back(std::make_unique<FrameResorce>(device, 1, (UINT)m_objects.size(), (UINT)m_material_map.size()));
 	}
 }
 
-void BoxScene::Build_DH(ID3D12Device* device) {
+void TestScene::Build_DH(ID3D12Device* device) {
 	UINT object_count = (UINT)m_objects.size();
 	UINT material_count = (UINT)m_material_map.size();
 
@@ -377,7 +377,7 @@ void BoxScene::Build_DH(ID3D12Device* device) {
 	Throw_If_Failed(device->CreateDescriptorHeap(&CBV_heap_desc, IID_PPV_ARGS(&m_CBV_heap)));
 }
 
-void BoxScene::Build_CBV(D3DManager* d3d_manager) {
+void TestScene::Build_CBV(D3DManager* d3d_manager) {
 	ID3D12Device* device = d3d_manager->Get_Device();
 
 	UINT object_constant_buffer_size = Calc_CB_Size(sizeof(ObjectConstants));
@@ -439,7 +439,7 @@ void BoxScene::Build_CBV(D3DManager* d3d_manager) {
 	}
 }
 
-void BoxScene::Build_PSO(D3DManager* d3d_manager) {
+void TestScene::Build_PSO(D3DManager* d3d_manager) {
 	ID3D12Device* device = d3d_manager->Get_Device();
 
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC opaque_PSO_desc;

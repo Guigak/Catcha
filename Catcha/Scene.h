@@ -1,6 +1,9 @@
 #pragma once
 #include "common.h"
 #include "FrameResource.h"
+#include "Camera.h"
+
+class Camera;
 
 class SceneManager;
 class D3DManager;
@@ -41,6 +44,10 @@ protected:
 
 	bool m_wireframe = false;
 
+	std::unordered_map<std::wstring, std::unique_ptr<Camera>> m_camera_map;
+
+	Camera* m_main_camera = nullptr;
+
 	DirectX::XMFLOAT3 m_camera_position = { 0.0f, 0.0f, 0.0f };
 
 	DirectX::XMFLOAT4X4 m_view_matrix = MathHelper::Identity_4x4();
@@ -71,6 +78,7 @@ public:
 	virtual void Build_Mesh(ID3D12Device* device, ID3D12GraphicsCommandList* command_list) {}	// Build Meshs
 	virtual void Build_Material() {}	// Build Materials
 	virtual void Build_O() {}	// Build Objects
+	virtual void Build_C(D3DManager* d3d_manager) {}	// Build Cameras
 	virtual void Build_FR(ID3D12Device* device) {}	// Build FrameResources
 	virtual void Build_DH(ID3D12Device* device) {}	// Build Descriptor Heaps
 	virtual void Build_CBV(D3DManager* d3d_manager) {}	// Build Constant Buffer Views

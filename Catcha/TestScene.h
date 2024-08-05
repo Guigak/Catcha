@@ -20,6 +20,7 @@ public:
 	virtual void Build_Mesh(ID3D12Device* device, ID3D12GraphicsCommandList* command_list);	// Build Meshs
 	virtual void Build_Material();	// Build Materials
 	virtual void Build_O();	// Build Objects
+	virtual void Build_C(D3DManager* d3d_manager);	// Build Cameras
 	virtual void Build_FR(ID3D12Device* device);	// Build FrameResources
 	virtual void Build_DH(ID3D12Device* device);	// Build Descriptor Heaps
 	virtual void Build_CBV(D3DManager* d3d_manager);	// Build Constant Buffer Views

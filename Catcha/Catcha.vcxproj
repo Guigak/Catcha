@@ -141,6 +141,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Camera.cpp" />
     <ClCompile Include="TestScene.cpp" />
     <ClCompile Include="D3DManager.cpp" />
     <ClCompile Include="DummyScene.cpp" />
@@ -152,6 +153,7 @@
     <ClCompile Include="WindowManager.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Camera.h" />
     <ClInclude Include="TestScene.h" />
     <ClInclude Include="common.h" />
     <ClInclude Include="D3DManager.h" />

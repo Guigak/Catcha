@@ -15,6 +15,7 @@ void TestScene::Enter(D3DManager* d3d_manager) {
 	Build_Mesh(device, command_list);
 	Build_Material();
 	Build_O();
+	Build_C(d3d_manager);
 	Build_FR(device);
 	Build_DH(device);
 	Build_CBV(d3d_manager);
@@ -83,14 +84,23 @@ void TestScene::Update(D3DManager* d3d_manager) {
 	//m_camera_position.x =100.0f * sinf(m_phi) * cosf(m_theta);
 	//m_camera_position.y =100.0f * sinf(m_phi) * sinf(m_theta);
 	//m_camera_position.z =100.0f * cosf(m_phi);
+	if (m_main_camera) {
+		m_main_camera->Udt_VM();
 
-	m_camera_position = DirectX::XMFLOAT3(0.0f, 300.0f, -500.0f);
-	DirectX::XMVECTOR pos = DirectX::XMVectorSet(m_camera_position.x, m_camera_position.y, m_camera_position.z, 1.0f);
-	DirectX::XMVECTOR target = DirectX::XMVectorZero();
-	DirectX::XMVECTOR up = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+		m_camera_position = m_main_camera->Get_Position_3f();
 
-	DirectX::XMMATRIX view = DirectX::XMMatrixLookAtLH(pos, target, up);
-	DirectX::XMStoreFloat4x4(&m_view_matrix, view);
+		DirectX::XMStoreFloat4x4(&m_view_matrix, m_main_camera->Get_VM_M());
+		DirectX::XMStoreFloat4x4(&m_projection_matrix, m_main_camera->Get_PM_M());
+	}
+	else {
+		m_camera_position = DirectX::XMFLOAT3(0.0f, 300.0f, -500.0f);
+		DirectX::XMVECTOR pos = DirectX::XMVectorSet(m_camera_position.x, m_camera_position.y, m_camera_position.z, 1.0f);
+		DirectX::XMVECTOR target = DirectX::XMVectorZero();
+		DirectX::XMVECTOR up = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+
+		DirectX::XMMATRIX view = DirectX::XMMatrixLookAtLH(pos, target, up);
+		DirectX::XMStoreFloat4x4(&m_view_matrix, view);
+	}
 
 	DirectX::XMMATRIX view_matrix = DirectX::XMLoadFloat4x4(&m_view_matrix);
 	DirectX::XMMATRIX projection_matrix = DirectX::XMLoadFloat4x4(&m_projection_matrix);
@@ -351,6 +361,17 @@ void TestScene::Build_O() {
 	for (auto& o : m_objects) {
 		m_opaque_objects.emplace_back(o.get());
 	}
+}
+
+void TestScene::Build_C(D3DManager* d3d_manager) {
+	auto main_camera = std::make_unique<Camera>();
+	main_camera->Set_Frustum(0.25f * MathHelper::Pi(), d3d_manager->Get_Aspect_Ratio(), 1.0f, 1000.0f);
+	main_camera->Set_Position(0.0f, 300.0f, -500.0f);
+	main_camera->Look_At(main_camera->Get_Position_V(), DirectX::XMVectorZero(), DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f));
+
+	m_camera_map[L"main_camera"] = std::move(main_camera);
+
+	m_main_camera = m_camera_map[L"main_camera"].get();
 }
 
 void TestScene::Build_FR(ID3D12Device* device) {

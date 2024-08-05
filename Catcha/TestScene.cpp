@@ -26,7 +26,13 @@ void TestScene::Enter(D3DManager* d3d_manager) {
 	d3d_manager->Flush_Cmd_Q();
 }
 
-void TestScene::Exit() {
+void TestScene::Exit(D3DManager* d3d_manager) {
+	d3d_manager->Rst_Cmd_List();
+	d3d_manager->Cls_Cmd_List();
+	d3d_manager->Exct_Cmd_List();
+	d3d_manager->Flush_Cmd_Q();
+
+
 }
 
 void TestScene::Update(D3DManager* d3d_manager) {

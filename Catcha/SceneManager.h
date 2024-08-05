@@ -14,7 +14,7 @@ private:
 
 public:
 	SceneManager() {}
-	~SceneManager() {}
+	~SceneManager();
 
 	void Update();
 	void Resize();

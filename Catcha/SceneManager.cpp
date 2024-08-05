@@ -2,6 +2,13 @@
 #include "DummyScene.h"
 #include "TestScene.h"
 
+SceneManager::~SceneManager() {
+	while (!m_scene_stack.empty()) {
+		m_scene_stack.top()->Exit(m_d3d_manager);
+		m_scene_stack.pop();
+	}
+}
+
 void SceneManager::Update() {
 	if (!m_scene_stack.empty()) {
 		m_scene_stack.top()->Update(m_d3d_manager);
@@ -28,7 +35,7 @@ void SceneManager::Prcs_Input(UINT message, WPARAM wparam, LPARAM lparam) {
 
 void SceneManager::Chg_Scene(std::unique_ptr<Scene> scene) {
 	if (!m_scene_stack.empty()) {
-		m_scene_stack.top()->Exit();
+		m_scene_stack.top()->Exit(m_d3d_manager);
 		m_scene_stack.pop();
 	}
 
@@ -40,7 +47,7 @@ void SceneManager::Chg_Scene(std::unique_ptr<Scene> scene) {
 
 void SceneManager::Chg_Scene(std::wstring scene_name, std::wstring back_scene_name) {
 	if (!m_scene_stack.empty()) {
-		m_scene_stack.top()->Exit();
+		m_scene_stack.top()->Exit(m_d3d_manager);
 		m_scene_stack.pop();
 	}
 
@@ -90,7 +97,7 @@ void SceneManager::Push_Scene(std::wstring scene_name, std::wstring back_scene_n
 
 void SceneManager::Pop_Scene() {
 	if (!m_scene_stack.empty()) {
-		m_scene_stack.top()->Exit();
+		m_scene_stack.top()->Exit(m_d3d_manager);
 		m_scene_stack.pop();
 	}
 

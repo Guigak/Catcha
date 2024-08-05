@@ -23,7 +23,7 @@ void DummyScene::Resume() {
 	OutputDebugString(wstr.c_str());
 }
 
-void DummyScene::Exit() {
+void DummyScene::Exit(D3DManager* d3d_manager) {
 	std::wstring wstr = m_name + L" Exit\n";
 	OutputDebugString(wstr.c_str());
 }

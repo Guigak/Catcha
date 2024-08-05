@@ -63,7 +63,7 @@ public:
 	virtual void Enter(D3DManager* d3d_manager) {}
 	virtual void Pause() { m_paused = true; }
 	virtual void Resume() { m_paused = false; }
-	virtual void Exit() {}
+	virtual void Exit(D3DManager* d3d_manager) {}
 
 	virtual void Update(D3DManager* d3d_manager) {}
 	virtual void Resize(D3DManager* d3d_manager) {}

@@ -8,7 +8,7 @@ public:
 	virtual void Enter(D3DManager* d3d_manager);
 	virtual void Pause();
 	virtual void Resume();
-	virtual void Exit();
+	virtual void Exit(D3DManager* d3d_manager);
 
 	virtual void Update(D3DManager* d3d_manager);
 	virtual void Draw(D3DManager* d3d_manager, ID3D12CommandList** command_lists);

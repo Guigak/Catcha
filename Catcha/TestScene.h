@@ -7,7 +7,7 @@ public:
 	TestScene(std::wstring name, Scene* back_scene = nullptr) : Scene(name, back_scene) {}
 
 	virtual void Enter(D3DManager* d3d_manager);
-	virtual void Exit();
+	virtual void Exit(D3DManager* d3d_manager);
 
 	virtual void Update(D3DManager* d3d_manager);
 	virtual void Resize(D3DManager* d3d_manager);

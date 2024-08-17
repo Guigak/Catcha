@@ -1,5 +1,8 @@
 #pragma once
 
+// disable error
+#pragma warning(disable : 4017)
+
 // about memory leak
 #if defined(DEBUG) || defined(_DEBUG)
 #define _CRTDBG_MAP_ALLOC

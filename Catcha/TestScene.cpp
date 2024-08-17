@@ -3,6 +3,8 @@
 #include "MeshCreater.h"
 
 void TestScene::Enter(D3DManager* d3d_manager) {
+	m_object_manager = std::make_unique<ObjectManager>();
+
 	ID3D12Device* device = d3d_manager->Get_Device();
 	ID3D12GraphicsCommandList* command_list = d3d_manager->Get_Cmd_List();
 
@@ -56,16 +58,18 @@ void TestScene::Update(D3DManager* d3d_manager) {
 	//
 	auto current_object_constant_buffer = m_current_frameresource->object_constant_buffer.get();
 
-	for (auto& object : m_objects) {
-		if (object->dirty_frame_count > 0) {
-			DirectX::XMMATRIX world_matrix = DirectX::XMLoadFloat4x4(&object->world_matrix);
+	for (UINT i = 0; i < m_object_manager->Get_Obj_Count(); ++i) {
+		Object* object = m_object_manager->Get_Obj(i);
+
+		if (object->Get_Dirty_Count()) {
+			DirectX::XMMATRIX world_matrix = DirectX::XMLoadFloat4x4(&object->Get_WM());
 
 			ObjectConstants object_constants;
 			DirectX::XMStoreFloat4x4(&object_constants.world_matrix, DirectX::XMMatrixTranspose(world_matrix));
 
-			current_object_constant_buffer->Copy_Data(object->constant_buffer_index, object_constants);
+			current_object_constant_buffer->Copy_Data(object->Get_CB_Index(), object_constants);
 
-			object->dirty_frame_count--;
+			object->Sub_Dirty_Count();
 		}
 	}
 
@@ -201,25 +205,25 @@ void TestScene::Draw(D3DManager* d3d_manager, ID3D12CommandList** command_lists)
 
 	auto object_constant_buffer = m_current_frameresource->object_constant_buffer->Get_Resource();
 
-	for (size_t i = 0; i < m_opaque_objects.size(); ++i) {
-		auto object = m_opaque_objects[i];
+	for (size_t i = 0; i < m_object_manager->Get_Opaque_Obj_Count(); ++i) {
+		auto object = m_object_manager->Get_Opaque_Obj((UINT)i);
 
-		command_list->IASetVertexBuffers(0, 1, &object->mesh_info->Get_VBV());
-		command_list->IASetIndexBuffer(&object->mesh_info->Get_IBV());
-		command_list->IASetPrimitiveTopology(object->primitive_topology);
+		command_list->IASetVertexBuffers(0, 1, &object->Get_Mesh_Info()->Get_VBV());
+		command_list->IASetIndexBuffer(&object->Get_Mesh_Info()->Get_IBV());
+		command_list->IASetPrimitiveTopology(object->Get_PT());
 
-		UINT object_CBV_index = m_current_frameresource_index * (UINT)m_opaque_objects.size() + object->constant_buffer_index;
+		UINT object_CBV_index = m_current_frameresource_index * (UINT)m_object_manager->Get_Opaque_Obj_Count() + object->Get_CB_Index();
 		auto object_CBV_gpu_descriptor_handle = D3D12_GPU_DESCRIPTOR_HANDLE_EX(m_CBV_heap->GetGPUDescriptorHandleForHeapStart());
 		object_CBV_gpu_descriptor_handle.Get_By_Offset(object_CBV_index, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size());
 
-		UINT material_CBV_index = m_material_CBV_offset + m_current_frameresource_index * (UINT)m_material_map.size() + object->material_info->constant_buffer_index;
+		UINT material_CBV_index = m_material_CBV_offset + m_current_frameresource_index * (UINT)m_material_map.size() + object->Get_Material_Info()->constant_buffer_index;
 		auto material_CBV_gpu_descriptor_handle = D3D12_GPU_DESCRIPTOR_HANDLE_EX(m_CBV_heap->GetGPUDescriptorHandleForHeapStart());
 		material_CBV_gpu_descriptor_handle.Get_By_Offset(material_CBV_index, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size());
 
 		command_list->SetGraphicsRootDescriptorTable(0, object_CBV_gpu_descriptor_handle);
 		command_list->SetGraphicsRootDescriptorTable(1, material_CBV_gpu_descriptor_handle);
 
-		command_list->DrawIndexedInstanced(object->index_count, 1, object->start_index_location, object->base_vertex_location, 0);
+		command_list->DrawIndexedInstanced(object->Get_Index(), 1, object->Get_Start_Index(), object->Get_Base_Vertex(), 0);
 		//for (UINT i = 0; i < object->index_count; ++++++i) {
 		//	command_list->DrawIndexedInstanced(3, 1, object->start_index_location + i, object->base_vertex_location, 0);
 		//}
@@ -351,22 +355,14 @@ void TestScene::Build_Material() {
 }
 
 void TestScene::Build_O() {
-	UINT index_count = 0;
-
-	auto box_object = std::make_unique<ObjectInfo>();
-	box_object->world_matrix = MathHelper::Identity_4x4();
-	box_object->constant_buffer_index = index_count++;
-	box_object->mesh_info = m_mesh_map[L"meshinfo"].get();
-	box_object->material_info = m_material_map[L"default"].get();
-	box_object->primitive_topology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-	box_object->index_count = box_object->mesh_info->submesh_map[L"box"].index_count;
-	box_object->start_index_location = box_object->mesh_info->submesh_map[L"box"].start_index_location;
-	box_object->base_vertex_location = box_object->mesh_info->submesh_map[L"box"].base_vertex_location;
-	m_objects.emplace_back(std::move(box_object));
-
-	for (auto& o : m_objects) {
-		m_opaque_objects.emplace_back(o.get());
-	}
+	m_object_manager->Add_Obj(
+		L"box",
+		m_mesh_map[L"meshinfo"].get(),
+		L"box",
+		m_material_map[L"default"].get(),
+		D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST,
+		true
+	);
 }
 
 void TestScene::Build_C(D3DManager* d3d_manager) {
@@ -382,12 +378,12 @@ void TestScene::Build_C(D3DManager* d3d_manager) {
 
 void TestScene::Build_FR(ID3D12Device* device) {
 	for (int i = 0; i < FRAME_RESOURCES_NUMBER; ++i) {
-		m_frameresources.emplace_back(std::make_unique<FrameResorce>(device, 1, (UINT)m_objects.size(), (UINT)m_material_map.size()));
+		m_frameresources.emplace_back(std::make_unique<FrameResorce>(device, 1, (UINT)m_object_manager->Get_Obj_Count(), (UINT)m_material_map.size()));
 	}
 }
 
 void TestScene::Build_DH(ID3D12Device* device) {
-	UINT object_count = (UINT)m_objects.size();
+	UINT object_count = (UINT)m_object_manager->Get_Obj_Count();
 	UINT material_count = (UINT)m_material_map.size();
 
 	UINT descriptors_number = (object_count + material_count + 1) * FRAME_RESOURCES_NUMBER;
@@ -409,7 +405,7 @@ void TestScene::Build_CBV(D3DManager* d3d_manager) {
 
 	UINT object_constant_buffer_size = Calc_CB_Size(sizeof(ObjectConstants));
 
-	UINT object_count = (UINT)m_objects.size();
+	UINT object_count = (UINT)m_object_manager->Get_Obj_Count();
 
 	for (int frameresource_index = 0; frameresource_index < FRAME_RESOURCES_NUMBER; ++frameresource_index) {
 		auto object_constant_buffer = m_frameresources[frameresource_index]->object_constant_buffer->Get_Resource();

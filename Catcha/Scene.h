@@ -2,6 +2,7 @@
 #include "common.h"
 #include "FrameResource.h"
 #include "Camera.h"
+#include "ObjectManager.h"
 
 class Camera;
 
@@ -32,10 +33,7 @@ protected:
 
 	std::vector<D3D12_INPUT_ELEMENT_DESC> m_input_layouts;
 
-	std::vector<std::unique_ptr<ObjectInfo>> m_objects;
-
-	std::vector<ObjectInfo*> m_opaque_objects;
-	std::vector<ObjectInfo*> m_transparent_objects;
+	std::unique_ptr<ObjectManager> m_object_manager;
 
 	PassConstants m_main_pass_constant_buffer;
 

@@ -13,7 +13,7 @@ public:
 	virtual void Resize(D3DManager* d3d_manager);
 	virtual void Draw(D3DManager* d3d_manager, ID3D12CommandList** command_lists);
 
-	virtual void Prcs_Input(UINT message, WPARAM wparam, LPARAM lparam) {}	// Process Message
+	virtual void Prcs_Input_Msg(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam);	// Process Message
 
 	virtual void Build_RS(ID3D12Device* device);	// Build Root Signature
 	virtual void Build_S_N_L();	// Build Shaders And Layouts

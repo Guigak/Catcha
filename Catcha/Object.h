@@ -63,7 +63,7 @@ public:
 	int Get_Base_Vertex() { return m_base_vertex_location; }
 
 	int Get_Dirty_Count() { return m_dirty_count; }
-	void Add_Dirty_Count() { m_dirty_count++; }
+	void Add_Dirty_Count() { m_dirty_count += FRAME_RESOURCES_NUMBER; }
 	void Sub_Dirty_Count() { m_dirty_count--; }
 
 	// move
@@ -75,6 +75,15 @@ public:
 	//void Move_Back(float velocity);
 	//void Move_Left(float velocity);
 	//void Move_Right(float velocity);
+
+	// test
+	void Teleport_Forward() {
+		m_position.z += 5.0f;
+
+		m_world_matrix._43 = m_position.z;
+
+		Add_Dirty_Count();
+	}
 
 	//// rotate
 	//void Rotate(float roll, float pitch, float yaw);

@@ -3,6 +3,7 @@
 #include "FrameResource.h"
 #include "Camera.h"
 #include "ObjectManager.h"
+#include "InputManager.h"
 
 class Camera;
 
@@ -34,6 +35,8 @@ protected:
 	std::vector<D3D12_INPUT_ELEMENT_DESC> m_input_layouts;
 
 	std::unique_ptr<ObjectManager> m_object_manager;
+
+	std::unique_ptr<InputManager> m_input_manager;
 
 	PassConstants m_main_pass_constant_buffer;
 
@@ -67,7 +70,7 @@ public:
 	virtual void Resize(D3DManager* d3d_manager) {}
 	virtual void Draw(D3DManager* d3d_manager, ID3D12CommandList** command_lists) {}
 
-	virtual void Prcs_Input(UINT message, WPARAM wparam, LPARAM lparam) {}	// Process Message
+	virtual void Prcs_Input_Msg(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam) {}	// Process Message
 
 	virtual std::wstring Get_Name() { return m_name; }
 

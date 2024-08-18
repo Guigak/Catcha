@@ -27,9 +27,9 @@ void SceneManager::Draw(ID3D12CommandList** command_lists) {
 	}
 }
 
-void SceneManager::Prcs_Input(UINT message, WPARAM wparam, LPARAM lparam) {
+void SceneManager::Prcs_Input_Msg(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam) {
 	if (!m_scene_stack.empty()) {
-		m_scene_stack.top()->Prcs_Input(message, wparam, lparam);
+		m_scene_stack.top()->Prcs_Input_Msg(hwnd, message, wparam, lparam);
 	}
 }
 

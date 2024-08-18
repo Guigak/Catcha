@@ -1,4 +1,11 @@
 #include "WindowManager.h"
+#include "SceneManager.h"
+
+SceneManager* m_scene_manager = nullptr;
+
+void Set_SM(SceneManager* scene_manager) {
+    m_scene_manager = scene_manager;
+}
 
 LRESULT CALLBACK Main_Wnd_Proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam);  // Main Window Procedure
 
@@ -52,6 +59,16 @@ LRESULT CALLBACK Main_Wnd_Proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lp
     case WM_KEYUP:
         if (wparam == VK_ESCAPE) {
             PostQuitMessage(0);
+        }
+    case WM_KEYDOWN:
+    case WM_LBUTTONUP:
+    case WM_LBUTTONDOWN:
+    case WM_RBUTTONUP:
+    case WM_RBUTTONDOWN:
+    case WM_MBUTTONUP:
+    case WM_MBUTTONDOWN:
+        if (m_scene_manager) {
+            m_scene_manager->Prcs_Input_Msg(hwnd, message, wparam, lparam);
         }
 
         return 0;

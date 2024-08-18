@@ -20,7 +20,7 @@ public:
 	void Resize();
 	void Draw(ID3D12CommandList** command_lists);
 
-	void Prcs_Input(UINT message, WPARAM wparam, LPARAM lparam);	// Process Input
+	void Prcs_Input_Msg(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam);	// Process Input
 
 	void Chg_Scene(std::unique_ptr<Scene>);	// Change Scene
 	void Chg_Scene(std::wstring scene_name, std::wstring back_scene_name = L"");	// Change Scene

@@ -1,6 +1,8 @@
 #pragma once
 #include "common.h"
 
+class SceneManager;
+
 class WindowManager {
 private:
 	HWND m_main_hwnd;
@@ -19,3 +21,4 @@ public:
 	int Get_Client_Height() { return m_client_height; }
 };
 
+void Set_SM(SceneManager* scene_manager);

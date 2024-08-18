@@ -4,6 +4,7 @@
 
 void TestScene::Enter(D3DManager* d3d_manager) {
 	m_object_manager = std::make_unique<ObjectManager>();
+	m_input_manager = std::make_unique<InputManager>(this, m_object_manager.get());
 
 	ID3D12Device* device = d3d_manager->Get_Device();
 	ID3D12GraphicsCommandList* command_list = d3d_manager->Get_Cmd_List();
@@ -41,6 +42,9 @@ void TestScene::Update(D3DManager* d3d_manager) {
 	//
 	// process input
 	//
+ 
+	// test
+	m_input_manager->Prcs_Input();
 
 	m_current_frameresource_index = (m_current_frameresource_index + 1) % FRAME_RESOURCES_NUMBER;
 	m_current_frameresource = m_frameresources[m_current_frameresource_index].get();
@@ -236,6 +240,10 @@ void TestScene::Draw(D3DManager* d3d_manager, ID3D12CommandList** command_lists)
 	m_current_frameresource->fence = d3d_manager->Get_Curr_Fence() + 1;
 }
 
+void TestScene::Prcs_Input_Msg(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam) {
+	m_input_manager->Prcs_Input_Msg(hwnd, message, wparam, lparam);
+}
+
 void TestScene::Build_RS(ID3D12Device* device) {
 	D3D12_DESCRIPTOR_RANGE_EX desriptor_range_0;
 	desriptor_range_0.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);
@@ -363,6 +371,11 @@ void TestScene::Build_O() {
 		D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST,
 		true
 	);
+
+
+	// test
+	m_input_manager->Bind_Key_First_Down(VK_W, BindingInfo(m_object_manager->Get_Obj(L"box"), Action::MOVE_FORWARD));
+	m_input_manager->Bind_Key_Down(VK_W, BindingInfo(m_object_manager->Get_Obj(L"box"), Action::MOVE_FORWARD));
 }
 
 void TestScene::Build_C(D3DManager* d3d_manager) {

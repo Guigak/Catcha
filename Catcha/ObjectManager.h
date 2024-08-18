@@ -23,6 +23,11 @@ public:
 	Object* Get_Opaque_Obj(UINT object_number);
 	Object* Get_Transparent_Obj(UINT object_number);
 
+	// test
+	void Teleport_Forward(Object* object) {
+		object->Teleport_Forward();
+	}
+
 	size_t Get_Opaque_Obj_Count() { return m_opaque_objects.size(); }
 	size_t Get_Transparent_Obj_Count() { return m_transparent_objects.size(); }
 	UINT Get_Obj_Count() { return m_object_count; }

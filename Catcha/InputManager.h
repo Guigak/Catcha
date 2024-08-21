@@ -7,11 +7,12 @@ class ObjectManager;
 
 enum class Action {
 	MOVE_FORWARD, MOVE_BACK, MOVE_LEFT, MOVE_RIGHT,
+	TELEPORT_FORWARD, TELEPORT_BACK, TELEPORT_LEFT, TELEPORT_RIGHT, TELEPORT_UP, TELEPORT_DOWN,
 	ROTATE_ROLL, ROTATE_PITCH, ROTATE_YAW
 };
 
 struct BindingInfo {
-	Object* object;
+	std::wstring object_name = L"";
 	Action action;
 };
 
@@ -41,5 +42,7 @@ public:
 	void Prcs_Input_Msg(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam);
 
 	void Prcs_Input();
+
+	void Prcs_Binding_Info(BindingInfo binding_info);
 };
 

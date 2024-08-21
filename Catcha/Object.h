@@ -6,6 +6,8 @@ private:
 	std::wstring m_name = L"";
 
 	DirectX::XMFLOAT3 m_position = { 0.0f, 0.0f, 0.0f };
+	DirectX::XMFLOAT3 m_rotate = { 0.0f, 0.0f, 0.0f };
+	DirectX::XMFLOAT3 m_scale = { 0.0f, 0.0f, 0.0f };
 
 	DirectX::XMFLOAT3 m_look = { 0.0f, 0.0f, 1.0f };
 	DirectX::XMFLOAT3 m_up = { 0.0f, 1.0f, 0.0f };
@@ -25,6 +27,16 @@ private:
 	int m_base_vertex_location = 0;
 
 	int m_dirty_count = FRAME_RESOURCES_NUMBER;
+
+	bool m_dirty = false;
+
+	//
+	float m_velocity_y = 0.0f;
+	float m_velocity_xz = 0.0f;
+
+	float m_gravity = 9.8f;
+
+	float m_friction = 0.0f;
 
 public:
 	Object() {}
@@ -63,8 +75,10 @@ public:
 	int Get_Base_Vertex() { return m_base_vertex_location; }
 
 	int Get_Dirty_Count() { return m_dirty_count; }
-	void Add_Dirty_Count() { m_dirty_count += FRAME_RESOURCES_NUMBER; }
+	void Rst_Dirty_Count() { m_dirty_count = FRAME_RESOURCES_NUMBER; }
 	void Sub_Dirty_Count() { m_dirty_count--; }
+
+	void Update();
 
 	// move
 	//void Move(float velocity_x, float velocity_y, float velocity_z);
@@ -76,14 +90,13 @@ public:
 	//void Move_Left(float velocity);
 	//void Move_Right(float velocity);
 
-	// test
-	void Teleport_Forward() {
-		m_position.z += 5.0f;
-
-		m_world_matrix._43 = m_position.z;
-
-		Add_Dirty_Count();
-	}
+	// teleport
+	void TP_Forward(float distance = 1.0f);
+	void TP_Back(float distance = 1.0f);
+	void TP_Left(float distance = 1.0f);
+	void TP_Right(float distance = 1.0f);
+	void TP_Up(float distance = 1.0f);
+	void TP_Down(float distance = 1.0f);
 
 	//// rotate
 	//void Rotate(float roll, float pitch, float yaw);

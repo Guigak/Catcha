@@ -42,26 +42,14 @@ void InputManager::Prcs_Input() {
 				if (m_key_down_map.count(k)) {
 					BindingInfo binding_info = m_key_down_map[k];
 
-					if (binding_info.object) {
-						switch (binding_info.action) {
-						case Action::MOVE_FORWARD:
-							m_object_manager->Teleport_Forward(binding_info.object);
-							break;
-						}
-					}
+					Prcs_Binding_Info(binding_info);
 				}
 			}
 			else {
 				if (m_key_first_down_map.count(k)) {
 					BindingInfo binding_info = m_key_first_down_map[k];
 
-					if (binding_info.object) {
-						switch (binding_info.action) {
-						case Action::MOVE_FORWARD:
-							m_object_manager->Teleport_Forward(binding_info.object);
-							break;
-						}
-					}
+					Prcs_Binding_Info(binding_info);
 				}
 			}
 		}
@@ -69,16 +57,34 @@ void InputManager::Prcs_Input() {
 			if (m_previous_state[k] && m_key_up_map.count(k)) {
 				BindingInfo binding_info = m_key_up_map[k];
 
-				if (binding_info.object) {
-					switch (binding_info.action) {
-
-					}
-				}
+				Prcs_Binding_Info(binding_info);
 			}
-
-
 		}
 
 		m_previous_state[k] = m_state[k];
+	}
+}
+
+void InputManager::Prcs_Binding_Info(BindingInfo binding_info) {
+	if (binding_info.object_name != L"") {
+		switch (binding_info.action) {
+		case Action::MOVE_FORWARD:
+		case Action::MOVE_BACK:
+		case Action::MOVE_LEFT:
+		case Action::MOVE_RIGHT:
+			break;
+		case Action::TELEPORT_FORWARD:
+		case Action::TELEPORT_BACK:
+		case Action::TELEPORT_LEFT:
+		case Action::TELEPORT_RIGHT:
+		case Action::TELEPORT_UP:
+		case Action::TELEPORT_DOWN:
+			m_object_manager->Teleport(binding_info.object_name, binding_info.action);
+			break;
+		case Action::ROTATE_ROLL:
+		case Action::ROTATE_PITCH:
+		case Action::ROTATE_YAW:
+			break;
+		}
 	}
 }

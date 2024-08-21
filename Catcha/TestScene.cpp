@@ -39,12 +39,8 @@ void TestScene::Exit(D3DManager* d3d_manager) {
 }
 
 void TestScene::Update(D3DManager* d3d_manager) {
-	//
-	// process input
-	//
- 
-	// test
 	m_input_manager->Prcs_Input();
+	m_object_manager->Update();
 
 	m_current_frameresource_index = (m_current_frameresource_index + 1) % FRAME_RESOURCES_NUMBER;
 	m_current_frameresource = m_frameresources[m_current_frameresource_index].get();
@@ -372,10 +368,7 @@ void TestScene::Build_O() {
 		true
 	);
 
-
-	// test
-	m_input_manager->Bind_Key_First_Down(VK_W, BindingInfo(m_object_manager->Get_Obj(L"box"), Action::MOVE_FORWARD));
-	m_input_manager->Bind_Key_Down(VK_W, BindingInfo(m_object_manager->Get_Obj(L"box"), Action::MOVE_FORWARD));
+	Binding_Key();
 }
 
 void TestScene::Build_C(D3DManager* d3d_manager) {
@@ -503,4 +496,12 @@ void TestScene::Build_PSO(D3DManager* d3d_manager) {
 	opaque_wireframe_PSO_desc.RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME;
 
 	Throw_If_Failed(device->CreateGraphicsPipelineState(&opaque_wireframe_PSO_desc, IID_PPV_ARGS(&m_pipeline_state_map[L"opaque_wireframe"])));
+}
+
+void TestScene::Binding_Key() {
+	// test
+	m_input_manager->Bind_Key_Down(VK_W, BindingInfo(L"box", Action::TELEPORT_FORWARD));
+	m_input_manager->Bind_Key_Down(VK_S, BindingInfo(L"box", Action::TELEPORT_BACK));
+	m_input_manager->Bind_Key_Down(VK_A, BindingInfo(L"box", Action::TELEPORT_LEFT));
+	m_input_manager->Bind_Key_Down(VK_D, BindingInfo(L"box", Action::TELEPORT_RIGHT));
 }

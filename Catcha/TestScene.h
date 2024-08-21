@@ -25,5 +25,7 @@ public:
 	virtual void Build_DH(ID3D12Device* device);	// Build Descriptor Heaps
 	virtual void Build_CBV(D3DManager* d3d_manager);	// Build Constant Buffer Views
 	virtual void Build_PSO(D3DManager* d3d_manager);	// Build Pipeline State Objects
+
+	virtual void Binding_Key();
 };
 

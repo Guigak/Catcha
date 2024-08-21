@@ -85,6 +85,8 @@ public:
 	virtual void Build_CBV(D3DManager* d3d_manager) {}	// Build Constant Buffer Views
 	virtual void Build_PSO(D3DManager* d3d_manager) {}	// Build Pipeline State Objects
 
+	virtual void Binding_Key() {}
+
 	virtual void Set_BS(Scene* back_scene) { m_back_scene = back_scene; }	// Set Back Scene
 	virtual void Set_SM(SceneManager* scene_manager) { m_scene_manager = scene_manager; }	// Set Scene Manager
 };

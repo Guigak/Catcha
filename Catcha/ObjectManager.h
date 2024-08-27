@@ -18,7 +18,8 @@ public:
 	ObjectManager() {}
 	~ObjectManager() {}
 
-	void Add_Obj(std::wstring object_name, MeshInfo* mesh_info, std::wstring mesh_name, MaterialInfo* material_info, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, bool opaque_object);
+	void Add_Obj(std::wstring object_name, MeshInfo* mesh_info, std::wstring mesh_name, MaterialInfo* material_info,
+		D3D12_PRIMITIVE_TOPOLOGY primitive_topology, bool opaque_object, bool physics);
 
 	Object* Get_Obj(std::wstring object_name);
 	Object* Get_Obj(UINT object_number);
@@ -30,8 +31,11 @@ public:
 	UINT Get_Obj_Count() { return m_object_count; }
 
 	//
+	void Move(std::wstring object_name, Action action);
 	void Teleport(std::wstring object_name, Action action);
 
-	void Update();
+	void Update(float elapsed_time);
+	
+	void Solve_Collision();
 };
 

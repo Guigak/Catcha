@@ -2,10 +2,12 @@
 #include "WindowManager.h"
 #include "D3DManager.h"
 #include "SceneManager.h"
+#include "Timer.h"
 
 WindowManager g_window_manager;
 D3DManager g_d3d_manager;
 SceneManager g_scene_manager;
+Timer g_timer;
 
 int WINAPI WinMain(HINSTANCE hinstance, HINSTANCE prev_hinstance, LPSTR command_line, int command_show) {
 #if defined(DEBUG) | defined(_DEBUG)
@@ -29,13 +31,18 @@ int WINAPI WinMain(HINSTANCE hinstance, HINSTANCE prev_hinstance, LPSTR command_
 
 		MSG message = { 0 };
 
+		g_timer.Reset();
+
+		// loop
 		while (message.message != WM_QUIT) {
 			if (PeekMessage(&message, 0, 0, 0, PM_REMOVE)) {
 				TranslateMessage(&message);
 				DispatchMessage(&message);
 			}
 			else {
-				g_scene_manager.Update();
+				g_timer.Tick();
+
+				g_scene_manager.Update(g_timer.Get_Elapsed_Time());
 				g_d3d_manager.Draw_Scene_With_FR();
 			}
 		}

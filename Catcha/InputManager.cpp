@@ -72,6 +72,7 @@ void InputManager::Prcs_Binding_Info(BindingInfo binding_info) {
 		case Action::MOVE_BACK:
 		case Action::MOVE_LEFT:
 		case Action::MOVE_RIGHT:
+			m_object_manager->Move(binding_info.object_name, binding_info.action);
 			break;
 		case Action::TELEPORT_FORWARD:
 		case Action::TELEPORT_BACK:

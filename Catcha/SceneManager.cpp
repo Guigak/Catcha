@@ -9,9 +9,9 @@ SceneManager::~SceneManager() {
 	}
 }
 
-void SceneManager::Update() {
+void SceneManager::Update(float elapsed_time) {
 	if (!m_scene_stack.empty()) {
-		m_scene_stack.top()->Update(m_d3d_manager);
+		m_scene_stack.top()->Update(m_d3d_manager, elapsed_time);
 	}
 }
 

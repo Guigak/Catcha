@@ -16,7 +16,7 @@ public:
 	SceneManager() {}
 	~SceneManager();
 
-	void Update();
+	void Update(float elapsed_time);
 	void Resize();
 	void Draw(ID3D12CommandList** command_lists);
 

@@ -1,6 +1,10 @@
 #pragma once
 #include "common.h"
 
+enum class Object_State {
+	IDLE_STATE, MOVE_STATE, JUMP_STATE
+};
+
 class Object {
 private:
 	std::wstring m_name = L"";
@@ -31,17 +35,33 @@ private:
 	bool m_dirty = false;
 
 	//
-	float m_velocity_y = 0.0f;
-	float m_velocity_xz = 0.0f;
+	bool m_physics = false;
 
 	float m_gravity = 9.8f;
 
+	DirectX::XMFLOAT3 m_velocity = DirectX::XMFLOAT3();
+
+	float m_acceleration = 100.0f;
+	float m_deceleration = 200.0f;
+
+	float m_speed = 0.0f;
+	float m_max_speed = 200.0f;
+
+	DirectX::XMFLOAT3 m_force = DirectX::XMFLOAT3();
+
 	float m_friction = 0.0f;
+
+	DirectX::XMFLOAT3 m_delta_position = DirectX::XMFLOAT3();
+
+	//
+	bool m_moving = false;
+
+	Object_State m_state = Object_State::IDLE_STATE;
 
 public:
 	Object() {}
 	Object(std::wstring object_name, MeshInfo* mesh_info, std::wstring mesh_name,
-		MaterialInfo* material_info, UINT constant_buffer_info, D3D12_PRIMITIVE_TOPOLOGY primitive_topology);
+		MaterialInfo* material_info, UINT constant_buffer_info, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, bool physics);
 	~Object() {}
 
 	void Set_Name(std::wstring object_name) { m_name = object_name; }
@@ -49,6 +69,7 @@ public:
 	void Set_Material_Info(MaterialInfo* material_info) { m_material_info = material_info; }
 	void Set_CB_Index(UINT constant_buffer_index) { m_constant_buffer_index = constant_buffer_index; }
 	void Set_PT(D3D12_PRIMITIVE_TOPOLOGY primitive_topology) { m_primitive_topology = primitive_topology; }
+	void Set_Phys(bool physics) { m_physics = physics; }
 
 	void Chg_Mesh(std::wstring mesh_name);
 
@@ -78,17 +99,22 @@ public:
 	void Rst_Dirty_Count() { m_dirty_count = FRAME_RESOURCES_NUMBER; }
 	void Sub_Dirty_Count() { m_dirty_count--; }
 
-	void Update();
+	DirectX::XMFLOAT3 Get_Vel() { return m_velocity; }
+	DirectX::XMFLOAT3 Get_Force() { return m_force; }
+
+	float Get_Spd() { return m_speed; }
+
+	void Calc_Delta(float elapsed_time);
+	//void Move_N_Solve_Collision();
+	void Udt_WM();
 
 	// move
-	//void Move(float velocity_x, float velocity_y, float velocity_z);
-	//void Move(DirectX::XMFLOAT3 velocity);
-	//void Move(DirectX::XMFLOAT3 direction, float length);
-
-	//void Move_Forward(float velocity);
-	//void Move_Back(float velocity);
-	//void Move_Left(float velocity);
-	//void Move_Right(float velocity);
+	void Move_Forward();
+	void Move_Back();
+	void Move_Left();
+	void Move_Right();
+	void Move_Up();
+	void Move_Down();
 
 	// teleport
 	void TP_Forward(float distance = 1.0f);

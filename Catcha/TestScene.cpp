@@ -38,9 +38,9 @@ void TestScene::Exit(D3DManager* d3d_manager) {
 
 }
 
-void TestScene::Update(D3DManager* d3d_manager) {
+void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
 	m_input_manager->Prcs_Input();
-	m_object_manager->Update();
+	m_object_manager->Update(elapsed_time);
 
 	m_current_frameresource_index = (m_current_frameresource_index + 1) % FRAME_RESOURCES_NUMBER;
 	m_current_frameresource = m_frameresources[m_current_frameresource_index].get();
@@ -365,6 +365,7 @@ void TestScene::Build_O() {
 		L"box",
 		m_material_map[L"default"].get(),
 		D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST,
+		true,
 		true
 	);
 
@@ -499,9 +500,8 @@ void TestScene::Build_PSO(D3DManager* d3d_manager) {
 }
 
 void TestScene::Binding_Key() {
-	// test
-	m_input_manager->Bind_Key_Down(VK_W, BindingInfo(L"box", Action::TELEPORT_FORWARD));
-	m_input_manager->Bind_Key_Down(VK_S, BindingInfo(L"box", Action::TELEPORT_BACK));
-	m_input_manager->Bind_Key_Down(VK_A, BindingInfo(L"box", Action::TELEPORT_LEFT));
-	m_input_manager->Bind_Key_Down(VK_D, BindingInfo(L"box", Action::TELEPORT_RIGHT));
+	m_input_manager->Bind_Key_Down(VK_W, BindingInfo(L"box", Action::MOVE_FORWARD));
+	m_input_manager->Bind_Key_Down(VK_S, BindingInfo(L"box", Action::MOVE_BACK));
+	m_input_manager->Bind_Key_Down(VK_A, BindingInfo(L"box", Action::MOVE_LEFT));
+	m_input_manager->Bind_Key_Down(VK_D, BindingInfo(L"box", Action::MOVE_RIGHT));
 }

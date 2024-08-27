@@ -9,7 +9,7 @@ public:
 	virtual void Enter(D3DManager* d3d_manager);
 	virtual void Exit(D3DManager* d3d_manager);
 
-	virtual void Update(D3DManager* d3d_manager);
+	virtual void Update(D3DManager* d3d_manager, float elapsed_time);
 	virtual void Resize(D3DManager* d3d_manager);
 	virtual void Draw(D3DManager* d3d_manager, ID3D12CommandList** command_lists);
 

@@ -168,6 +168,13 @@ struct MathHelper {
 		return result;
 	}
 
+	static DirectX::XMFLOAT4X4 Multiply(const DirectX::XMFLOAT4X4& xmfloat4x4, const DirectX::XMMATRIX& matrix) {
+		DirectX::XMFLOAT4X4 result;
+		DirectX::XMStoreFloat4x4(&result, DirectX::XMMatrixMultiply(DirectX::XMLoadFloat4x4(&xmfloat4x4), matrix));
+
+		return result;
+	}
+
 	//
 	static DirectX::XMFLOAT3 Add(const DirectX::XMFLOAT3& xmfloat3_a, const DirectX::XMFLOAT3 xmfloat3_b) {
 		DirectX::XMFLOAT3 result;
@@ -283,7 +290,15 @@ struct SubmeshInfo {
 	UINT start_index_location = 0;
 	INT base_vertex_location = 0;
 
-	DirectX::BoundingBox bounding_box;
+	float minimum_x = FLT_MAX;
+	float minimum_y = FLT_MAX;
+	float minimum_z = FLT_MAX;
+
+	float maximum_x = FLT_MIN;
+	float maximum_y = FLT_MIN;
+	float maximum_z = FLT_MIN;
+
+	//DirectX::BoundingBox bounding_box;
 };
 
 struct MeshInfo {

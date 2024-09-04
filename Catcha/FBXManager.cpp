@@ -122,6 +122,15 @@ void FBXManager::Add_Mesh_From_Node(FbxNode* node, MeshData& mesh_data) {
         vertex_data.uv = MathHelper::Multiply(vertex_data.uv, transform_xmmatrix);
 
         mesh_data.vertices.emplace_back(vertex_data);
+
+        //
+        mesh_data.minimum_x = MathHelper::Min(mesh_data.minimum_x, vertex_data.position.x);
+        mesh_data.minimum_y = MathHelper::Min(mesh_data.minimum_y, vertex_data.position.y);
+        mesh_data.minimum_z = MathHelper::Min(mesh_data.minimum_z, vertex_data.position.z);
+
+        mesh_data.maximum_x = MathHelper::Max(mesh_data.maximum_x, vertex_data.position.x);
+        mesh_data.maximum_y = MathHelper::Max(mesh_data.maximum_y, vertex_data.position.y);
+        mesh_data.maximum_z = MathHelper::Max(mesh_data.maximum_z, vertex_data.position.z);
     }
 }
 

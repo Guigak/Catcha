@@ -80,11 +80,12 @@ void InputManager::Prcs_Binding_Info(BindingInfo binding_info) {
 		case Action::TELEPORT_RIGHT:
 		case Action::TELEPORT_UP:
 		case Action::TELEPORT_DOWN:
-			m_object_manager->Teleport(binding_info.object_name, binding_info.action);
+			m_object_manager->Teleport(binding_info.object_name, binding_info.action, binding_info.value);
 			break;
 		case Action::ROTATE_ROLL:
 		case Action::ROTATE_PITCH:
 		case Action::ROTATE_YAW:
+			m_object_manager->Rotate(binding_info.object_name, binding_info.action, binding_info.value);
 			break;
 		}
 	}

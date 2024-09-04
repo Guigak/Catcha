@@ -28,6 +28,14 @@ struct MeshData {
 	std::vector<std::uint16_t> indices_16;
 	std::vector<std::uint32_t> indices_32;
 
+	float minimum_x = FLT_MAX;
+	float minimum_y = FLT_MAX;
+	float minimum_z = FLT_MAX;
+
+	float maximum_x = FLT_MIN;
+	float maximum_y = FLT_MIN;
+	float maximum_z = FLT_MIN;
+
 	std::vector<std::uint16_t>& Get_Idxs_16() {	// Get Indices 16
 		if (indices_16.empty()) {
 			indices_16.resize(indices_32.size());
@@ -45,7 +53,7 @@ class MeshCreater {
 public:
 	MeshData Crt_Box(float width, float height, float depth, std::uint32_t subdivisions_number);
 
-	MeshData Crt_Mesh_From_File(std::wstring file_name);
+	MeshData Crt_Mesh_From_File(std::wstring file_name, std::uint32_t subdivisions_number);
 	
 	void Subdivide(MeshData& mesh);
 	VertexData Calc_Mid_Point(VertexData& a, VertexData& b);

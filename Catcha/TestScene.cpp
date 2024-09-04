@@ -137,9 +137,9 @@ void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
 	m_main_pass_constant_buffer.ambient_light = { 0.25f, 0.25f, 0.35f, 1.0f };
 	//
 	//m_main_pass_constant_buffer.lights[0].direction = { 0.57735f, -0.57735f, 1.0f };
-	m_main_pass_constant_buffer.lights[0].direction = { 1.0f, 0.0f, 1.0f };
-	//m_main_pass_constant_buffer.lights[0].strength = { 0.6f, 0.6f, 0.6f };
-	m_main_pass_constant_buffer.lights[0].strength = { 0.0f, 0.0f, 0.0f };
+	m_main_pass_constant_buffer.lights[0].direction = { 0.5f, -1.0f, 0.5f };
+	m_main_pass_constant_buffer.lights[0].strength = { 0.6f, 0.6f, 0.6f };
+	//m_main_pass_constant_buffer.lights[0].strength = { 0.0f, 0.0f, 0.0f };
 	//
 	m_main_pass_constant_buffer.lights[1].position = { 0.0f, 100.0f, -300.0f };
 	//m_main_pass_constant_buffer.lights[1].strength = { 0.6f, 0.6f, 0.6f };
@@ -149,8 +149,8 @@ void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
 	//
 	m_main_pass_constant_buffer.lights[2].position = { 0.0f, 100.0f, -500.0f };
 	m_main_pass_constant_buffer.lights[2].direction = { 0.0f, 0.0f, 1.0f };
-	m_main_pass_constant_buffer.lights[2].strength = { 0.6f, 0.6f, 0.6f };
-	//m_main_pass_constant_buffer.lights[2].strength = { 0.0f, 0.0f, 0.0f };
+	//m_main_pass_constant_buffer.lights[2].strength = { 0.6f, 0.6f, 0.6f };
+	m_main_pass_constant_buffer.lights[2].strength = { 0.0f, 0.0f, 0.0f };
 	m_main_pass_constant_buffer.lights[2].falloff_start = 500.0f;
 	m_main_pass_constant_buffer.lights[2].falloff_end = 1000.0f;
 	m_main_pass_constant_buffer.lights[2].spot_power = 256.0f;
@@ -288,35 +288,69 @@ void TestScene::Build_S_N_L() {
 
 void TestScene::Build_Mesh(ID3D12Device* device, ID3D12GraphicsCommandList* command_list) {
 	MeshCreater mesh_creater;
-	//MeshData box_mesh = mesh_creater.Crt_Box(1.5f, 0.5f, 1.5f, 3);
-	//MeshData box_mesh = mesh_creater.Crt_Mesh_From_File(L"Test_TXT.fbx");
-	//MeshData box_mesh = mesh_creater.Crt_Mesh_From_File(L"testbox.fbx");
-	//MeshData box_mesh = mesh_creater.Crt_Mesh_From_File(L"testplane.fbx");
-	//MeshData box_mesh = mesh_creater.Crt_Mesh_From_File(L"testpyramid.fbx");
-	//MeshData box_mesh = mesh_creater.Crt_Mesh_From_File(L"testbuilding.fbx");
-	MeshData box_mesh = mesh_creater.Crt_Mesh_From_File(L"Mawang_Test.fbx");
-	//MeshData box_mesh = mesh_creater.Crt_Mesh_From_File(L"testpyramids.fbx");
-	
-	UINT box_vertex_offset = 0;
 
-	UINT box_index_offset = 0;
+	//MeshData test_mesh = mesh_creater.Crt_Box(100.0f, 100.0f, 100.0f, 3);
+	//MeshData test_mesh = mesh_creater.Crt_Mesh_From_File(L"Test_TXT.fbx");
+	//MeshData test_mesh = mesh_creater.Crt_Mesh_From_File(L"testbox.fbx", 3);
+	//MeshData test_mesh = mesh_creater.Crt_Mesh_From_File(L"testplane.fbx");
+	//MeshData test_mesh = mesh_creater.Crt_Mesh_From_File(L"testpyramid.fbx", 3);
+	//MeshData test_mesh = mesh_creater.Crt_Mesh_From_File(L"testbuilding.fbx", 4);
+	MeshData test_mesh = mesh_creater.Crt_Mesh_From_File(L"Mawang_Test.fbx", 0);
+	//MeshData test_mesh = mesh_creater.Crt_Mesh_From_File(L"testpyramids.fbx");
+
+	//MeshData box_mesh = mesh_creater.Crt_Box(100.0f, 100.0f, 100.0f, 0);
+	MeshData box_mesh = mesh_creater.Crt_Mesh_From_File(L"painting.fbx", 0);
+	//MeshData box_mesh = mesh_creater.Crt_Mesh_From_File(L"test_house.fbx", 0);
+
+	UINT test_vertex_offset = 0;
+	UINT box_vertex_offset = (UINT)test_mesh.vertices.size();
+
+	UINT test_index_offset = 0;
+	UINT box_index_offset = (UINT)test_mesh.indices_32.size();
+
+	SubmeshInfo test_submesh;
+	test_submesh.index_count = (UINT)test_mesh.indices_32.size();
+	test_submesh.start_index_location = test_index_offset;
+	test_submesh.base_vertex_location = test_vertex_offset;
+
+	test_submesh.minimum_x = test_mesh.minimum_x;
+	test_submesh.minimum_y = test_mesh.minimum_y;
+	test_submesh.minimum_z = test_mesh.minimum_z;
+	test_submesh.maximum_x = test_mesh.maximum_x;
+	test_submesh.maximum_y = test_mesh.maximum_y;
+	test_submesh.maximum_z = test_mesh.maximum_z;
 
 	SubmeshInfo box_submesh;
 	box_submesh.index_count = (UINT)box_mesh.indices_32.size();
 	box_submesh.start_index_location = box_index_offset;
 	box_submesh.base_vertex_location = box_vertex_offset;
 
-	auto total_vertex_count = box_mesh.vertices.size();
+	box_submesh.minimum_x = box_mesh.minimum_x;
+	box_submesh.minimum_y = box_mesh.minimum_y;
+	box_submesh.minimum_z = box_mesh.minimum_z;
+	box_submesh.maximum_x = box_mesh.maximum_x;
+	box_submesh.maximum_y = box_mesh.maximum_y;
+	box_submesh.maximum_z = box_mesh.maximum_z;
+
+	auto total_vertex_count =
+		test_mesh.vertices.size() +
+		box_mesh.vertices.size();
 
 	std::vector<Vertex> vertices(total_vertex_count);
 
 	UINT count = 0;
+	for (size_t i = 0; i < test_mesh.vertices.size(); ++i, ++count) {
+		vertices[count].position = test_mesh.vertices[i].position;
+		vertices[count].normal = test_mesh.vertices[i].normal;
+	}
+
 	for (size_t i = 0; i < box_mesh.vertices.size(); ++i, ++count) {
 		vertices[count].position = box_mesh.vertices[i].position;
 		vertices[count].normal = box_mesh.vertices[i].normal;
 	}
 
 	std::vector<std::uint16_t> indices;
+	indices.insert(indices.end(), std::begin(test_mesh.Get_Idxs_16()), std::end(test_mesh.Get_Idxs_16()));
 	indices.insert(indices.end(), std::begin(box_mesh.Get_Idxs_16()), std::end(box_mesh.Get_Idxs_16()));
 
 	UINT vertex_buffer_size = (UINT)vertices.size() * sizeof(Vertex);
@@ -341,6 +375,7 @@ void TestScene::Build_Mesh(ID3D12Device* device, ID3D12GraphicsCommandList* comm
 	mesh_info->index_format = DXGI_FORMAT_R16_UINT;
 	mesh_info->index_buffer_size = index_buffer_size;
 
+	mesh_info->submesh_map[L"test"] = test_submesh;
 	mesh_info->submesh_map[L"box"] = box_submesh;
 
 	m_mesh_map[mesh_info->name] = std::move(mesh_info);
@@ -360,16 +395,33 @@ void TestScene::Build_Material() {
 
 void TestScene::Build_O() {
 	m_object_manager->Add_Obj(
+		L"test",
+		m_mesh_map[L"meshinfo"].get(),
+		L"test",
+		m_material_map[L"default"].get(),
+		D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST,
+		true,
+		true,
+		L"player"
+	);
+	m_object_manager->Get_Obj(L"test")->Crt_Simple_OBB();
+
+	m_object_manager->Add_Obj(
 		L"box",
 		m_mesh_map[L"meshinfo"].get(),
 		L"box",
 		m_material_map[L"default"].get(),
 		D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST,
 		true,
-		true
+		true,
+		L"object"
 	);
+	m_object_manager->Get_Obj(L"box")->Crt_Simple_OBB();
+	m_object_manager->Get_Obj(L"box")->TP_Up(50.0f);
+	m_object_manager->Get_Obj(L"box")->Rotate_Pitch(-180.0f);
 
 	Binding_Key();
+	Pairing_Collision_Set();
 }
 
 void TestScene::Build_C(D3DManager* d3d_manager) {
@@ -500,8 +552,20 @@ void TestScene::Build_PSO(D3DManager* d3d_manager) {
 }
 
 void TestScene::Binding_Key() {
-	m_input_manager->Bind_Key_Down(VK_W, BindingInfo(L"box", Action::MOVE_FORWARD));
-	m_input_manager->Bind_Key_Down(VK_S, BindingInfo(L"box", Action::MOVE_BACK));
-	m_input_manager->Bind_Key_Down(VK_A, BindingInfo(L"box", Action::MOVE_LEFT));
-	m_input_manager->Bind_Key_Down(VK_D, BindingInfo(L"box", Action::MOVE_RIGHT));
+	m_input_manager->Bind_Key_Down(VK_W, BindingInfo(L"test", Action::MOVE_FORWARD));
+	m_input_manager->Bind_Key_Down(VK_S, BindingInfo(L"test", Action::MOVE_BACK));
+	m_input_manager->Bind_Key_Down(VK_A, BindingInfo(L"test", Action::MOVE_LEFT));
+	m_input_manager->Bind_Key_Down(VK_D, BindingInfo(L"test", Action::MOVE_RIGHT));
+
+	//m_input_manager->Bind_Key_Down(VK_W, BindingInfo(L"test", Action::TELEPORT_FORWARD, 0.05f));
+	//m_input_manager->Bind_Key_Down(VK_S, BindingInfo(L"test", Action::TELEPORT_BACK, 0.05f));
+	//m_input_manager->Bind_Key_Down(VK_A, BindingInfo(L"test", Action::TELEPORT_LEFT, 0.05f));
+	//m_input_manager->Bind_Key_Down(VK_D, BindingInfo(L"test", Action::TELEPORT_RIGHT, 0.05f));
+
+	m_input_manager->Bind_Key_Down(VK_Q, BindingInfo(L"test", Action::ROTATE_PITCH, -1.0f));
+	m_input_manager->Bind_Key_Down(VK_E, BindingInfo(L"test", Action::ROTATE_PITCH, 1.0f));
+}
+
+void TestScene::Pairing_Collision_Set() {
+	//m_object_manager->Add_Collision_Pair(L"")
 }

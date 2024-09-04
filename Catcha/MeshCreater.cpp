@@ -106,6 +106,14 @@ MeshData MeshCreater::Crt_Box(float width, float height, float depth, std::uint3
     indices[count++] = 22;
     indices[count++] = 23;
 
+    mesh_data.minimum_x = -half_width;
+    mesh_data.minimum_y = -half_height;
+    mesh_data.minimum_z = -half_depth;
+
+    mesh_data.maximum_x = half_width;
+    mesh_data.maximum_y = half_height;
+    mesh_data.maximum_z = half_depth;
+
     mesh_data.indices_32.assign(&indices[0], &indices[count]);
 
     subdivisions_number = std::min<std::uint32_t>(subdivisions_number, 6u);
@@ -117,9 +125,17 @@ MeshData MeshCreater::Crt_Box(float width, float height, float depth, std::uint3
     return mesh_data;
 }
 
-MeshData MeshCreater::Crt_Mesh_From_File(std::wstring file_name) {
+MeshData MeshCreater::Crt_Mesh_From_File(std::wstring file_name, std::uint32_t subdivisions_number) {
     FBXManager* fbx_manager = FBXManager::Get_Inst();
-    return fbx_manager->Ipt_Mesh_From_File(file_name);
+    MeshData mesh_data = fbx_manager->Ipt_Mesh_From_File(file_name);
+
+    subdivisions_number = std::min<std::uint32_t>(subdivisions_number, 6u);
+
+    for (std::uint32_t i = 0; i < subdivisions_number; ++i) {
+        Subdivide(mesh_data);
+    }
+
+    return mesh_data;
 }
 
 void MeshCreater::Subdivide(MeshData& mesh) {

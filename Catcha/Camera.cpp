@@ -4,15 +4,15 @@ Camera::Camera() {
 	Set_Frustum(0.25f * MathHelper::Pi(), 1.0f, 1.0f, 1000.0f);
 }
 
-void Camera::Set_Position(float position_x, float position_y, float position_z) {
-	m_position = DirectX::XMFLOAT3(position_x, position_y, position_z);
-	m_dirty = true;
-}
-
-void Camera::Set_Position(DirectX::XMFLOAT3 position_vector) {
-	m_position = position_vector;
-	m_dirty = true;
-}
+//void Camera::Set_Position(float position_x, float position_y, float position_z) {
+//	m_position = DirectX::XMFLOAT3(position_x, position_y, position_z);
+//	m_dirty = true;
+//}
+//
+//void Camera::Set_Position(DirectX::XMFLOAT3 position_vector) {
+//	m_position = position_vector;
+//	m_dirty = true;
+//}
 
 void Camera::Set_Frustum(float FOV_y, float aspect_ratio, float near_z, float far_z) {
 	m_FOV_y = FOV_y;

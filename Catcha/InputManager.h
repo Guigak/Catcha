@@ -14,6 +14,7 @@ enum class Action {
 struct BindingInfo {
 	std::wstring object_name = L"";
 	Action action;
+	float value;
 };
 
 class InputManager {

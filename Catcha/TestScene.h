@@ -27,5 +27,6 @@ public:
 	virtual void Build_PSO(D3DManager* d3d_manager);	// Build Pipeline State Objects
 
 	virtual void Binding_Key();
+	virtual void Pairing_Collision_Set();
 };
 

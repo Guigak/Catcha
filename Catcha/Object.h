@@ -6,7 +6,7 @@ enum class Object_State {
 };
 
 class Object {
-private:
+protected:
 	std::wstring m_name = L"";
 
 	DirectX::XMFLOAT3 m_position = { 0.0f, 0.0f, 0.0f };
@@ -22,6 +22,7 @@ private:
 	UINT m_constant_buffer_index = -1;
 
 	MeshInfo* m_mesh_info = nullptr;
+	std::wstring m_submesh_name = L"";
 	MaterialInfo* m_material_info = nullptr;
 
 	D3D12_PRIMITIVE_TOPOLOGY m_primitive_topology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
@@ -58,6 +59,9 @@ private:
 
 	Object_State m_state = Object_State::IDLE_STATE;
 
+	//
+	DirectX::BoundingOrientedBox m_OBB;
+
 public:
 	Object() {}
 	Object(std::wstring object_name, MeshInfo* mesh_info, std::wstring mesh_name,
@@ -74,9 +78,15 @@ public:
 	void Chg_Mesh(std::wstring mesh_name);
 
 	//
+	void Crt_Simple_OBB();
+	DirectX::XMMATRIX Get_OBB_WM();
+	DirectX::BoundingOrientedBox Get_Calcd_OBB();
+
+	//
 	std::wstring Get_Name() { return m_name; }
 
-	DirectX::XMFLOAT3 Get_Position() { return m_position; }
+	DirectX::XMVECTOR Get_Position_V() { return DirectX::XMLoadFloat3(&m_position); }	// Get Position Vector
+	DirectX::XMFLOAT3 Get_Position_3f() { return m_position; }	// Get Position float3
 
 	DirectX::XMFLOAT3 Get_Look() { return m_look; }
 	DirectX::XMFLOAT3 Get_Up() { return m_up; }
@@ -108,6 +118,9 @@ public:
 	//void Move_N_Solve_Collision();
 	void Udt_WM();
 
+	//
+	void Set_Position(float position_x, float position_y, float position_z);
+
 	// move
 	void Move_Forward();
 	void Move_Back();
@@ -117,19 +130,20 @@ public:
 	void Move_Down();
 
 	// teleport
-	void TP_Forward(float distance = 1.0f);
-	void TP_Back(float distance = 1.0f);
-	void TP_Left(float distance = 1.0f);
-	void TP_Right(float distance = 1.0f);
-	void TP_Up(float distance = 1.0f);
-	void TP_Down(float distance = 1.0f);
+	void Teleport(DirectX::XMFLOAT3 direction, float distance);
 
-	//// rotate
-	//void Rotate(float roll, float pitch, float yaw);
-	//void Rotate(DirectX::XMFLOAT3 degree);
+	void TP_Forward(float distance);
+	void TP_Back(float distance);
+	void TP_Left(float distance);
+	void TP_Right(float distance);
+	void TP_Up(float distance);
+	void TP_Down(float distance);
 
-	//void Rotate_Roll(float degree);
-	//void Rotate_Pitch(float degree);
-	//void Rotate_Yaw(float degree);
+	// rotate
+	void Rotate(float degree_roll, float degree_pitch, float degree_yaw);
+
+	void Rotate_Roll(float degree);
+	void Rotate_Pitch(float degree);
+	void Rotate_Yaw(float degree);
 };
 

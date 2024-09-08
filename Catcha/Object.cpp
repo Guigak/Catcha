@@ -240,7 +240,7 @@ void Object::TP_Up(float distance) {
 }
 
 void Object::TP_Down(float distance) {
-	m_position = MathHelper::Add(Get_Position_3f(), Get_Up(), distance);
+	m_position = MathHelper::Add(Get_Position_3f(), Get_Up(), -distance);
 
 	m_dirty = true;
 }

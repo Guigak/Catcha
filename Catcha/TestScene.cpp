@@ -291,7 +291,7 @@ void TestScene::Build_S_N_L() {
 void TestScene::Build_Mesh(ID3D12Device* device, ID3D12GraphicsCommandList* command_list) {
 	MeshCreater mesh_creater;
 
-	//MeshData test_mesh = mesh_creater.Crt_Box(100.0f, 100.0f, 100.0f, 3);
+	//MeshData test_mesh = mesh_creater.Crt_Box(100.0f, 100.0f, 100.0f, 0);
 	//MeshData test_mesh = mesh_creater.Crt_Mesh_From_File(L"Test_TXT.fbx");
 	//MeshData test_mesh = mesh_creater.Crt_Mesh_From_File(L"testbox.fbx", 3);
 	//MeshData test_mesh = mesh_creater.Crt_Mesh_From_File(L"testplane.fbx");
@@ -580,6 +580,9 @@ void TestScene::Binding_Key() {
 	m_input_manager->Bind_Key_Down(VK_S, BindingInfo(L"maincamera", Action::TELEPORT_BACK, 1.0f));
 	m_input_manager->Bind_Key_Down(VK_A, BindingInfo(L"maincamera", Action::TELEPORT_LEFT, 1.0f));
 	m_input_manager->Bind_Key_Down(VK_D, BindingInfo(L"maincamera", Action::TELEPORT_RIGHT, 1.0f));
+
+	m_input_manager->Bind_Key_Down(VK_SPACE, BindingInfo(L"maincamera", Action::TELEPORT_UP, 1.0f));
+	m_input_manager->Bind_Key_Down(VK_SHIFT, BindingInfo(L"maincamera", Action::TELEPORT_DOWN, 1.0f));
 
 	m_input_manager->Bind_Key_Down(VK_Q, BindingInfo(L"maincamera", Action::ROTATE_PITCH, POINTF(-1.0f)));
 	m_input_manager->Bind_Key_Down(VK_E, BindingInfo(L"maincamera", Action::ROTATE_PITCH, POINTF(1.0f)));

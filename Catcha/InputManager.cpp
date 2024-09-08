@@ -35,6 +35,10 @@ void InputManager::Prcs_Input_Msg(HWND hwnd, UINT message, WPARAM wparam, LPARAM
 	}
 }
 
+void InputManager::Bind_Mouse_Move(BindingInfo binding_info) {
+	m_mouse_move_info = binding_info;
+}
+
 void InputManager::Prcs_Input() {
 	for (auto& k : m_key_set) {
 		if (m_state[k]) {
@@ -63,6 +67,19 @@ void InputManager::Prcs_Input() {
 
 		m_previous_state[k] = m_state[k];
 	}
+
+	POINT new_point;
+	GetCursorPos(&new_point);
+
+	if (m_previous_point.x != -1 && m_previous_point.y != -1) {
+		if (m_previous_point.x != new_point.x || m_previous_point.y != new_point.y) {
+			m_mouse_move_info.value = POINTF((float)(new_point.x - m_previous_point.x), (float)(new_point.y - m_previous_point.y));
+
+			Prcs_Binding_Info(m_mouse_move_info);
+		}
+	}
+
+	m_previous_point = new_point;
 }
 
 void InputManager::Prcs_Binding_Info(BindingInfo binding_info) {
@@ -80,12 +97,15 @@ void InputManager::Prcs_Binding_Info(BindingInfo binding_info) {
 		case Action::TELEPORT_RIGHT:
 		case Action::TELEPORT_UP:
 		case Action::TELEPORT_DOWN:
-			m_object_manager->Teleport(binding_info.object_name, binding_info.action, binding_info.value);
+			m_object_manager->Teleport(binding_info.object_name, binding_info.action, std::get<float>(binding_info.value));
 			break;
+		case Action::ROTATE:
 		case Action::ROTATE_ROLL:
 		case Action::ROTATE_PITCH:
 		case Action::ROTATE_YAW:
-			m_object_manager->Rotate(binding_info.object_name, binding_info.action, binding_info.value);
+			m_object_manager->Rotate(binding_info.object_name, binding_info.action, std::get<POINTF>(binding_info.value));
+			break;
+		default:
 			break;
 		}
 	}

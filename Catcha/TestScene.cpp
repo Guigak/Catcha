@@ -581,8 +581,10 @@ void TestScene::Binding_Key() {
 	m_input_manager->Bind_Key_Down(VK_A, BindingInfo(L"maincamera", Action::TELEPORT_LEFT, 1.0f));
 	m_input_manager->Bind_Key_Down(VK_D, BindingInfo(L"maincamera", Action::TELEPORT_RIGHT, 1.0f));
 
-	m_input_manager->Bind_Key_Down(VK_Q, BindingInfo(L"maincamera", Action::ROTATE_PITCH, -1.0f));
-	m_input_manager->Bind_Key_Down(VK_E, BindingInfo(L"maincamera", Action::ROTATE_PITCH, 1.0f));
+	m_input_manager->Bind_Key_Down(VK_Q, BindingInfo(L"maincamera", Action::ROTATE_PITCH, POINTF(-1.0f)));
+	m_input_manager->Bind_Key_Down(VK_E, BindingInfo(L"maincamera", Action::ROTATE_PITCH, POINTF(1.0f)));
+
+	m_input_manager->Bind_Mouse_Move(BindingInfo(L"maincamera", Action::ROTATE));
 }
 
 void TestScene::Pairing_Collision_Set() {

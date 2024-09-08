@@ -43,6 +43,8 @@
 #include <sstream>
 #include <cassert>
 
+#include <variant>
+
 // fbx sdk
 #include "fbxsdk.h"
 

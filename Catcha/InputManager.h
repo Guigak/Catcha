@@ -8,13 +8,13 @@ class ObjectManager;
 enum class Action {
 	MOVE_FORWARD, MOVE_BACK, MOVE_LEFT, MOVE_RIGHT, MOVE_UP, MOVE_DOWN,
 	TELEPORT_FORWARD, TELEPORT_BACK, TELEPORT_LEFT, TELEPORT_RIGHT, TELEPORT_UP, TELEPORT_DOWN,
-	ROTATE_ROLL, ROTATE_PITCH, ROTATE_YAW
+	ROTATE, ROTATE_ROLL, ROTATE_PITCH, ROTATE_YAW
 };
 
 struct BindingInfo {
 	std::wstring object_name = L"";
 	Action action;
-	float value;
+	std::variant<int, float, POINTF, std::wstring> value;
 };
 
 class InputManager {
@@ -28,6 +28,9 @@ private:
 	std::unordered_map<int, BindingInfo> m_key_first_down_map;
 	std::unordered_map<int, BindingInfo> m_key_up_map;
 
+	POINT m_previous_point = { -1, -1 };
+	BindingInfo m_mouse_move_info;
+
 	Scene* m_scene = nullptr;
 	ObjectManager* m_object_manager = nullptr;
 
@@ -39,6 +42,8 @@ public:
 	void Bind_Key_Down(int key_id, BindingInfo binding_info);
 	void Bind_Key_First_Down(int key_id, BindingInfo binding_info);
 	void Bind_Key_Up(int key_id, BindingInfo binding_info);
+
+	void Bind_Mouse_Move(BindingInfo binding_info);
 
 	void Prcs_Input_Msg(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam);
 

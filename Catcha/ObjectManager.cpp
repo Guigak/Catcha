@@ -1,21 +1,43 @@
 #include "ObjectManager.h"
 #include "InputManager.h"
+#include "Camera.h"
 
 void ObjectManager::Add_Obj(std::wstring object_name, MeshInfo* mesh_info, std::wstring mesh_name, MaterialInfo* material_info,
-    D3D12_PRIMITIVE_TOPOLOGY primitive_topology, bool opaque_object, bool physics, std::wstring set_name)
+    D3D12_PRIMITIVE_TOPOLOGY primitive_topology, ObjectType object_type, bool physics, std::wstring set_name)
 {
-    auto object = std::make_unique<Object>(object_name, mesh_info, mesh_name, material_info, m_object_count++, primitive_topology, physics);
+    //auto object = std::make_unique<Object>(object_name, mesh_info, mesh_name, material_info, m_object_count++, primitive_topology, physics);
+
+    std::unique_ptr<Object> object;
+
+    switch (object_type) {
+    case ObjectType::OPAQUE_OBJECT:
+    case ObjectType::TRANSPARENT_OBJECT:
+        object = std::make_unique<Object>(object_name, mesh_info, mesh_name, material_info, m_object_count++, primitive_topology, physics);
+        break;
+    case ObjectType::CAMERA_OBJECT:
+        object = std::make_unique<Camera>();
+        break;
+    default:
+        break;
+    }
 
     m_object_map[object_name] = std::move(object);
 
     Object* object_pointer = m_object_map[object_name].get();
     m_objects.emplace_back(object_pointer);
 
-    if (opaque_object) {
+    switch (object_type) {
+    case ObjectType::OPAQUE_OBJECT:
         m_opaque_objects.emplace_back(object_pointer);
-    }
-    else {
+        break;
+    case ObjectType::TRANSPARENT_OBJECT:
         m_transparent_objects.emplace_back(object_pointer);
+        break;
+    case ObjectType::CAMERA_OBJECT:
+        m_camera_objects.emplace_back(object_pointer);
+        break;
+    default:
+        break;
     }
 
     m_object_set_map[set_name].emplace_back(object_pointer);
@@ -117,7 +139,7 @@ void ObjectManager::Update(float elapsed_time) {
     Solve_Collision();
 
     for (auto& o : m_objects) {
-        o->Udt_WM();
+        o->Update();
     }
 }
 

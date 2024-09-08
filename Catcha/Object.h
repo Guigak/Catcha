@@ -60,6 +60,10 @@ protected:
 	Object_State m_state = Object_State::IDLE_STATE;
 
 	//
+
+	bool m_visiable = false;
+
+	//
 	DirectX::BoundingOrientedBox m_OBB;
 
 public:
@@ -116,6 +120,8 @@ public:
 
 	void Calc_Delta(float elapsed_time);
 	//void Move_N_Solve_Collision();
+	virtual void Update();
+
 	void Udt_WM();
 
 	//

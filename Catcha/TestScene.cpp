@@ -165,7 +165,7 @@ void TestScene::Resize(D3DManager* d3d_manager) {
 }
 
 void TestScene::Draw(D3DManager* d3d_manager, ID3D12CommandList** command_lists) {
-	ID3D12Device* device = d3d_manager->Get_Device();
+	//ID3D12Device* device = d3d_manager->Get_Device();
 	ID3D12CommandAllocator* command_allocator = m_current_frameresource->command_allocator.Get();
 	ID3D12GraphicsCommandList* command_list = m_current_frameresource->command_list.Get();
 
@@ -228,6 +228,8 @@ void TestScene::Draw(D3DManager* d3d_manager, ID3D12CommandList** command_lists)
 		//	command_list->DrawIndexedInstanced(3, 1, object->start_index_location + i, object->base_vertex_location, 0);
 		//}
 	}
+
+	// draw transparent objects
 
 	Throw_If_Failed(command_list->Close());
 
@@ -400,7 +402,7 @@ void TestScene::Build_O() {
 		L"test",
 		m_material_map[L"default"].get(),
 		D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST,
-		true,
+		ObjectType::OPAQUE_OBJECT,
 		true,
 		L"player"
 	);
@@ -412,7 +414,7 @@ void TestScene::Build_O() {
 		L"box",
 		m_material_map[L"default"].get(),
 		D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST,
-		true,
+		ObjectType::OPAQUE_OBJECT,
 		true,
 		L"object"
 	);
@@ -425,14 +427,31 @@ void TestScene::Build_O() {
 }
 
 void TestScene::Build_C(D3DManager* d3d_manager) {
-	auto main_camera = std::make_unique<Camera>();
+	//auto main_camera = std::make_unique<Camera>();
+	//main_camera->Set_Frustum(0.25f * MathHelper::Pi(), d3d_manager->Get_Aspect_Ratio(), 1.0f, 1000.0f);
+	//main_camera->Set_Position(0.0f, 300.0f, -500.0f);
+	//main_camera->Look_At(main_camera->Get_Position_V(), DirectX::XMVectorZero(), DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f));
+
+	//m_camera_map[L"main_camera"] = std::move(main_camera);
+
+	//m_main_camera = m_camera_map[L"main_camera"].get();
+
+	m_object_manager->Add_Obj(
+		L"maincamera",
+		nullptr,
+		L"",
+		nullptr,
+		D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST,
+		ObjectType::CAMERA_OBJECT,
+		false,
+		L"camera"
+	);
+	auto main_camera = reinterpret_cast<Camera*>(m_object_manager->Get_Obj(L"maincamera"));
 	main_camera->Set_Frustum(0.25f * MathHelper::Pi(), d3d_manager->Get_Aspect_Ratio(), 1.0f, 1000.0f);
 	main_camera->Set_Position(0.0f, 300.0f, -500.0f);
 	main_camera->Look_At(main_camera->Get_Position_V(), DirectX::XMVectorZero(), DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f));
 
-	m_camera_map[L"main_camera"] = std::move(main_camera);
-
-	m_main_camera = m_camera_map[L"main_camera"].get();
+	m_main_camera = main_camera;
 }
 
 void TestScene::Build_FR(ID3D12Device* device) {
@@ -552,18 +571,18 @@ void TestScene::Build_PSO(D3DManager* d3d_manager) {
 }
 
 void TestScene::Binding_Key() {
-	m_input_manager->Bind_Key_Down(VK_W, BindingInfo(L"test", Action::MOVE_FORWARD));
-	m_input_manager->Bind_Key_Down(VK_S, BindingInfo(L"test", Action::MOVE_BACK));
-	m_input_manager->Bind_Key_Down(VK_A, BindingInfo(L"test", Action::MOVE_LEFT));
-	m_input_manager->Bind_Key_Down(VK_D, BindingInfo(L"test", Action::MOVE_RIGHT));
+	//m_input_manager->Bind_Key_Down(VK_W, BindingInfo(L"test", Action::MOVE_FORWARD));
+	//m_input_manager->Bind_Key_Down(VK_S, BindingInfo(L"test", Action::MOVE_BACK));
+	//m_input_manager->Bind_Key_Down(VK_A, BindingInfo(L"test", Action::MOVE_LEFT));
+	//m_input_manager->Bind_Key_Down(VK_D, BindingInfo(L"test", Action::MOVE_RIGHT));
 
-	//m_input_manager->Bind_Key_Down(VK_W, BindingInfo(L"test", Action::TELEPORT_FORWARD, 0.05f));
-	//m_input_manager->Bind_Key_Down(VK_S, BindingInfo(L"test", Action::TELEPORT_BACK, 0.05f));
-	//m_input_manager->Bind_Key_Down(VK_A, BindingInfo(L"test", Action::TELEPORT_LEFT, 0.05f));
-	//m_input_manager->Bind_Key_Down(VK_D, BindingInfo(L"test", Action::TELEPORT_RIGHT, 0.05f));
+	m_input_manager->Bind_Key_Down(VK_W, BindingInfo(L"maincamera", Action::TELEPORT_FORWARD, 1.0f));
+	m_input_manager->Bind_Key_Down(VK_S, BindingInfo(L"maincamera", Action::TELEPORT_BACK, 1.0f));
+	m_input_manager->Bind_Key_Down(VK_A, BindingInfo(L"maincamera", Action::TELEPORT_LEFT, 1.0f));
+	m_input_manager->Bind_Key_Down(VK_D, BindingInfo(L"maincamera", Action::TELEPORT_RIGHT, 1.0f));
 
-	m_input_manager->Bind_Key_Down(VK_Q, BindingInfo(L"test", Action::ROTATE_PITCH, -1.0f));
-	m_input_manager->Bind_Key_Down(VK_E, BindingInfo(L"test", Action::ROTATE_PITCH, 1.0f));
+	m_input_manager->Bind_Key_Down(VK_Q, BindingInfo(L"maincamera", Action::ROTATE_PITCH, -1.0f));
+	m_input_manager->Bind_Key_Down(VK_E, BindingInfo(L"maincamera", Action::ROTATE_PITCH, 1.0f));
 }
 
 void TestScene::Pairing_Collision_Set() {

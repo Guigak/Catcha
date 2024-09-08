@@ -12,6 +12,10 @@ Object::Object(std::wstring object_name, MeshInfo* mesh_info, std::wstring mesh_
 }
 
 void Object::Set_Mesh_Info(MeshInfo* mesh_info, std::wstring mesh_name) {
+	if (mesh_info == nullptr) {
+		return;
+	}
+
 	m_mesh_info = mesh_info;
 
 	m_submesh_name = mesh_name;
@@ -22,6 +26,10 @@ void Object::Set_Mesh_Info(MeshInfo* mesh_info, std::wstring mesh_name) {
 }
 
 void Object::Chg_Mesh(std::wstring mesh_name) {
+	if (mesh_name == L"") {
+		return;
+	}
+
 	m_submesh_name = mesh_name;
 
 	m_index_count = m_mesh_info->submesh_map[mesh_name].index_count;
@@ -115,6 +123,8 @@ void Object::Calc_Delta(float elapsed_time) {
 		// Move
 		m_position = MathHelper::Add(Get_Position_3f(), m_delta_position);
 
+		Udt_WM();
+
 		m_moving = false;
 		m_dirty = true;
 	}
@@ -126,19 +136,27 @@ void Object::Calc_Delta(float elapsed_time) {
 //	// solve collision
 //}
 
-void Object::Udt_WM() {
+void Object::Update() {
 	if (m_dirty) {
-		DirectX::XMMATRIX translate_matrix = DirectX::XMMatrixTranslation(m_position.x, m_position.y, m_position.z);
-		DirectX::XMMATRIX rotate_matrix = DirectX::XMMatrixRotationRollPitchYaw(
-			DirectX::XMConvertToRadians(m_rotate.x), DirectX::XMConvertToRadians(m_rotate.y), DirectX::XMConvertToRadians(m_rotate.z));
-		DirectX::XMMATRIX scale_matrix = DirectX::XMMatrixTranslation(m_scale.x, m_scale.y, m_scale.z);
-
-		DirectX::XMStoreFloat4x4(&m_world_matrix, scale_matrix * rotate_matrix * translate_matrix);
+		Udt_WM();
 
 		Rst_Dirty_Count();
 
 		m_dirty = false;
 	}
+}
+
+void Object::Udt_WM() {
+	DirectX::XMMATRIX translate_matrix = DirectX::XMMatrixTranslation(m_position.x, m_position.y, m_position.z);
+	DirectX::XMMATRIX rotate_matrix = DirectX::XMMatrixRotationRollPitchYaw(
+		DirectX::XMConvertToRadians(m_rotate.x), DirectX::XMConvertToRadians(m_rotate.y), DirectX::XMConvertToRadians(m_rotate.z));
+	DirectX::XMMATRIX scale_matrix = DirectX::XMMatrixTranslation(m_scale.x, m_scale.y, m_scale.z);
+
+	DirectX::XMStoreFloat4x4(&m_world_matrix, scale_matrix * rotate_matrix * translate_matrix);
+
+	m_look = MathHelper::Normalize(MathHelper::Multiply(DirectX::XMFLOAT3(0.0f, 0.0f, 1.0f), rotate_matrix));
+	m_up = MathHelper::Normalize(MathHelper::Multiply(DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f), rotate_matrix));
+	m_right = MathHelper::Normalize(MathHelper::Cross(Get_Look(), Get_Up()));
 }
 
 void Object::Set_Position(float position_x, float position_y, float position_z) {

@@ -48,45 +48,55 @@ void Camera::Look_At(const DirectX::XMFLOAT3 position, const DirectX::XMFLOAT3 t
 	Look_At(position_, target_, up_);
 }
 
-void Camera::Udt_VM() {
+void Camera::Update() {
 	if (m_dirty) {
-		DirectX::XMVECTOR position = DirectX::XMLoadFloat3(&m_position);
-		DirectX::XMVECTOR look = DirectX::XMLoadFloat3(&m_look);
-		DirectX::XMVECTOR up = DirectX::XMLoadFloat3(&m_up);
-		DirectX::XMVECTOR right = DirectX::XMLoadFloat3(&m_right);
+		Udt_WM();
 
-		look = DirectX::XMVector3Normalize(look);
-		up = DirectX::XMVector3Normalize(DirectX::XMVector3Cross(look, right));
-		right = DirectX::XMVector3Cross(up, look);
+		Look_At(Get_Position_3f(), MathHelper::Add(Get_Position_3f(), Get_Look(), 300.0f), Get_Up());
 
-		float x = -DirectX::XMVectorGetX(DirectX::XMVector3Dot(position, right));
-		float y = -DirectX::XMVectorGetX(DirectX::XMVector3Dot(position, up));
-		float z = -DirectX::XMVectorGetX(DirectX::XMVector3Dot(position, look));
+		Rst_Dirty_Count();
 
-		DirectX::XMStoreFloat3(&m_look, look);
-		DirectX::XMStoreFloat3(&m_up, up);
-		DirectX::XMStoreFloat3(&m_right, right);
-
-		m_view_matrix(0, 0) = m_right.x;
-		m_view_matrix(1, 0) = m_right.y;
-		m_view_matrix(2, 0) = m_right.z;
-		m_view_matrix(3, 0) = x;
-
-		m_view_matrix(0, 1) = m_up.x;
-		m_view_matrix(1, 1) = m_up.y;
-		m_view_matrix(2, 1) = m_up.z;
-		m_view_matrix(3, 1) = y;
-
-		m_view_matrix(0, 2) = m_look.x;
-		m_view_matrix(1, 2) = m_look.y;
-		m_view_matrix(2, 2) = m_look.z;
-		m_view_matrix(3, 2) = z;
-
-		m_view_matrix(0, 3) = 0.0f;
-		m_view_matrix(1, 3) = 0.0f;
-		m_view_matrix(2, 3) = 0.0f;
-		m_view_matrix(3, 3) = 1.0f;
+		Udt_VM();
 
 		m_dirty = false;
 	}
+}
+
+void Camera::Udt_VM() {
+	DirectX::XMVECTOR position = DirectX::XMLoadFloat3(&m_position);
+	DirectX::XMVECTOR look = DirectX::XMLoadFloat3(&m_look);
+	DirectX::XMVECTOR up = DirectX::XMLoadFloat3(&m_up);
+	DirectX::XMVECTOR right = DirectX::XMLoadFloat3(&m_right);
+
+	look = DirectX::XMVector3Normalize(look);
+	up = DirectX::XMVector3Normalize(DirectX::XMVector3Cross(look, right));
+	right = DirectX::XMVector3Cross(up, look);
+
+	float x = -DirectX::XMVectorGetX(DirectX::XMVector3Dot(position, right));
+	float y = -DirectX::XMVectorGetX(DirectX::XMVector3Dot(position, up));
+	float z = -DirectX::XMVectorGetX(DirectX::XMVector3Dot(position, look));
+
+	DirectX::XMStoreFloat3(&m_look, look);
+	DirectX::XMStoreFloat3(&m_up, up);
+	DirectX::XMStoreFloat3(&m_right, right);
+
+	m_view_matrix(0, 0) = m_right.x;
+	m_view_matrix(1, 0) = m_right.y;
+	m_view_matrix(2, 0) = m_right.z;
+	m_view_matrix(3, 0) = x;
+
+	m_view_matrix(0, 1) = m_up.x;
+	m_view_matrix(1, 1) = m_up.y;
+	m_view_matrix(2, 1) = m_up.z;
+	m_view_matrix(3, 1) = y;
+
+	m_view_matrix(0, 2) = m_look.x;
+	m_view_matrix(1, 2) = m_look.y;
+	m_view_matrix(2, 2) = m_look.z;
+	m_view_matrix(3, 2) = z;
+
+	m_view_matrix(0, 3) = 0.0f;
+	m_view_matrix(1, 3) = 0.0f;
+	m_view_matrix(2, 3) = 0.0f;
+	m_view_matrix(3, 3) = 1.0f;
 }

@@ -45,7 +45,7 @@ protected:
 
 	bool m_wireframe = false;
 
-	std::unordered_map<std::wstring, std::unique_ptr<Camera>> m_camera_map;
+	//std::unordered_map<std::wstring, std::unique_ptr<Camera>> m_camera_map;
 
 	Camera* m_main_camera = nullptr;
 

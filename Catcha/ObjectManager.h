@@ -4,6 +4,12 @@
 
 enum class Action;
 
+enum class ObjectType {
+	OPAQUE_OBJECT,
+	TRANSPARENT_OBJECT,
+	CAMERA_OBJECT
+};
+
 class ObjectManager {
 private:
 	std::unordered_map<std::wstring, std::unique_ptr<Object>> m_object_map;
@@ -11,6 +17,8 @@ private:
 
 	std::vector<Object*> m_opaque_objects;
 	std::vector<Object*> m_transparent_objects;
+
+	std::vector<Object*> m_camera_objects;
 
 	UINT m_object_count = 0;
 
@@ -23,7 +31,7 @@ public:
 	~ObjectManager() {}
 
 	void Add_Obj(std::wstring object_name, MeshInfo* mesh_info, std::wstring mesh_name, MaterialInfo* material_info,
-		D3D12_PRIMITIVE_TOPOLOGY primitive_topology, bool opaque_object, bool physics, std::wstring set_name);
+		D3D12_PRIMITIVE_TOPOLOGY primitive_topology, ObjectType object_type, bool physics, std::wstring set_name);
 
 	Object* Get_Obj(std::wstring object_name);
 	Object* Get_Obj(UINT object_number);

@@ -301,8 +301,8 @@ void TestScene::Build_Mesh(ID3D12Device* device, ID3D12GraphicsCommandList* comm
 	//MeshData test_mesh = mesh_creater.Crt_Mesh_From_File(L"testpyramids.fbx");
 
 	//MeshData box_mesh = mesh_creater.Crt_Box(100.0f, 100.0f, 100.0f, 0);
-	MeshData box_mesh = mesh_creater.Crt_Mesh_From_File(L"painting.fbx", 0);
-	//MeshData box_mesh = mesh_creater.Crt_Mesh_From_File(L"test_house.fbx", 0);
+	//MeshData box_mesh = mesh_creater.Crt_Mesh_From_File(L"painting.fbx", 0);
+	MeshData box_mesh = mesh_creater.Crt_Mesh_From_File(L"test_house.fbx", 0);
 
 	UINT test_vertex_offset = 0;
 	UINT box_vertex_offset = (UINT)test_mesh.vertices.size();

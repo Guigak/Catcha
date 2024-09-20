@@ -44,8 +44,9 @@ MeshData FBXManager::Ipt_Mesh_From_File(std::wstring file_name) {
     importer->Import(scene);
     importer->Destroy();
 
-    FbxAxisSystem y_up_axis_system(FbxAxisSystem::eYAxis, FbxAxisSystem::eParityOdd, FbxAxisSystem::eLeftHanded);
-    y_up_axis_system.ConvertScene(scene);
+    //FbxAxisSystem axis_system(FbxAxisSystem::eYAxis, FbxAxisSystem::eParityOdd, FbxAxisSystem::eLeftHanded);
+    FbxAxisSystem axis_system = FbxAxisSystem::DirectX;
+    axis_system.ConvertScene(scene);
 
     FbxGeometryConverter converter(manager);
     converter.Triangulate(scene, true);
@@ -56,6 +57,8 @@ MeshData FBXManager::Ipt_Mesh_From_File(std::wstring file_name) {
     Find_N_Prcs_Node(scene->GetRootNode(), mesh_data);
 
     //
+    manager->Destroy();
+
     return mesh_data;
 }
 
@@ -80,6 +83,9 @@ void FBXManager::Find_N_Prcs_Node(FbxNode* node, MeshData& mesh_data) {
 }
 
 void FBXManager::Add_Mesh_From_Node(FbxNode* node, MeshData& mesh_data) {
+    //OutputDebugStringA(node->GetName());
+    //OutputDebugStringA("\n");
+
     FbxAMatrix pivot_transform_matrix = FbxAMatrix(
         node->GetGeometricTranslation(FbxNode::eSourcePivot),
         node->GetGeometricRotation(FbxNode::eSourcePivot),
@@ -87,8 +93,10 @@ void FBXManager::Add_Mesh_From_Node(FbxNode* node, MeshData& mesh_data) {
     );
 
     FbxAMatrix local_transform_matrix = node->EvaluateLocalTransform();
+    //FbxAMatrix global_transform_matrix = node->GetParent()->EvaluateLocalTransform();
 
     FbxAMatrix transform_matrix = local_transform_matrix * pivot_transform_matrix;
+    //FbxAMatrix transform_matrix = global_transform_matrix * local_transform_matrix * pivot_transform_matrix;
 
     DirectX::XMMATRIX transform_xmmatrix = {
         (float)transform_matrix[0][0], (float)transform_matrix[1][0], (float)transform_matrix[2][0], (float)transform_matrix[3][0],
@@ -226,7 +234,7 @@ DirectX::XMFLOAT3 FBXManager::Get_Norm(FbxMesh* mesh, UINT control_point_index, 
 
 DirectX::XMFLOAT3 FBXManager::Get_Tan(FbxMesh* mesh, UINT control_point_index, UINT vertex_count) {
     if (mesh->GetElementTangentCount() == 0) {
-        OutputDebugString(L"Tangent Info Not Found\n");
+        //OutputDebugString(L"Tangent Info Not Found\n");
 
         return DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
     }

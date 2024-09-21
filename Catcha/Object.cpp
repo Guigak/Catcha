@@ -1,4 +1,5 @@
 #include "Object.h"
+#include "Camera.h"
 
 Object::Object(std::wstring object_name, MeshInfo* mesh_info, std::wstring mesh_name,
 	MaterialInfo* material_info, UINT constant_buffer_index, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, bool physics)
@@ -139,6 +140,7 @@ void Object::Calc_Delta(float elapsed_time) {
 void Object::Update() {
 	if (m_dirty) {
 		Udt_WM();
+		Udt_LUR();
 
 		Rst_Dirty_Count();
 
@@ -153,10 +155,15 @@ void Object::Udt_WM() {
 	DirectX::XMMATRIX scale_matrix = DirectX::XMMatrixTranslation(m_scale.x, m_scale.y, m_scale.z);
 
 	DirectX::XMStoreFloat4x4(&m_world_matrix, scale_matrix * rotate_matrix * translate_matrix);
+}
+
+void Object::Udt_LUR() {
+	DirectX::XMMATRIX rotate_matrix = DirectX::XMMatrixRotationRollPitchYaw(
+		DirectX::XMConvertToRadians(m_rotate.x), DirectX::XMConvertToRadians(m_rotate.y), DirectX::XMConvertToRadians(m_rotate.z));
 
 	m_look = MathHelper::Normalize(MathHelper::Multiply(DirectX::XMFLOAT3(0.0f, 0.0f, 1.0f), rotate_matrix));
 	m_up = MathHelper::Normalize(MathHelper::Multiply(DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f), rotate_matrix));
-	m_right = MathHelper::Normalize(MathHelper::Cross(Get_Look(), Get_Up()));
+	m_right = MathHelper::Normalize(MathHelper::Cross(Get_Up(), Get_Look()));
 }
 
 void Object::Set_Position(float position_x, float position_y, float position_z) {
@@ -167,38 +174,74 @@ void Object::Set_Position(float position_x, float position_y, float position_z) 
 	m_dirty = true;
 }
 
+void Object::Move(DirectX::XMFLOAT3 direction) {
+	m_velocity = MathHelper::Add(Get_Vel(), direction, m_acceleration);
+
+	m_moving = true;
+}
+
 void Object::Move_Forward() {
-	m_velocity = MathHelper::Add(Get_Vel(), Get_Look(), m_acceleration);
+	if (m_camera) {
+		m_velocity = MathHelper::Add(Get_Vel(), m_camera->Get_Look(), m_acceleration);
+	}
+	else {
+		m_velocity = MathHelper::Add(Get_Vel(), Get_Look(), m_acceleration);
+	}
 
 	m_moving = true;
 }
 
 void Object::Move_Back() {
-	m_velocity = MathHelper::Add(Get_Vel(), Get_Look(), -m_acceleration);
+	if (m_camera) {
+		m_velocity = MathHelper::Add(Get_Vel(), m_camera->Get_Look(), -m_acceleration);
+	}
+	else {
+		m_velocity = MathHelper::Add(Get_Vel(), Get_Look(), -m_acceleration);
+	}
 
 	m_moving = true;
 }
 
 void Object::Move_Left() {
-	m_velocity = MathHelper::Add(Get_Vel(), Get_Right(), -m_acceleration);
+	if (m_camera) {
+		m_velocity = MathHelper::Add(Get_Vel(), m_camera->Get_Right(), -m_acceleration);
+	}
+	else {
+		m_velocity = MathHelper::Add(Get_Vel(), Get_Right(), -m_acceleration);
+	}
 
 	m_moving = true;
 }
 
 void Object::Move_Right() {
-	m_velocity = MathHelper::Add(Get_Vel(), Get_Right(), m_acceleration);
+	if (m_camera) {
+		m_velocity = MathHelper::Add(Get_Vel(), m_camera->Get_Right(), m_acceleration);
+	}
+	else {
+		m_velocity = MathHelper::Add(Get_Vel(), Get_Right(), m_acceleration);
+	}
 
 	m_moving = true;
 }
 
 void Object::Move_Up() {
-	m_velocity = MathHelper::Add(Get_Vel(), Get_Up(), m_acceleration);
+	if (m_camera) {
+		m_velocity = MathHelper::Add(Get_Vel(), m_camera->Get_Up(), m_acceleration);
+	}
+	else {
+		m_velocity = MathHelper::Add(Get_Vel(), Get_Up(), m_acceleration);
+	}
 
 	m_moving = true;
 }
 
 void Object::Move_Down() {
-	m_velocity = MathHelper::Add(Get_Vel(), Get_Up(), -m_acceleration);
+	if (m_camera) {
+		m_velocity = MathHelper::Add(Get_Vel(), m_camera->Get_Up(), -m_acceleration);
+	}
+	else {
+		m_velocity = MathHelper::Add(Get_Vel(), Get_Up(), -m_acceleration);
+	}
 
 	m_moving = true;
 }
@@ -210,37 +253,67 @@ void Object::Teleport(DirectX::XMFLOAT3 direction, float distance) {
 }
 
 void Object::TP_Forward(float distance) {
-	m_position = MathHelper::Add(Get_Position_3f(), Get_Look(), distance);
+	if (m_camera) {
+		m_position = MathHelper::Add(Get_Position_3f(), m_camera->Get_Look(), distance);
+	}
+	else {
+		m_position = MathHelper::Add(Get_Position_3f(), Get_Look(), distance);
+	}
 
 	m_dirty = true;
 }
 
 void Object::TP_Back(float distance) {
-	m_position = MathHelper::Add(Get_Position_3f(), Get_Look(), -distance);
+	if (m_camera) {
+		m_position = MathHelper::Add(Get_Position_3f(), m_camera->Get_Look(), -distance);
+	}
+	else {
+		m_position = MathHelper::Add(Get_Position_3f(), Get_Look(), -distance);
+	}
 
 	m_dirty = true;
 }
 
 void Object::TP_Left(float distance) {
-	m_position = MathHelper::Add(Get_Position_3f(), Get_Right(), -distance);
+	if (m_camera) {
+		m_position = MathHelper::Add(Get_Position_3f(), m_camera->Get_Right(), -distance);
+	}
+	else {
+		m_position = MathHelper::Add(Get_Position_3f(), Get_Right(), -distance);
+	}
 
 	m_dirty = true;
 }
 
 void Object::TP_Right(float distance) {
-	m_position = MathHelper::Add(Get_Position_3f(), Get_Right(), distance);
+	if (m_camera) {
+		m_position = MathHelper::Add(Get_Position_3f(), m_camera->Get_Right(), distance);
+	}
+	else {
+		m_position = MathHelper::Add(Get_Position_3f(), Get_Right(), distance);
+	}
 
 	m_dirty = true;
 }
 
 void Object::TP_Up(float distance) {
-	m_position = MathHelper::Add(Get_Position_3f(), Get_Up(), distance);
+	if (m_camera) {
+		m_position = MathHelper::Add(Get_Position_3f(), m_camera->Get_Up(), distance);
+	}
+	else {
+		m_position = MathHelper::Add(Get_Position_3f(), Get_Up(), distance);
+	}
 
 	m_dirty = true;
 }
 
 void Object::TP_Down(float distance) {
-	m_position = MathHelper::Add(Get_Position_3f(), Get_Up(), -distance);
+	if (m_camera) {
+		m_position = MathHelper::Add(Get_Position_3f(), m_camera->Get_Up(), -distance);
+	}
+	else {
+		m_position = MathHelper::Add(Get_Position_3f(), Get_Up(), -distance);
+	}
 
 	m_dirty = true;
 }
@@ -250,12 +323,14 @@ void Object::Rotate(float degree_roll, float degree_pitch, float degree_yaw) {
 	m_rotate.y += degree_pitch;
 	m_rotate.z += degree_yaw;
 
+	m_rotate.x = MathHelper::Min(90.0f, MathHelper::Max(-90.0f, m_rotate.x));
 	m_dirty = true;
 }
 
 void Object::Rotate_Roll(float degree) {
 	m_rotate.x += degree;
 
+	m_rotate.x = MathHelper::Min(90.0f, MathHelper::Max(-90.0f, m_rotate.x));
 	m_dirty = true;
 }
 
@@ -269,4 +344,8 @@ void Object::Rotate_Yaw(float degree) {
 	m_rotate.z += degree;
 
 	m_dirty = true;
+}
+
+void Object::Bind_Camera(Camera* camera) {
+	m_camera = camera;
 }

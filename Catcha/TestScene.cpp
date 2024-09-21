@@ -448,8 +448,11 @@ void TestScene::Build_C(D3DManager* d3d_manager) {
 	);
 	auto main_camera = reinterpret_cast<Camera*>(m_object_manager->Get_Obj(L"maincamera"));
 	main_camera->Set_Frustum(0.25f * MathHelper::Pi(), d3d_manager->Get_Aspect_Ratio(), 1.0f, 1000.0f);
-	main_camera->Set_Position(0.0f, 300.0f, -500.0f);
-	main_camera->Look_At(main_camera->Get_Position_V(), DirectX::XMVectorZero(), DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f));
+
+	//main_camera->Set_Position(0.0f, 300.0f, -500.0f);
+	//main_camera->Look_At(main_camera->Get_Position_V(), DirectX::XMVectorZero(), DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f));
+
+	m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"test", 500.0f);
 
 	m_main_camera = main_camera;
 }
@@ -571,15 +574,15 @@ void TestScene::Build_PSO(D3DManager* d3d_manager) {
 }
 
 void TestScene::Binding_Key() {
-	//m_input_manager->Bind_Key_Down(VK_W, BindingInfo(L"test", Action::MOVE_FORWARD));
-	//m_input_manager->Bind_Key_Down(VK_S, BindingInfo(L"test", Action::MOVE_BACK));
-	//m_input_manager->Bind_Key_Down(VK_A, BindingInfo(L"test", Action::MOVE_LEFT));
-	//m_input_manager->Bind_Key_Down(VK_D, BindingInfo(L"test", Action::MOVE_RIGHT));
+	m_input_manager->Bind_Key_Down(VK_W, BindingInfo(L"test", Action::MOVE_FORWARD));
+	m_input_manager->Bind_Key_Down(VK_S, BindingInfo(L"test", Action::MOVE_BACK));
+	m_input_manager->Bind_Key_Down(VK_A, BindingInfo(L"test", Action::MOVE_LEFT));
+	m_input_manager->Bind_Key_Down(VK_D, BindingInfo(L"test", Action::MOVE_RIGHT));
 
-	m_input_manager->Bind_Key_Down(VK_W, BindingInfo(L"maincamera", Action::TELEPORT_FORWARD, 1.0f));
-	m_input_manager->Bind_Key_Down(VK_S, BindingInfo(L"maincamera", Action::TELEPORT_BACK, 1.0f));
-	m_input_manager->Bind_Key_Down(VK_A, BindingInfo(L"maincamera", Action::TELEPORT_LEFT, 1.0f));
-	m_input_manager->Bind_Key_Down(VK_D, BindingInfo(L"maincamera", Action::TELEPORT_RIGHT, 1.0f));
+	//m_input_manager->Bind_Key_Down(VK_W, BindingInfo(L"maincamera", Action::TELEPORT_FORWARD, 1.0f));
+	//m_input_manager->Bind_Key_Down(VK_S, BindingInfo(L"maincamera", Action::TELEPORT_BACK, 1.0f));
+	//m_input_manager->Bind_Key_Down(VK_A, BindingInfo(L"maincamera", Action::TELEPORT_LEFT, 1.0f));
+	//m_input_manager->Bind_Key_Down(VK_D, BindingInfo(L"maincamera", Action::TELEPORT_RIGHT, 1.0f));
 
 	m_input_manager->Bind_Key_Down(VK_SPACE, BindingInfo(L"maincamera", Action::TELEPORT_UP, 1.0f));
 	m_input_manager->Bind_Key_Down(VK_SHIFT, BindingInfo(L"maincamera", Action::TELEPORT_DOWN, 1.0f));

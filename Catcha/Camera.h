@@ -24,6 +24,9 @@ private:
 	DirectX::XMFLOAT4X4 m_view_matrix = MathHelper::Identity_4x4();
 	DirectX::XMFLOAT4X4 m_projection_matrix = MathHelper::Identity_4x4();
 
+	Object* m_object = nullptr;
+	float m_distance = 0.0f;
+
 public:
 	Camera();
 	~Camera() {}
@@ -69,4 +72,7 @@ public:
 	virtual void Update();
 
 	void Udt_VM();	// Update View Matrix
+
+	//
+	void Bind_Obj(Object* object, float distance);
 };

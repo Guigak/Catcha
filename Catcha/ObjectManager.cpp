@@ -170,3 +170,11 @@ bool ObjectManager::Chk_Collision(const DirectX::BoundingOrientedBox& OBB_a, con
 bool ObjectManager::Overlaped(DirectX::XMVECTOR corners_a[], DirectX::XMVECTOR corners_b[], const DirectX::XMVECTOR& axis, float& overlap) {
     return false;
 }
+
+void ObjectManager::Bind_Cam_2_Obj(std::wstring camera_name, std::wstring object_name, float distance) {
+    Camera* camera = (Camera*)Get_Obj(camera_name);
+    Object* object = Get_Obj(object_name);
+
+    object->Bind_Camera(camera);
+    camera->Bind_Obj(object, distance);
+}

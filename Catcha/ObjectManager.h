@@ -58,5 +58,8 @@ public:
 		DirectX::XMFLOAT3& normal, float& depth);
 
 	bool Overlaped(DirectX::XMVECTOR corners_a[], DirectX::XMVECTOR corners_b[], const DirectX::XMVECTOR& axis, float& overlap);
+
+	//
+	void Bind_Cam_2_Obj(std::wstring camera_name, std::wstring object_name, float distance);	// Bind Camera to Object
 };
 

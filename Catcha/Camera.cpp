@@ -49,10 +49,24 @@ void Camera::Look_At(const DirectX::XMFLOAT3 position, const DirectX::XMFLOAT3 t
 }
 
 void Camera::Update() {
+	if (m_object) {
+		Udt_LUR();
+
+		m_position = MathHelper::Add(m_object->Get_Position_3f(), Get_Look(), -m_distance);
+
+		m_dirty = true;
+	}
+
 	if (m_dirty) {
 		Udt_WM();
+		Udt_LUR();
 
-		Look_At(Get_Position_3f(), MathHelper::Add(Get_Position_3f(), Get_Look(), 300.0f), Get_Up());
+		if (m_object) {
+			Look_At(Get_Position_3f(), m_object->Get_Position_3f(), Get_Up());
+		}
+		else {
+			Look_At(Get_Position_3f(), MathHelper::Add(Get_Position_3f(), Get_Look(), 300.0f), Get_Up());
+		}
 
 		Rst_Dirty_Count();
 
@@ -99,4 +113,9 @@ void Camera::Udt_VM() {
 	m_view_matrix(1, 3) = 0.0f;
 	m_view_matrix(2, 3) = 0.0f;
 	m_view_matrix(3, 3) = 1.0f;
+}
+
+void Camera::Bind_Obj(Object* object, float distance) {
+	m_object = object;
+	m_distance = distance;
 }

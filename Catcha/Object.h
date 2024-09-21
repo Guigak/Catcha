@@ -5,6 +5,8 @@ enum class Object_State {
 	IDLE_STATE, MOVE_STATE, JUMP_STATE
 };
 
+class Camera;
+
 class Object {
 protected:
 	std::wstring m_name = L"";
@@ -60,6 +62,7 @@ protected:
 	Object_State m_state = Object_State::IDLE_STATE;
 
 	//
+	Camera* m_camera = nullptr;
 
 	bool m_visiable = false;
 
@@ -122,12 +125,15 @@ public:
 	//void Move_N_Solve_Collision();
 	virtual void Update();
 
-	void Udt_WM();
+	void Udt_WM();	// Update World Matrix
+	void Udt_LUR();	// Update Look Up Right
 
 	//
 	void Set_Position(float position_x, float position_y, float position_z);
 
 	// move
+	void Move(DirectX::XMFLOAT3 direction);
+
 	void Move_Forward();
 	void Move_Back();
 	void Move_Left();
@@ -151,5 +157,8 @@ public:
 	void Rotate_Roll(float degree);
 	void Rotate_Pitch(float degree);
 	void Rotate_Yaw(float degree);
+
+	//
+	void Bind_Camera(Camera* camera);
 };
 

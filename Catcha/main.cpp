@@ -3,11 +3,13 @@
 #include "D3DManager.h"
 #include "SceneManager.h"
 #include "Timer.h"
+#include "NetworkManager.h"
 
 WindowManager g_window_manager;
 D3DManager g_d3d_manager;
 SceneManager g_scene_manager;
 Timer g_timer;
+NetworkManager g_network_manager;
 
 int WINAPI WinMain(HINSTANCE hinstance, HINSTANCE prev_hinstance, LPSTR command_line, int command_show) {
 #if defined(DEBUG) | defined(_DEBUG)

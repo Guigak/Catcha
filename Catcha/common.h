@@ -9,6 +9,22 @@
 #include <crtdbg.h>
 #endif
 
+// NetworkManager
+#include <WS2tcpip.h>
+#include <MSWSock.h>
+
+#pragma comment(lib, "WS2_32.lib")
+#pragma comment(lib, "MSWSock.lib")
+
+constexpr short PORT = 4000;
+constexpr short UDPPORT = 8000;
+constexpr int BUFSIZE = 256;
+constexpr int MAX_USER = 4;
+constexpr int MAX_NPC = 4;
+
+extern void print_error(const char* msg, int err_no);
+
+
 // windows
 #include <windows.h>
 #include <wrl.h>
@@ -30,6 +46,7 @@
 #pragma comment(lib, "dxgi.lib")
 
 // standard
+#include <iostream>
 #include <string>
 #include <memory>
 #include <algorithm>

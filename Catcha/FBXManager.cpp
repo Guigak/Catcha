@@ -96,7 +96,7 @@ void FBXManager::Add_Mesh_From_Node(FbxNode* node, MeshData& mesh_data) {
     FbxAMatrix global_transform_matrix = node->GetParent()->EvaluateLocalTransform();
 
     FbxAMatrix transform_matrix = local_transform_matrix;
-    //FbxAMatrix transform_matrix = global_transform_matrix * local_transform_matrix * pivot_transform_matrix;
+    //FbxAMatrix transform_matrix = global_transform_matrix * local_transform_matrix;
 
     //DirectX::XMMATRIX transform_xmmatrix = {
     //    (float)transform_matrix[0][0], (float)transform_matrix[1][0], (float)transform_matrix[2][0], (float)transform_matrix[3][0],

@@ -95,6 +95,12 @@ public:
 	DirectX::XMVECTOR Get_Position_V() { return DirectX::XMLoadFloat3(&m_position); }	// Get Position Vector
 	DirectX::XMFLOAT3 Get_Position_3f() { return m_position; }	// Get Position float3
 
+	DirectX::XMVECTOR Get_Rotate_V() { return DirectX::XMLoadFloat3(&m_rotate); }	// Get Rotate Vector
+	DirectX::XMFLOAT3 Get_Rotate_3f() { return m_rotate; }	// Get Rotate float3
+
+	DirectX::XMVECTOR Get_Scale_V() { return DirectX::XMLoadFloat3(&m_scale); }	// Get Scale Vector
+	DirectX::XMFLOAT3 Get_Scale_3f() { return m_scale; }	// Get Scale float3
+
 	DirectX::XMFLOAT3 Get_Look() { return m_look; }
 	DirectX::XMFLOAT3 Get_Up() { return m_up; }
 	DirectX::XMFLOAT3 Get_Right() { return m_right; }

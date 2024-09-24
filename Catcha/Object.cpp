@@ -139,6 +139,10 @@ void Object::Calc_Delta(float elapsed_time) {
 
 void Object::Update() {
 	if (m_dirty) {
+		if (m_camera) {
+			m_rotate = m_camera->Get_Rotate_3f();
+		}
+
 		Udt_WM();
 		Udt_LUR();
 

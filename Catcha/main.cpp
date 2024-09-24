@@ -35,6 +35,8 @@ int WINAPI WinMain(HINSTANCE hinstance, HINSTANCE prev_hinstance, LPSTR command_
 
 		g_timer.Reset();
 
+		g_network_manager.InitSocket();
+
 		// loop
 		while (message.message != WM_QUIT) {
 			if (PeekMessage(&message, 0, 0, 0, PM_REMOVE)) {

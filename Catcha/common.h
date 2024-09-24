@@ -16,6 +16,8 @@
 #pragma comment(lib, "WS2_32.lib")
 #pragma comment(lib, "MSWSock.lib")
 
+#include "protocol.h"
+
 constexpr short PORT = 4000;
 constexpr short UDPPORT = 8000;
 constexpr int BUFSIZE = 256;

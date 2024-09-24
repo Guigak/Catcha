@@ -12,6 +12,7 @@
 // NetworkManager
 #include <WS2tcpip.h>
 #include <MSWSock.h>
+#include <stdint.h>
 
 #pragma comment(lib, "WS2_32.lib")
 #pragma comment(lib, "MSWSock.lib")
@@ -23,6 +24,7 @@ constexpr short UDPPORT = 8000;
 constexpr int BUFSIZE = 256;
 constexpr int MAX_USER = 4;
 constexpr int MAX_NPC = 4;
+
 
 extern void print_error(const char* msg, int err_no);
 

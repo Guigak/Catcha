@@ -18,7 +18,7 @@ void NetworkManager::InitSocket()
 	std::wcout.imbue(std::locale("korean"));
 	WSADATA WSAData;
 	int res = WSAStartup(MAKEWORD(2, 2), &WSAData);
-	if (true != res)
+	if (0 != res)
 	{
 		print_error("WSAStartup", WSAGetLastError());
 	}
@@ -63,6 +63,29 @@ void NetworkManager::InitSocket()
 	p.type = CS_LOGIN;
 	strcpy_s(p.name, m_name.c_str());
 	DoSend(&p);
+
+	// UDP 소켓 Initialize
+	m_udp_socket = WSASocket(AF_INET, SOCK_DGRAM, IPPROTO_UDP, NULL, 0, WSA_FLAG_OVERLAPPED);
+	if (m_udp_socket == INVALID_SOCKET)
+	{
+		print_error("UDP socket creation failed", WSAGetLastError());
+		WSACleanup();
+		exit(0);
+	}
+
+	// UDP 소켓 비동기 모드 설정
+	u_long mode = 1;
+	ioctlsocket(m_udp_socket, FIONBIO, &mode);
+
+	m_udp_addr.sin_family = AF_INET;
+	inet_pton(AF_INET, SERVER_ADDR, &m_udp_addr.sin_addr);
+	m_udp_addr.sin_port = htons(UDPPORT);
+
+	CS_TIME_PACKET time;
+	time.size = sizeof(time);
+	time.type = CS_TIME;
+	time.time = 0;
+	DoSendUDP(&time);
 }
 
 
@@ -76,9 +99,28 @@ void NetworkManager::DoSend(void* packet)
 	ZeroMemory(&m_overlapped, sizeof(m_overlapped));
 
 	int res = WSASend(m_server_socket, &wsabuf, 1, nullptr, 0, &m_overlapped, nullptr);
-	if (true != res)
+	if (0 != res)
 	{
 		print_error("WSASend", WSAGetLastError());
+	}
+}
+
+void NetworkManager::DoSendUDP(void* packet)
+{
+	DWORD BytesSent = 0;
+	DWORD Flags = 0;
+	CHAR* p = reinterpret_cast<CHAR*>(packet);
+
+	WSABUF wsabuf;
+	wsabuf.buf = p;
+	wsabuf.len = p[0];
+	ZeroMemory(&m_overlapped, sizeof(m_overlapped));
+
+	int res = WSASendTo(m_udp_socket, &wsabuf, 1, &BytesSent, Flags, 
+		reinterpret_cast<SOCKADDR*>(&m_udp_addr), sizeof(m_udp_addr), &m_overlapped, nullptr);
+	if (0 != res)
+	{
+		print_error("WSASendTo", WSAGetLastError());
 	}
 }
 
@@ -92,7 +134,39 @@ void NetworkManager::DoRecv()
 	DWORD recv_flags = 0;
 	DWORD bytes_received = 0;
 
-	int res = WSARecv(m_server_socket, &wsabuf, 1, &wsabuf.len, &recv_flags, nullptr, nullptr);
+	// TCP
+	int res = WSARecv(m_server_socket, &wsabuf, 1, &bytes_received, &recv_flags, nullptr, nullptr);
+	if (res == SOCKET_ERROR)
+	{
+		int err = WSAGetLastError();
+		if (err == WSA_IO_PENDING || err == WSAEWOULDBLOCK)
+		{
+			// NON-Blocking 패킷 안받음
+		}
+		else if (err == WSAECONNRESET || err == WSAENOTCONN)
+		{
+			// Disconnect
+			closesocket(m_server_socket);
+			exit(0);
+		}
+		else
+		{
+			print_error("WSARecv", err);
+			exit(0);
+		}
+	}
+	else
+	{
+		ProcessData(wsabuf.buf, bytes_received);
+	}
+
+	// UDP
+	sockaddr_in sender_addr;
+	int sender_addr_size = sizeof(sender_addr);
+
+	res = WSARecvFrom(
+		m_udp_socket, &wsabuf, 1, &bytes_received, &recv_flags, 
+		(SOCKADDR*)&sender_addr, &sender_addr_size, nullptr, nullptr);
 	if (res == SOCKET_ERROR)
 	{
 		int err = WSAGetLastError();
@@ -120,7 +194,60 @@ void NetworkManager::DoRecv()
 
 void NetworkManager::ProcessData(char* net_buf, size_t io_byte)
 {
-	OVERLAPPED over;
-	char* p = net_buf;
-	int total_data = io_byte;
+	char* ptr = net_buf;
+	static size_t in_packet_size = 0;
+	static size_t saved_packet_size = 0;
+	static char packet_buffer[BUF_SIZE];
+
+	while (0 != io_byte)
+	{
+		if (0 == in_packet_size) in_packet_size = ptr[0];
+
+		if (io_byte + saved_packet_size >= in_packet_size)
+		{
+			memcpy(packet_buffer + saved_packet_size, ptr, in_packet_size - saved_packet_size);
+			ProcessPacket(packet_buffer);
+			ptr += in_packet_size - saved_packet_size;
+			io_byte -= in_packet_size - saved_packet_size;
+			in_packet_size = 0;
+			saved_packet_size = 0;
+		}
+		else
+		{
+			memcpy(packet_buffer + saved_packet_size, ptr, io_byte);
+			saved_packet_size += io_byte;
+			io_byte = 0;
+		}
+	}
 }
+
+void NetworkManager::ProcessPacket(char* ptr)
+{
+	switch (ptr[1])
+	{
+	case SC_LOGIN_INFO:
+	{
+		SC_LOGIN_INFO_PACKET* p = reinterpret_cast<SC_LOGIN_INFO_PACKET*>(ptr);
+		m_myid = p->id;
+		//XMFLOAT3 coord = { static_cast<float>(packet->x), static_cast<float>(packet->y), static_cast<float>(packet->z) };
+		//g_objects[g_myid].Location = coord;
+		float yaw = 0;
+		//characters[m_myid].yaw = yaw;
+
+		break;
+	}
+	case SC_TIME:
+	{
+		SC_TIME_PACKET* time = reinterpret_cast<SC_TIME_PACKET*>(ptr);
+		unsigned short game_time = time->time;
+		DoSend(time);
+		break;
+	}
+	default:
+	{
+		printf("Unknown PACKET type [%d]\n", ptr[1]);
+		break;
+	}
+	}
+}
+

@@ -45,7 +45,7 @@ int WINAPI WinMain(HINSTANCE hinstance, HINSTANCE prev_hinstance, LPSTR command_
 			}
 			else {
 				g_timer.Tick();
-
+				g_network_manager.DoRecv();
 				g_scene_manager.Update(g_timer.Get_Elapsed_Time());
 				g_d3d_manager.Draw_Scene_With_FR();
 			}

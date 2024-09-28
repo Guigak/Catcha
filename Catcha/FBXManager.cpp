@@ -44,8 +44,8 @@ MeshData FBXManager::Ipt_Mesh_From_File(std::wstring file_name) {
     importer->Import(scene);
     importer->Destroy();
 
-    //FbxAxisSystem axis_system(FbxAxisSystem::eYAxis, FbxAxisSystem::eParityOdd, FbxAxisSystem::eLeftHanded);
-    FbxAxisSystem axis_system = FbxAxisSystem::DirectX;
+    //FbxAxisSystem axis_system(FbxAxisSystem::eYAxis, FbxAxisSystem::eParityOdd, FbxAxisSystem::eRightHanded);
+    FbxAxisSystem axis_system = FbxAxisSystem::OpenGL;
     axis_system.ConvertScene(scene);
 
     FbxGeometryConverter converter(manager);
@@ -86,23 +86,30 @@ void FBXManager::Add_Mesh_From_Node(FbxNode* node, MeshData& mesh_data) {
     //OutputDebugStringA(node->GetName());
     //OutputDebugStringA("\n");
 
-    FbxAMatrix pivot_transform_matrix = FbxAMatrix(
-        node->GetGeometricTranslation(FbxNode::eSourcePivot),
-        node->GetGeometricRotation(FbxNode::eSourcePivot),
-        node->GetGeometricScaling(FbxNode::eSourcePivot)
-    );
+    FbxVector4 pivot_position = node->EvaluateGlobalTransform().GetT();
+
+    char str[1024];
+    sprintf_s(str, "Mesh : %s\nPivot %f %f %f", node->GetName(), pivot_position[0], pivot_position[1], pivot_position[2]);
+    OutputDebugStringA(str);
 
     FbxAMatrix local_transform_matrix = node->EvaluateLocalTransform();
-    //FbxAMatrix global_transform_matrix = node->GetParent()->EvaluateLocalTransform();
+    FbxAMatrix global_transform_matrix = node->GetParent()->EvaluateLocalTransform();
 
-    FbxAMatrix transform_matrix = local_transform_matrix * pivot_transform_matrix;
-    //FbxAMatrix transform_matrix = global_transform_matrix * local_transform_matrix * pivot_transform_matrix;
+    FbxAMatrix transform_matrix = local_transform_matrix;
+    //FbxAMatrix transform_matrix = global_transform_matrix * local_transform_matrix;
+
+    //DirectX::XMMATRIX transform_xmmatrix = {
+    //    (float)transform_matrix[0][0], (float)transform_matrix[1][0], (float)transform_matrix[2][0], (float)transform_matrix[3][0],
+    //    (float)transform_matrix[0][1], (float)transform_matrix[1][1], (float)transform_matrix[2][1], (float)transform_matrix[3][1],
+    //    (float)transform_matrix[0][2], (float)transform_matrix[1][2], (float)transform_matrix[2][2], (float)transform_matrix[3][2],
+    //    (float)transform_matrix[0][3], (float)transform_matrix[1][3], (float)transform_matrix[2][3], (float)transform_matrix[3][3],
+    //};
 
     DirectX::XMMATRIX transform_xmmatrix = {
-        (float)transform_matrix[0][0], (float)transform_matrix[1][0], (float)transform_matrix[2][0], (float)transform_matrix[3][0],
-        (float)transform_matrix[0][1], (float)transform_matrix[1][1], (float)transform_matrix[2][1], (float)transform_matrix[3][1],
-        (float)transform_matrix[0][2], (float)transform_matrix[1][2], (float)transform_matrix[2][2], (float)transform_matrix[3][2],
-        (float)transform_matrix[0][3], (float)transform_matrix[1][3], (float)transform_matrix[2][3], (float)transform_matrix[3][3],
+        (float)transform_matrix[0][0], (float)transform_matrix[0][1], (float)transform_matrix[0][2], (float)transform_matrix[0][3],
+        (float)transform_matrix[1][0], (float)transform_matrix[1][1], (float)transform_matrix[1][2], (float)transform_matrix[1][3],
+        (float)transform_matrix[2][0], (float)transform_matrix[2][1], (float)transform_matrix[2][2], (float)transform_matrix[2][3],
+        (float)transform_matrix[3][0], (float)transform_matrix[3][1], (float)transform_matrix[3][2], (float)transform_matrix[3][3],
     };
 
     //

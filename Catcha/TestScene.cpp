@@ -224,8 +224,8 @@ void TestScene::Draw(D3DManager* d3d_manager, ID3D12CommandList** command_lists)
 		command_list->SetGraphicsRootDescriptorTable(1, material_CBV_gpu_descriptor_handle);
 
 		command_list->DrawIndexedInstanced(object->Get_Index(), 1, object->Get_Start_Index(), object->Get_Base_Vertex(), 0);
-		//for (UINT i = 0; i < object->index_count; ++++++i) {
-		//	command_list->DrawIndexedInstanced(3, 1, object->start_index_location + i, object->base_vertex_location, 0);
+		//for (UINT i = 0; i < object->Get_Index(); ++++++i) {
+		//	command_list->DrawIndexedInstanced(3, 1, object->Get_Start_Index() + i, object->Get_Base_Vertex(), 0);
 		//}
 	}
 
@@ -297,12 +297,15 @@ void TestScene::Build_Mesh(ID3D12Device* device, ID3D12GraphicsCommandList* comm
 	//MeshData test_mesh = mesh_creater.Crt_Mesh_From_File(L"testplane.fbx");
 	//MeshData test_mesh = mesh_creater.Crt_Mesh_From_File(L"testpyramid.fbx", 3);
 	//MeshData test_mesh = mesh_creater.Crt_Mesh_From_File(L"testbuilding.fbx", 4);
-	MeshData test_mesh = mesh_creater.Crt_Mesh_From_File(L"Mawang_Test.fbx", 0);
+	//MeshData test_mesh = mesh_creater.Crt_Mesh_From_File(L"Mawang_Test.fbx", 0);
+	MeshData test_mesh = mesh_creater.Crt_Mesh_From_File(L"cattest.fbx", 0);
 	//MeshData test_mesh = mesh_creater.Crt_Mesh_From_File(L"testpyramids.fbx");
 
 	//MeshData box_mesh = mesh_creater.Crt_Box(100.0f, 100.0f, 100.0f, 0);
 	//MeshData box_mesh = mesh_creater.Crt_Mesh_From_File(L"painting.fbx", 0);
-	MeshData box_mesh = mesh_creater.Crt_Mesh_From_File(L"test_house.fbx", 0);
+	//MeshData box_mesh = mesh_creater.Crt_Mesh_From_File(L"test_house.fbx", 0);
+	//MeshData box_mesh = mesh_creater.Crt_Mesh_From_File(L"housetest.fbx", 0);
+	MeshData box_mesh = mesh_creater.Crt_Mesh_From_File(L"walltest.fbx", 0);
 
 	UINT test_vertex_offset = 0;
 	UINT box_vertex_offset = (UINT)test_mesh.vertices.size();
@@ -452,7 +455,7 @@ void TestScene::Build_C(D3DManager* d3d_manager) {
 	//main_camera->Set_Position(0.0f, 300.0f, -500.0f);
 	//main_camera->Look_At(main_camera->Get_Position_V(), DirectX::XMVectorZero(), DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f));
 
-	m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"test", 500.0f);
+	m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"test", 100.0f);
 
 	m_main_camera = main_camera;
 }
@@ -584,8 +587,8 @@ void TestScene::Binding_Key() {
 	//m_input_manager->Bind_Key_Down(VK_A, BindingInfo(L"maincamera", Action::TELEPORT_LEFT, 1.0f));
 	//m_input_manager->Bind_Key_Down(VK_D, BindingInfo(L"maincamera", Action::TELEPORT_RIGHT, 1.0f));
 
-	m_input_manager->Bind_Key_Down(VK_SPACE, BindingInfo(L"maincamera", Action::TELEPORT_UP, 1.0f));
-	m_input_manager->Bind_Key_Down(VK_SHIFT, BindingInfo(L"maincamera", Action::TELEPORT_DOWN, 1.0f));
+	m_input_manager->Bind_Key_Down(VK_SPACE, BindingInfo(L"test", Action::MOVE_UP, 1.0f));
+	m_input_manager->Bind_Key_Down(VK_SHIFT, BindingInfo(L"test", Action::MOVE_DOWN, 1.0f));
 
 	m_input_manager->Bind_Key_Down(VK_Q, BindingInfo(L"maincamera", Action::ROTATE_PITCH, POINTF(-1.0f)));
 	m_input_manager->Bind_Key_Down(VK_E, BindingInfo(L"maincamera", Action::ROTATE_PITCH, POINTF(1.0f)));

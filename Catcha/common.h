@@ -397,22 +397,22 @@ struct MaterialInfo {
 	float roughness = 0.25f;
 };
 
-struct ObjectInfo {
-	DirectX::XMFLOAT4X4 world_matrix = MathHelper::Identity_4x4();
-
-	UINT constant_buffer_index = -1;
-
-	MeshInfo* mesh_info = nullptr;
-	MaterialInfo* material_info = nullptr;
-
-	D3D12_PRIMITIVE_TOPOLOGY primitive_topology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-
-	UINT index_count = 0;
-	UINT start_index_location = 0;
-	int base_vertex_location = 0;
-
-	int dirty_frame_count = FRAME_RESOURCES_NUMBER;
-};
+//struct ObjectInfo {
+//	DirectX::XMFLOAT4X4 world_matrix = MathHelper::Identity_4x4();
+//
+//	UINT constant_buffer_index = -1;
+//
+//	MeshInfo* mesh_info = nullptr;
+//	MaterialInfo* material_info = nullptr;
+//
+//	D3D12_PRIMITIVE_TOPOLOGY primitive_topology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+//
+//	UINT index_count = 0;
+//	UINT start_index_location = 0;
+//	int base_vertex_location = 0;
+//
+//	int dirty_frame_count = FRAME_RESOURCES_NUMBER;
+//};
 
 struct LightInfo {
 	DirectX::XMFLOAT3 strength = { 0.5f, 0.5f, 0.5f };

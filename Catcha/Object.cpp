@@ -129,6 +129,11 @@ void Object::Calc_Delta(float elapsed_time) {
 		m_moving = false;
 		m_dirty = true;
 	}
+
+	// [SC] NetworkManager 싱글톤 인스턴스 사용
+	//		서버에서 받은 위치 동기화
+	NetworkManager& network_manager = NetworkManager::GetInstance();
+	m_position = network_manager.characters[network_manager.m_myid].Location;
 }
 
 //void Object::Move_N_Solve_Collision() {

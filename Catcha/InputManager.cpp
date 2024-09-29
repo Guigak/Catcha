@@ -62,6 +62,10 @@ void InputManager::Prcs_Input() {
 				BindingInfo binding_info = m_key_up_map[k];
 
 				Prcs_Binding_Info(binding_info);
+
+				// [CS] 키보드 입력이 끝났음을 알림
+				//input_key_ = (static_cast<uint8_t>(binding_info.action) << 1) | false;
+				//network_manager.SendInput(input_key_);
 			}
 		}
 
@@ -84,6 +88,9 @@ void InputManager::Prcs_Input() {
 
 void InputManager::Prcs_Binding_Info(BindingInfo binding_info) {
 	if (binding_info.object_name != L"") {
+		// NetworkManager 싱글톤 인스턴스 사용
+		NetworkManager& network_manager = NetworkManager::GetInstance();
+
 		switch (binding_info.action) {
 		case Action::MOVE_FORWARD:
 		case Action::MOVE_BACK:
@@ -92,6 +99,11 @@ void InputManager::Prcs_Binding_Info(BindingInfo binding_info) {
 		case Action::MOVE_UP:
 		case Action::MOVE_DOWN:
 			m_object_manager->Move(binding_info.object_name, binding_info.action);
+
+			// [CS] 키보드 입력이 시작되었음을 알림
+			input_key_ = (static_cast<uint8_t>(binding_info.action) << 1) | true;
+			network_manager.SendInput(input_key_);
+
 			break;
 		case Action::TELEPORT_FORWARD:
 		case Action::TELEPORT_BACK:

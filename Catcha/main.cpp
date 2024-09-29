@@ -9,7 +9,7 @@ WindowManager g_window_manager;
 D3DManager g_d3d_manager;
 SceneManager g_scene_manager;
 Timer g_timer;
-NetworkManager g_network_manager;
+
 
 int WINAPI WinMain(HINSTANCE hinstance, HINSTANCE prev_hinstance, LPSTR command_line, int command_show) {
 #if defined(DEBUG) | defined(_DEBUG)
@@ -35,7 +35,11 @@ int WINAPI WinMain(HINSTANCE hinstance, HINSTANCE prev_hinstance, LPSTR command_
 
 		g_timer.Reset();
 
-		g_network_manager.InitSocket();
+		// NetworkManager 싱글톤 인스턴스 가져오기
+		NetworkManager& network_manager = NetworkManager::GetInstance();
+		// 소켓 초기화
+		network_manager.InitSocket();
+
 
 		// loop
 		while (message.message != WM_QUIT) {
@@ -45,7 +49,7 @@ int WINAPI WinMain(HINSTANCE hinstance, HINSTANCE prev_hinstance, LPSTR command_
 			}
 			else {
 				g_timer.Tick();
-				g_network_manager.DoRecv();
+				network_manager.DoRecv();
 				g_scene_manager.Update(g_timer.Get_Elapsed_Time());
 				g_d3d_manager.Draw_Scene_With_FR();
 			}

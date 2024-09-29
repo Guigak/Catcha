@@ -1,5 +1,6 @@
 #pragma once
 #include "common.h"
+#include "NetworkManager.h"
 
 class Scene;
 class Object;
@@ -33,6 +34,10 @@ private:
 
 	Scene* m_scene = nullptr;
 	ObjectManager* m_object_manager = nullptr;
+
+	// [CS] 현재 키보드가 입력되고 있는지
+	bool press_keyboard_movement_ = false;
+	uint8_t input_key_;
 
 public:
 	InputManager() {}

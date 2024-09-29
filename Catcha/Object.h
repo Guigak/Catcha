@@ -1,5 +1,6 @@
 #pragma once
 #include "common.h"
+#include "NetworkManager.h"
 
 enum class Object_State {
 	IDLE_STATE, MOVE_STATE, JUMP_STATE

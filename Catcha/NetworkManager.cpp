@@ -85,7 +85,7 @@ void NetworkManager::InitSocket()
 	time.size = sizeof(time);
 	time.type = CS_TIME;
 	time.time = 0;
-	DoSendUDP(&time);
+	//DoSendUDP(&time);
 }
 
 
@@ -103,6 +103,19 @@ void NetworkManager::DoSend(void* packet)
 	{
 		print_error("WSASend", WSAGetLastError());
 	}
+}
+
+void NetworkManager::SendInput(uint8_t& input_key)
+{
+	CS_MOVE_PACKET p;
+	p.size = sizeof(p);
+	p.type = CS_MOVE;
+	//p.camera_yaw = static_cast<short>(camera_->GetYaw());
+	p.camera_yaw = 0;
+	//p.player_yaw = static_cast<short>(rotation_component_->yaw());
+	p.player_yaw = 0;
+	p.keyinput = input_key;
+	DoSend(&p);
 }
 
 void NetworkManager::DoSendUDP(void* packet)
@@ -161,35 +174,35 @@ void NetworkManager::DoRecv()
 	}
 
 	// UDP
-	sockaddr_in sender_addr;
-	int sender_addr_size = sizeof(sender_addr);
+	//sockaddr_in sender_addr;
+	//int sender_addr_size = sizeof(sender_addr);
 
-	res = WSARecvFrom(
-		m_udp_socket, &wsabuf, 1, &bytes_received, &recv_flags, 
-		(SOCKADDR*)&sender_addr, &sender_addr_size, nullptr, nullptr);
-	if (res == SOCKET_ERROR)
-	{
-		int err = WSAGetLastError();
-		if (err == WSA_IO_PENDING || err == WSAEWOULDBLOCK)
-		{
-			// NON-Blocking 패킷 안받음
-		}
-		else if (err == WSAECONNRESET || err == WSAENOTCONN)
-		{
-			// Disconnect
-			closesocket(m_server_socket);
-			exit(0);
-		}
-		else
-		{
-			print_error("WSARecv", err);
-			exit(0);
-		}
-	}
-	else
-	{
-		ProcessData(wsabuf.buf, bytes_received);
-	}
+	//res = WSARecvFrom(
+	//	m_udp_socket, &wsabuf, 1, &bytes_received, &recv_flags, 
+	//	(SOCKADDR*)&sender_addr, &sender_addr_size, nullptr, nullptr);
+	//if (res == SOCKET_ERROR)
+	//{
+	//	int err = WSAGetLastError();
+	//	if (err == WSA_IO_PENDING || err == WSAEWOULDBLOCK)
+	//	{
+	//		// NON-Blocking 패킷 안받음
+	//	}
+	//	else if (err == WSAECONNRESET || err == WSAENOTCONN)
+	//	{
+	//		// Disconnect
+	//		closesocket(m_server_socket);
+	//		exit(0);
+	//	}
+	//	else
+	//	{
+	//		print_error("WSARecv", err);
+	//		exit(0);
+	//	}
+	//}
+	//else
+	//{
+	//	ProcessData(wsabuf.buf, bytes_received);
+	//}
 }
 
 void NetworkManager::ProcessData(char* net_buf, size_t io_byte)
@@ -229,11 +242,52 @@ void NetworkManager::ProcessPacket(char* ptr)
 	{
 		SC_LOGIN_INFO_PACKET* p = reinterpret_cast<SC_LOGIN_INFO_PACKET*>(ptr);
 		m_myid = p->id;
-		//XMFLOAT3 coord = { static_cast<float>(packet->x), static_cast<float>(packet->y), static_cast<float>(packet->z) };
-		//g_objects[g_myid].Location = coord;
+		DirectX::XMFLOAT3 coord = { static_cast<float>(p->x), static_cast<float>(p->y), static_cast<float>(p->z) };
+		characters[m_myid].Location = coord;
 		float yaw = 0;
-		//characters[m_myid].yaw = yaw;
+		characters[m_myid].yaw = yaw;
 
+		break;
+	}
+	case SC_ADD_PLAYER:
+	{
+		SC_ADD_PLAYER_PACKET* p = reinterpret_cast<SC_ADD_PLAYER_PACKET*>(ptr);
+		int id = p->id;
+
+		if (id == m_myid)
+		{
+			// 자신일 경우 자신의 움직임
+			//g_objects[id].move(my_packet->x, my_packet->y);
+		}
+		else
+		{
+			DirectX::XMFLOAT3 coord = { static_cast<float>(p->x), static_cast<float>(p->y), static_cast<float>(p->z) };
+			characters[id].Location = coord;
+			float yaw = 0;
+			characters[id].yaw = yaw;
+		}
+		break;
+	}
+	case SC_MOVE_PLAYER:
+	{
+		SC_MOVE_PLAYER_PACKET* p = reinterpret_cast<SC_MOVE_PLAYER_PACKET*>(ptr);
+		int other_id = p->id;
+		if (other_id == m_myid)
+		{
+			// 자신의 받은 움직임과 look
+			DirectX::XMFLOAT3 coord = { static_cast<float>(p->x), static_cast<float>(p->y), static_cast<float>(p->z) };
+			characters[m_myid].Location = coord;
+			float yaw = p->yaw;
+			characters[m_myid].yaw = yaw;
+		}
+		else
+		{
+			// 다른 캐릭터의 받은 움직임
+			DirectX::XMFLOAT3 coord = { static_cast<float>(p->x), static_cast<float>(p->y), static_cast<float>(p->z) };
+			characters[other_id].Location = coord;
+			float yaw = p->yaw;
+			characters[other_id].yaw = yaw;
+		}
 		break;
 	}
 	case SC_TIME:

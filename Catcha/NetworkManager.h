@@ -2,6 +2,16 @@
 #include "common.h"
 
 
+enum class ANIM_TYPE { IDLE };
+
+struct Client
+{
+	ANIM_TYPE Type;
+	DirectX::XMFLOAT3 Location;
+	float yaw;
+};
+
+
 class NetworkManager {
 private:
 	// socket
@@ -15,14 +25,31 @@ private:
 	WSAOVERLAPPED m_overlapped;
 
 	std::string m_name;
-	int m_myid;
-	std::vector<int> characters;
+
+
+
+	NetworkManager() 
+	{
+		InitSocket();
+	}
+	NetworkManager(const NetworkManager&) = delete;
+	NetworkManager& operator=(const NetworkManager&) = delete;
 
 public:
+	int m_myid;
+	std::unordered_map<int, Client> characters;
+
+	static NetworkManager& GetInstance() 
+	{
+		static NetworkManager instance;
+		return instance;
+	}
+
 	// 구성요소 Initialize
 	void InitSocket();
 
 	void DoSend(void* packet);
+	void SendInput(uint8_t& input_key);
 	void DoSendUDP(void* packet);
 	void DoRecv();
 	void ProcessData(char* net_buf, size_t io_byte);

@@ -72,7 +72,7 @@ protected:
 public:
 	Object() {}
 	Object(std::wstring object_name, MeshInfo* mesh_info, std::wstring mesh_name,
-		MaterialInfo* material_info, UINT constant_buffer_info, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, bool physics);
+		MaterialInfo* material_info, UINT constant_buffer_info, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, bool physics, bool visiable);
 	~Object() {}
 
 	void Set_Name(std::wstring object_name) { m_name = object_name; }
@@ -81,6 +81,7 @@ public:
 	void Set_CB_Index(UINT constant_buffer_index) { m_constant_buffer_index = constant_buffer_index; }
 	void Set_PT(D3D12_PRIMITIVE_TOPOLOGY primitive_topology) { m_primitive_topology = primitive_topology; }
 	void Set_Phys(bool physics) { m_physics = physics; }
+	void Set_Visiable(bool visiable) { m_visiable = visiable; }
 
 	void Chg_Mesh(std::wstring mesh_name);
 
@@ -126,6 +127,8 @@ public:
 	DirectX::XMFLOAT3 Get_Force() { return m_force; }
 
 	float Get_Spd() { return m_speed; }
+
+	bool Get_Visiable() { return m_visiable; }
 
 	void Calc_Delta(float elapsed_time);
 	//void Move_N_Solve_Collision();

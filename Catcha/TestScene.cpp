@@ -211,6 +211,10 @@ void TestScene::Draw(D3DManager* d3d_manager, ID3D12CommandList** command_lists)
 	for (size_t i = 0; i < m_object_manager->Get_Opaque_Obj_Count(); ++i) {
 		auto object = m_object_manager->Get_Opaque_Obj((UINT)i);
 
+		if (!object->Get_Visiable()) {
+			continue;
+		}
+
 		command_list->IASetVertexBuffers(0, 1, &object->Get_Mesh_Info()->Get_VBV());
 		command_list->IASetIndexBuffer(&object->Get_Mesh_Info()->Get_IBV());
 		command_list->IASetPrimitiveTopology(object->Get_PT());
@@ -313,11 +317,15 @@ void TestScene::Build_Mesh(ID3D12Device* device, ID3D12GraphicsCommandList* comm
 	MeshData box_mesh = mesh_creater.Crt_Mesh_From_File(L"house_simple.fbx", 0);
 	//MeshData box_mesh = mesh_creater.Crt_Mesh_From_File(L"mouse_mesh.fbx", 0);
 
+	MeshData mouse_mesh = mesh_creater.Crt_Mesh_From_File(L"mouse_mesh.fbx", 0);
+
 	UINT test_vertex_offset = 0;
 	UINT box_vertex_offset = (UINT)test_mesh.vertices.size();
+	UINT mouse_vertex_offset = box_vertex_offset + (UINT)box_mesh.vertices.size();
 
 	UINT test_index_offset = 0;
 	UINT box_index_offset = (UINT)test_mesh.indices_32.size();
+	UINT mouse_index_offset = box_index_offset + (UINT)box_mesh.indices_32.size();
 
 	SubmeshInfo test_submesh;
 	test_submesh.index_count = (UINT)test_mesh.indices_32.size();
@@ -343,9 +351,22 @@ void TestScene::Build_Mesh(ID3D12Device* device, ID3D12GraphicsCommandList* comm
 	box_submesh.maximum_y = box_mesh.maximum_y;
 	box_submesh.maximum_z = box_mesh.maximum_z;
 
+	SubmeshInfo mouse_submesh;
+	mouse_submesh.index_count = (UINT)mouse_mesh.indices_32.size();
+	mouse_submesh.start_index_location = mouse_index_offset;
+	mouse_submesh.base_vertex_location = mouse_vertex_offset;
+
+	mouse_submesh.minimum_x = mouse_mesh.minimum_x;
+	mouse_submesh.minimum_y = mouse_mesh.minimum_y;
+	mouse_submesh.minimum_z = mouse_mesh.minimum_z;
+	mouse_submesh.maximum_x = mouse_mesh.maximum_x;
+	mouse_submesh.maximum_y = mouse_mesh.maximum_y;
+	mouse_submesh.maximum_z = mouse_mesh.maximum_z;
+
 	auto total_vertex_count =
 		test_mesh.vertices.size() +
-		box_mesh.vertices.size();
+		box_mesh.vertices.size() +
+		mouse_mesh.vertices.size();
 
 	std::vector<Vertex> vertices(total_vertex_count);
 
@@ -360,9 +381,15 @@ void TestScene::Build_Mesh(ID3D12Device* device, ID3D12GraphicsCommandList* comm
 		vertices[count].normal = box_mesh.vertices[i].normal;
 	}
 
+	for (size_t i = 0; i < mouse_mesh.vertices.size(); ++i, ++count) {
+		vertices[count].position = mouse_mesh.vertices[i].position;
+		vertices[count].normal = mouse_mesh.vertices[i].normal;
+	}
+
 	std::vector<std::uint16_t> indices;
 	indices.insert(indices.end(), std::begin(test_mesh.Get_Idxs_16()), std::end(test_mesh.Get_Idxs_16()));
 	indices.insert(indices.end(), std::begin(box_mesh.Get_Idxs_16()), std::end(box_mesh.Get_Idxs_16()));
+	indices.insert(indices.end(), std::begin(mouse_mesh.Get_Idxs_16()), std::end(mouse_mesh.Get_Idxs_16()));
 
 	UINT vertex_buffer_size = (UINT)vertices.size() * sizeof(Vertex);
 	UINT index_buffer_size = (UINT)indices.size() * sizeof(std::uint16_t);
@@ -388,6 +415,7 @@ void TestScene::Build_Mesh(ID3D12Device* device, ID3D12GraphicsCommandList* comm
 
 	mesh_info->submesh_map[L"test"] = test_submesh;
 	mesh_info->submesh_map[L"box"] = box_submesh;
+	mesh_info->submesh_map[L"mouse"] = mouse_submesh;
 
 	m_mesh_map[mesh_info->name] = std::move(mesh_info);
 }
@@ -413,6 +441,7 @@ void TestScene::Build_O() {
 		D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST,
 		ObjectType::OPAQUE_OBJECT,
 		true,
+		true,
 		L"player"
 	);
 	m_object_manager->Get_Obj(L"test")->Crt_Simple_OBB();
@@ -425,9 +454,22 @@ void TestScene::Build_O() {
 		D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST,
 		ObjectType::OPAQUE_OBJECT,
 		true,
+		true,
 		L"object"
 	);
 	//m_object_manager->Get_Obj(L"box")->Crt_Simple_OBB();
+
+	m_object_manager->Add_Obj(
+		L"mouse",
+		m_mesh_map[L"meshinfo"].get(),
+		L"mouse",
+		m_material_map[L"default"].get(),
+		D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST,
+		ObjectType::OPAQUE_OBJECT,
+		true,
+		false,
+		L"object"
+	);
 }
 
 void TestScene::Build_C(D3DManager* d3d_manager) {
@@ -448,6 +490,7 @@ void TestScene::Build_C(D3DManager* d3d_manager) {
 		D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST,
 		ObjectType::CAMERA_OBJECT,
 		false,
+		false,
 		L"camera"
 	);
 	auto main_camera = reinterpret_cast<Camera*>(m_object_manager->Get_Obj(L"maincamera"));
@@ -456,7 +499,8 @@ void TestScene::Build_C(D3DManager* d3d_manager) {
 	//main_camera->Set_Position(0.0f, 300.0f, -500.0f);
 	//main_camera->Look_At(main_camera->Get_Position_V(), DirectX::XMVectorZero(), DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f));
 
-	m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"test", 200.0f);
+	//m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"test", 200.0f);
+	m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"mouse", 0.1f);
 
 	m_main_camera = main_camera;
 }
@@ -583,16 +627,22 @@ void TestScene::Binding_Key() {
 	//m_input_manager->Bind_Key_Down(VK_A, BindingInfo(L"test", Action::MOVE_LEFT));
 	//m_input_manager->Bind_Key_Down(VK_D, BindingInfo(L"test", Action::MOVE_RIGHT));
 
-	m_input_manager->Bind_Key_Down(VK_W, BindingInfo(L"test", Action::TELEPORT_FORWARD, 1.0f));
-	m_input_manager->Bind_Key_Down(VK_S, BindingInfo(L"test", Action::TELEPORT_BACK, 1.0f));
-	m_input_manager->Bind_Key_Down(VK_A, BindingInfo(L"test", Action::TELEPORT_LEFT, 1.0f));
-	m_input_manager->Bind_Key_Down(VK_D, BindingInfo(L"test", Action::TELEPORT_RIGHT, 1.0f));
+	//m_input_manager->Bind_Key_Down(VK_W, BindingInfo(L"test", Action::TELEPORT_FORWARD, 1.0f));
+	//m_input_manager->Bind_Key_Down(VK_S, BindingInfo(L"test", Action::TELEPORT_BACK, 1.0f));
+	//m_input_manager->Bind_Key_Down(VK_A, BindingInfo(L"test", Action::TELEPORT_LEFT, 1.0f));
+	//m_input_manager->Bind_Key_Down(VK_D, BindingInfo(L"test", Action::TELEPORT_RIGHT, 1.0f));
+	//m_input_manager->Bind_Key_Down(VK_SPACE, BindingInfo(L"test", Action::TELEPORT_UP, 1.0f));
+	//m_input_manager->Bind_Key_Down(VK_SHIFT, BindingInfo(L"test", Action::TELEPORT_DOWN, 1.0f));
+
+	m_input_manager->Bind_Key_Down(VK_W, BindingInfo(L"mouse", Action::TELEPORT_FORWARD, 1.0f));
+	m_input_manager->Bind_Key_Down(VK_S, BindingInfo(L"mouse", Action::TELEPORT_BACK, 1.0f));
+	m_input_manager->Bind_Key_Down(VK_A, BindingInfo(L"mouse", Action::TELEPORT_LEFT, 1.0f));
+	m_input_manager->Bind_Key_Down(VK_D, BindingInfo(L"mouse", Action::TELEPORT_RIGHT, 1.0f));
+	m_input_manager->Bind_Key_Down(VK_SPACE, BindingInfo(L"mouse", Action::TELEPORT_UP, 1.0f));
+	m_input_manager->Bind_Key_Down(VK_SHIFT, BindingInfo(L"mouse", Action::TELEPORT_DOWN, 1.0f));
 
 	//m_input_manager->Bind_Key_Down(VK_SPACE, BindingInfo(L"test", Action::MOVE_UP, 1.0f));
 	//m_input_manager->Bind_Key_Down(VK_SHIFT, BindingInfo(L"test", Action::MOVE_DOWN, 1.0f));
-
-	m_input_manager->Bind_Key_Down(VK_SPACE, BindingInfo(L"test", Action::TELEPORT_UP, 1.0f));
-	m_input_manager->Bind_Key_Down(VK_SHIFT, BindingInfo(L"test", Action::TELEPORT_DOWN, 1.0f));
 
 	m_input_manager->Bind_Key_Down(VK_Q, BindingInfo(L"maincamera", Action::ROTATE_PITCH, POINTF(-1.0f)));
 	m_input_manager->Bind_Key_Down(VK_E, BindingInfo(L"maincamera", Action::ROTATE_PITCH, POINTF(1.0f)));

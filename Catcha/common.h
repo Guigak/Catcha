@@ -49,8 +49,8 @@
 #include "fbxsdk.h"
 
 // constant
-constexpr int CLIENT_WIDTH = 800;
-constexpr int CLIENT_HEIGHT = 600;
+constexpr int CLIENT_WIDTH = 1600;
+constexpr int CLIENT_HEIGHT = 900;
 
 constexpr int FRAME_RESOURCES_NUMBER = 3;
 

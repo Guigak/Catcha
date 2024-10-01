@@ -31,7 +31,7 @@ public:
 	~ObjectManager() {}
 
 	void Add_Obj(std::wstring object_name, MeshInfo* mesh_info, std::wstring mesh_name, MaterialInfo* material_info,
-		D3D12_PRIMITIVE_TOPOLOGY primitive_topology, ObjectType object_type, bool physics, std::wstring set_name);
+		D3D12_PRIMITIVE_TOPOLOGY primitive_topology, ObjectType object_type, bool physics, bool visiable, std::wstring set_name);
 
 	Object* Get_Obj(std::wstring object_name);
 	Object* Get_Obj(UINT object_number);

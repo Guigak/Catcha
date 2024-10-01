@@ -2,7 +2,7 @@
 #include "Camera.h"
 
 Object::Object(std::wstring object_name, MeshInfo* mesh_info, std::wstring mesh_name,
-	MaterialInfo* material_info, UINT constant_buffer_index, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, bool physics)
+	MaterialInfo* material_info, UINT constant_buffer_index, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, bool physics, bool visiable)
 {
 	Set_Name(object_name);
 	Set_CB_Index(constant_buffer_index);
@@ -10,6 +10,7 @@ Object::Object(std::wstring object_name, MeshInfo* mesh_info, std::wstring mesh_
 	Set_Material_Info(material_info);
 	Set_PT(primitive_topology);
 	Set_Phys(physics);
+	Set_Visiable(visiable);
 }
 
 void Object::Set_Mesh_Info(MeshInfo* mesh_info, std::wstring mesh_name) {

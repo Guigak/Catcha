@@ -3,7 +3,7 @@
 #include "Camera.h"
 
 void ObjectManager::Add_Obj(std::wstring object_name, MeshInfo* mesh_info, std::wstring mesh_name, MaterialInfo* material_info,
-    D3D12_PRIMITIVE_TOPOLOGY primitive_topology, ObjectType object_type, bool physics, std::wstring set_name)
+    D3D12_PRIMITIVE_TOPOLOGY primitive_topology, ObjectType object_type, bool physics, bool visiable, std::wstring set_name)
 {
     //auto object = std::make_unique<Object>(object_name, mesh_info, mesh_name, material_info, m_object_count++, primitive_topology, physics);
 
@@ -12,7 +12,7 @@ void ObjectManager::Add_Obj(std::wstring object_name, MeshInfo* mesh_info, std::
     switch (object_type) {
     case ObjectType::OPAQUE_OBJECT:
     case ObjectType::TRANSPARENT_OBJECT:
-        object = std::make_unique<Object>(object_name, mesh_info, mesh_name, material_info, m_object_count++, primitive_topology, physics);
+        object = std::make_unique<Object>(object_name, mesh_info, mesh_name, material_info, m_object_count++, primitive_topology, physics, visiable);
         break;
     case ObjectType::CAMERA_OBJECT:
         object = std::make_unique<Camera>();

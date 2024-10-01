@@ -129,6 +129,7 @@ public:
 	float Get_Spd() { return m_speed; }
 
 	void Calc_Delta(float elapsed_time);
+	void Calc_Delta_Characters(float elapsed_time);
 	//void Move_N_Solve_Collision();
 	virtual void Update();
 

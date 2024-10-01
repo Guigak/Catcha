@@ -27,11 +27,7 @@ private:
 	std::string m_name;
 
 
-
-	NetworkManager() 
-	{
-		InitSocket();
-	}
+	NetworkManager() {	}
 	NetworkManager(const NetworkManager&) = delete;
 	NetworkManager& operator=(const NetworkManager&) = delete;
 

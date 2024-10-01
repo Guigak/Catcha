@@ -73,6 +73,21 @@ void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
 		}
 	}
 
+	for (UINT i = 0; i < m_object_manager->Get_Character_Count(); ++i) {
+		Object* object = m_object_manager->Get_Obj_Character(i);
+
+		if (object->Get_Dirty_Count()) {
+			DirectX::XMMATRIX world_matrix = DirectX::XMLoadFloat4x4(&object->Get_WM());
+
+			ObjectConstants object_constants;
+			DirectX::XMStoreFloat4x4(&object_constants.world_matrix, DirectX::XMMatrixTranspose(world_matrix));
+
+			current_object_constant_buffer->Copy_Data(object->Get_CB_Index(), object_constants);
+
+			object->Sub_Dirty_Count();
+		}
+	}
+
 	auto current_material_constant_buffer = m_current_frameresource->material_constant_buffer.get();
 
 	for (auto& m : m_material_map) {
@@ -405,7 +420,7 @@ void TestScene::Build_O() {
 		L"test",
 		m_material_map[L"default"].get(),
 		D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST,
-		ObjectType::OPAQUE_OBJECT,
+		ObjectType::CHARACTER_OBJECT,
 		true,
 		L"player"
 	);
@@ -462,12 +477,14 @@ void TestScene::Build_C(D3DManager* d3d_manager) {
 
 void TestScene::Build_FR(ID3D12Device* device) {
 	for (int i = 0; i < FRAME_RESOURCES_NUMBER; ++i) {
-		m_frameresources.emplace_back(std::make_unique<FrameResorce>(device, 1, (UINT)m_object_manager->Get_Obj_Count(), (UINT)m_material_map.size()));
+		// 캐릭터 오브젝트까지 카운트 추가
+		m_frameresources.emplace_back(std::make_unique<FrameResorce>(device, 1, (UINT)m_object_manager->Get_Obj_Count() + (UINT)m_object_manager->Get_Character_Count(), (UINT)m_material_map.size()));
 	}
 }
 
 void TestScene::Build_DH(ID3D12Device* device) {
-	UINT object_count = (UINT)m_object_manager->Get_Obj_Count();
+	// 캐릭터 오브젝트까지 count 추가
+	UINT object_count = (UINT)m_object_manager->Get_Obj_Count() + (UINT)m_object_manager->Get_Character_Count();
 	UINT material_count = (UINT)m_material_map.size();
 
 	UINT descriptors_number = (object_count + material_count + 1) * FRAME_RESOURCES_NUMBER;
@@ -489,7 +506,8 @@ void TestScene::Build_CBV(D3DManager* d3d_manager) {
 
 	UINT object_constant_buffer_size = Calc_CB_Size(sizeof(ObjectConstants));
 
-	UINT object_count = (UINT)m_object_manager->Get_Obj_Count();
+	// 캐릭터 오브젝트까지 count 추가
+	UINT object_count = (UINT)m_object_manager->Get_Obj_Count() + (UINT)m_object_manager->Get_Character_Count();
 
 	for (int frameresource_index = 0; frameresource_index < FRAME_RESOURCES_NUMBER; ++frameresource_index) {
 		auto object_constant_buffer = m_frameresources[frameresource_index]->object_constant_buffer->Get_Resource();
@@ -581,6 +599,11 @@ void TestScene::Binding_Key() {
 	m_input_manager->Bind_Key_Down(VK_S, BindingInfo(L"test", Action::MOVE_BACK));
 	m_input_manager->Bind_Key_Down(VK_A, BindingInfo(L"test", Action::MOVE_LEFT));
 	m_input_manager->Bind_Key_Down(VK_D, BindingInfo(L"test", Action::MOVE_RIGHT));
+
+	m_input_manager->Bind_Key_Up(VK_W, BindingInfo(L"test", Action::MOVE_FORWARD));
+	m_input_manager->Bind_Key_Up(VK_S, BindingInfo(L"test", Action::MOVE_BACK));
+	m_input_manager->Bind_Key_Up(VK_A, BindingInfo(L"test", Action::MOVE_LEFT));
+	m_input_manager->Bind_Key_Up(VK_D, BindingInfo(L"test", Action::MOVE_RIGHT));
 
 	//m_input_manager->Bind_Key_Down(VK_W, BindingInfo(L"maincamera", Action::TELEPORT_FORWARD, 1.0f));
 	//m_input_manager->Bind_Key_Down(VK_S, BindingInfo(L"maincamera", Action::TELEPORT_BACK, 1.0f));

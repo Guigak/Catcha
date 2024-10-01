@@ -130,10 +130,71 @@ void Object::Calc_Delta(float elapsed_time) {
 		m_dirty = true;
 	}
 
-	// [SC] NetworkManager 싱글톤 인스턴스 사용
-	//		서버에서 받은 위치 동기화
-	NetworkManager& network_manager = NetworkManager::GetInstance();
-	m_position = network_manager.characters[network_manager.m_myid].Location;
+}
+
+void Object::Calc_Delta_Characters(float elapsed_time)
+{
+	m_delta_position = DirectX::XMFLOAT3();
+
+	if (m_physics) {
+		// Calc Vel
+		m_speed = MathHelper::Length_XZ(Get_Vel());
+
+		if (m_speed > m_max_speed) {
+			m_velocity.x *= (m_max_speed / m_speed);
+			m_velocity.z *= (m_max_speed / m_speed);
+
+			m_speed = m_max_speed;
+		}
+
+		DirectX::XMFLOAT3 delta = MathHelper::Multiply(Get_Vel(), elapsed_time);
+
+		m_delta_position = MathHelper::Add(m_delta_position, delta);
+
+		// Calc deceleration
+		if (m_moving == false && m_state == Object_State::IDLE_STATE) {
+			if (m_speed > 0.0f) {
+				float deceleration = m_deceleration * elapsed_time;
+				float new_speed = MathHelper::Max(m_speed - deceleration, 0.0f);
+
+				m_velocity = MathHelper::Multiply(Get_Vel(), new_speed / m_speed);
+			}
+		}
+
+		// Calc Force
+		if (m_force.x != 0.0f || m_force.y != 0.0f || m_force.z != 0.0f) {
+			delta = MathHelper::Multiply(Get_Force(), elapsed_time);
+
+			m_delta_position = MathHelper::Add(m_delta_position, delta);
+		}
+
+		// Calc friction
+		float speed = MathHelper::Length(delta);
+
+		if (speed > 0.0f) {
+			float deceleration = m_deceleration * elapsed_time;
+			float new_speed = MathHelper::Max(speed - deceleration, 0.0f);
+
+			m_force = MathHelper::Multiply(Get_Force(), new_speed / speed);
+		}
+
+		// Calc Grav
+		//m_velocity.y += m_gravity;
+
+		// Move
+		m_position = MathHelper::Add(Get_Position_3f(), m_delta_position);
+
+		// [SC] NetworkManager 싱글톤 인스턴스 사용
+		//		서버에서 받은 위치 동기화
+		NetworkManager& network_manager = NetworkManager::GetInstance();
+		m_position = network_manager.characters[network_manager.m_myid].Location;
+		//Set_Position(m_position.x, m_position.y, m_position.z);
+
+		Udt_WM();
+
+		m_moving = false;
+		m_dirty = true;
+	}
 }
 
 //void Object::Move_N_Solve_Collision() {

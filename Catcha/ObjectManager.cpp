@@ -17,6 +17,9 @@ void ObjectManager::Add_Obj(std::wstring object_name, MeshInfo* mesh_info, std::
     case ObjectType::CAMERA_OBJECT:
         object = std::make_unique<Camera>();
         break;
+    case ObjectType::CHARACTER_OBJECT:
+        object = std::make_unique<Object>(object_name, mesh_info, mesh_name, material_info, m_character_count++, primitive_topology, physics);
+        break;
     default:
         break;
     }
@@ -24,9 +27,19 @@ void ObjectManager::Add_Obj(std::wstring object_name, MeshInfo* mesh_info, std::
     m_object_map[object_name] = std::move(object);
 
     Object* object_pointer = m_object_map[object_name].get();
-    m_objects.emplace_back(object_pointer);
+    
+    // player와 다른 오브젝트 구분
+    if (set_name == L"player") 
+    {
+        m_characters.emplace_back(object_pointer);
+    }
+    else
+    {
+        m_objects.emplace_back(object_pointer);
+    }
 
     switch (object_type) {
+    case ObjectType::CHARACTER_OBJECT:
     case ObjectType::OPAQUE_OBJECT:
         m_opaque_objects.emplace_back(object_pointer);
         break;
@@ -49,6 +62,12 @@ Object* ObjectManager::Get_Obj(std::wstring object_name) {
 
 Object* ObjectManager::Get_Obj(UINT object_number) {
     return m_objects[object_number];
+}
+
+// 플레이어 추가로 인한 getter
+Object* ObjectManager::Get_Obj_Character(UINT object_number)
+{
+    return m_characters[object_number];
 }
 
 Object* ObjectManager::Get_Opaque_Obj(UINT object_number) {
@@ -138,12 +157,23 @@ void ObjectManager::Update(float elapsed_time) {
     for (auto& o : m_objects) {
         o->Calc_Delta(elapsed_time);
     }
+    // player에 대한 calc_delta 따로 실시
+    for (auto& o : m_characters)
+    {
+        o->Calc_Delta_Characters(elapsed_time);
+    }
 
     Solve_Collision();
 
-    for (auto& o : m_objects) {
+    for (auto& o : m_characters)
+    {
         o->Update();
     }
+    for (auto& o : m_objects) {
+        if (o->Get_Name() == L"box") continue;
+        o->Update();
+    }
+
 }
 
 void ObjectManager::Solve_Collision() {

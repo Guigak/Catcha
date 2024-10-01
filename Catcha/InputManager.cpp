@@ -40,6 +40,9 @@ void InputManager::Bind_Mouse_Move(BindingInfo binding_info) {
 }
 
 void InputManager::Prcs_Input() {
+	// NetworkManager 싱글톤 인스턴스 사용
+	NetworkManager& network_manager = NetworkManager::GetInstance();
+
 	for (auto& k : m_key_set) {
 		if (m_state[k]) {
 			if (m_previous_state[k]) {
@@ -64,8 +67,8 @@ void InputManager::Prcs_Input() {
 				Prcs_Binding_Info(binding_info);
 
 				// [CS] 키보드 입력이 끝났음을 알림
-				//input_key_ = (static_cast<uint8_t>(binding_info.action) << 1) | false;
-				//network_manager.SendInput(input_key_);
+				input_key_ = (static_cast<uint8_t>(binding_info.action) << 1) | false;
+				network_manager.SendInput(input_key_);
 			}
 		}
 

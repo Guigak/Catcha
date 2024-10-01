@@ -24,6 +24,9 @@ void TestScene::Enter(D3DManager* d3d_manager) {
 	Build_CBV(d3d_manager);
 	Build_PSO(d3d_manager);
 
+	Binding_Key();
+	Pairing_Collision_Set();
+
 	d3d_manager->Cls_Cmd_List();
 	d3d_manager->Exct_Cmd_List();
 	d3d_manager->Flush_Cmd_Q();
@@ -298,14 +301,17 @@ void TestScene::Build_Mesh(ID3D12Device* device, ID3D12GraphicsCommandList* comm
 	//MeshData test_mesh = mesh_creater.Crt_Mesh_From_File(L"testpyramid.fbx", 3);
 	//MeshData test_mesh = mesh_creater.Crt_Mesh_From_File(L"testbuilding.fbx", 4);
 	//MeshData test_mesh = mesh_creater.Crt_Mesh_From_File(L"Mawang_Test.fbx", 0);
-	MeshData test_mesh = mesh_creater.Crt_Mesh_From_File(L"cattest.fbx", 0);
+	//MeshData test_mesh = mesh_creater.Crt_Mesh_From_File(L"cattest.fbx", 0);
+	MeshData test_mesh = mesh_creater.Crt_Mesh_From_File(L"cat_mesh.fbx", 0);
 	//MeshData test_mesh = mesh_creater.Crt_Mesh_From_File(L"testpyramids.fbx");
 
 	//MeshData box_mesh = mesh_creater.Crt_Box(100.0f, 100.0f, 100.0f, 0);
 	//MeshData box_mesh = mesh_creater.Crt_Mesh_From_File(L"painting.fbx", 0);
 	//MeshData box_mesh = mesh_creater.Crt_Mesh_From_File(L"test_house.fbx", 0);
 	//MeshData box_mesh = mesh_creater.Crt_Mesh_From_File(L"housetest.fbx", 0);
-	MeshData box_mesh = mesh_creater.Crt_Mesh_From_File(L"walltest.fbx", 0);
+	//MeshData box_mesh = mesh_creater.Crt_Mesh_From_File(L"walltest.fbx", 0);
+	MeshData box_mesh = mesh_creater.Crt_Mesh_From_File(L"house_simple.fbx", 0);
+	//MeshData box_mesh = mesh_creater.Crt_Mesh_From_File(L"mouse_mesh.fbx", 0);
 
 	UINT test_vertex_offset = 0;
 	UINT box_vertex_offset = (UINT)test_mesh.vertices.size();
@@ -421,12 +427,7 @@ void TestScene::Build_O() {
 		true,
 		L"object"
 	);
-	m_object_manager->Get_Obj(L"box")->Crt_Simple_OBB();
-	m_object_manager->Get_Obj(L"box")->TP_Up(50.0f);
-	m_object_manager->Get_Obj(L"box")->Rotate_Pitch(-180.0f);
-
-	Binding_Key();
-	Pairing_Collision_Set();
+	//m_object_manager->Get_Obj(L"box")->Crt_Simple_OBB();
 }
 
 void TestScene::Build_C(D3DManager* d3d_manager) {
@@ -450,12 +451,12 @@ void TestScene::Build_C(D3DManager* d3d_manager) {
 		L"camera"
 	);
 	auto main_camera = reinterpret_cast<Camera*>(m_object_manager->Get_Obj(L"maincamera"));
-	main_camera->Set_Frustum(0.25f * MathHelper::Pi(), d3d_manager->Get_Aspect_Ratio(), 1.0f, 1000.0f);
+	main_camera->Set_Frustum(0.25f * MathHelper::Pi(), d3d_manager->Get_Aspect_Ratio(), 1.0f, 2000.0f);
 
 	//main_camera->Set_Position(0.0f, 300.0f, -500.0f);
 	//main_camera->Look_At(main_camera->Get_Position_V(), DirectX::XMVectorZero(), DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f));
 
-	m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"test", 100.0f);
+	m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"test", 200.0f);
 
 	m_main_camera = main_camera;
 }
@@ -577,18 +578,21 @@ void TestScene::Build_PSO(D3DManager* d3d_manager) {
 }
 
 void TestScene::Binding_Key() {
-	m_input_manager->Bind_Key_Down(VK_W, BindingInfo(L"test", Action::MOVE_FORWARD));
-	m_input_manager->Bind_Key_Down(VK_S, BindingInfo(L"test", Action::MOVE_BACK));
-	m_input_manager->Bind_Key_Down(VK_A, BindingInfo(L"test", Action::MOVE_LEFT));
-	m_input_manager->Bind_Key_Down(VK_D, BindingInfo(L"test", Action::MOVE_RIGHT));
+	//m_input_manager->Bind_Key_Down(VK_W, BindingInfo(L"test", Action::MOVE_FORWARD));
+	//m_input_manager->Bind_Key_Down(VK_S, BindingInfo(L"test", Action::MOVE_BACK));
+	//m_input_manager->Bind_Key_Down(VK_A, BindingInfo(L"test", Action::MOVE_LEFT));
+	//m_input_manager->Bind_Key_Down(VK_D, BindingInfo(L"test", Action::MOVE_RIGHT));
 
-	//m_input_manager->Bind_Key_Down(VK_W, BindingInfo(L"maincamera", Action::TELEPORT_FORWARD, 1.0f));
-	//m_input_manager->Bind_Key_Down(VK_S, BindingInfo(L"maincamera", Action::TELEPORT_BACK, 1.0f));
-	//m_input_manager->Bind_Key_Down(VK_A, BindingInfo(L"maincamera", Action::TELEPORT_LEFT, 1.0f));
-	//m_input_manager->Bind_Key_Down(VK_D, BindingInfo(L"maincamera", Action::TELEPORT_RIGHT, 1.0f));
+	m_input_manager->Bind_Key_Down(VK_W, BindingInfo(L"test", Action::TELEPORT_FORWARD, 1.0f));
+	m_input_manager->Bind_Key_Down(VK_S, BindingInfo(L"test", Action::TELEPORT_BACK, 1.0f));
+	m_input_manager->Bind_Key_Down(VK_A, BindingInfo(L"test", Action::TELEPORT_LEFT, 1.0f));
+	m_input_manager->Bind_Key_Down(VK_D, BindingInfo(L"test", Action::TELEPORT_RIGHT, 1.0f));
 
-	m_input_manager->Bind_Key_Down(VK_SPACE, BindingInfo(L"test", Action::MOVE_UP, 1.0f));
-	m_input_manager->Bind_Key_Down(VK_SHIFT, BindingInfo(L"test", Action::MOVE_DOWN, 1.0f));
+	//m_input_manager->Bind_Key_Down(VK_SPACE, BindingInfo(L"test", Action::MOVE_UP, 1.0f));
+	//m_input_manager->Bind_Key_Down(VK_SHIFT, BindingInfo(L"test", Action::MOVE_DOWN, 1.0f));
+
+	m_input_manager->Bind_Key_Down(VK_SPACE, BindingInfo(L"test", Action::TELEPORT_UP, 1.0f));
+	m_input_manager->Bind_Key_Down(VK_SHIFT, BindingInfo(L"test", Action::TELEPORT_DOWN, 1.0f));
 
 	m_input_manager->Bind_Key_Down(VK_Q, BindingInfo(L"maincamera", Action::ROTATE_PITCH, POINTF(-1.0f)));
 	m_input_manager->Bind_Key_Down(VK_E, BindingInfo(L"maincamera", Action::ROTATE_PITCH, POINTF(1.0f)));

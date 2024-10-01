@@ -93,23 +93,25 @@ void FBXManager::Add_Mesh_From_Node(FbxNode* node, MeshData& mesh_data) {
     OutputDebugStringA(str);
 
     FbxAMatrix local_transform_matrix = node->EvaluateLocalTransform();
-    FbxAMatrix global_transform_matrix = node->GetParent()->EvaluateLocalTransform();
+    FbxAMatrix global_transform_matrix = node->EvaluateGlobalTransform();
 
-    FbxAMatrix transform_matrix = local_transform_matrix;
-    //FbxAMatrix transform_matrix = global_transform_matrix * local_transform_matrix;
-
-    //DirectX::XMMATRIX transform_xmmatrix = {
-    //    (float)transform_matrix[0][0], (float)transform_matrix[1][0], (float)transform_matrix[2][0], (float)transform_matrix[3][0],
-    //    (float)transform_matrix[0][1], (float)transform_matrix[1][1], (float)transform_matrix[2][1], (float)transform_matrix[3][1],
-    //    (float)transform_matrix[0][2], (float)transform_matrix[1][2], (float)transform_matrix[2][2], (float)transform_matrix[3][2],
-    //    (float)transform_matrix[0][3], (float)transform_matrix[1][3], (float)transform_matrix[2][3], (float)transform_matrix[3][3],
-    //};
+    //FbxAMatrix transform_matrix = local_transform_matrix;
+    FbxAMatrix transform_matrix = global_transform_matrix;// *local_transform_matrix;
+    FbxAMatrix rotate_matrix;
+    rotate_matrix.SetR(global_transform_matrix.GetR());
 
     DirectX::XMMATRIX transform_xmmatrix = {
         (float)transform_matrix[0][0], (float)transform_matrix[0][1], (float)transform_matrix[0][2], (float)transform_matrix[0][3],
         (float)transform_matrix[1][0], (float)transform_matrix[1][1], (float)transform_matrix[1][2], (float)transform_matrix[1][3],
         (float)transform_matrix[2][0], (float)transform_matrix[2][1], (float)transform_matrix[2][2], (float)transform_matrix[2][3],
         (float)transform_matrix[3][0], (float)transform_matrix[3][1], (float)transform_matrix[3][2], (float)transform_matrix[3][3],
+    };
+
+    DirectX::XMMATRIX rotate_xmmatrix = {
+        (float)rotate_matrix[0][0], (float)rotate_matrix[0][1], (float)rotate_matrix[0][2], (float)rotate_matrix[0][3],
+        (float)rotate_matrix[1][0], (float)rotate_matrix[1][1], (float)rotate_matrix[1][2], (float)rotate_matrix[1][3],
+        (float)rotate_matrix[2][0], (float)rotate_matrix[2][1], (float)rotate_matrix[2][2], (float)rotate_matrix[2][3],
+        (float)rotate_matrix[3][0], (float)rotate_matrix[3][1], (float)rotate_matrix[3][2], (float)rotate_matrix[3][3],
     };
 
     //
@@ -132,9 +134,9 @@ void FBXManager::Add_Mesh_From_Node(FbxNode* node, MeshData& mesh_data) {
         vertex_data.uv = Get_UV(mesh, control_point_index, i);
 
         vertex_data.position = MathHelper::Multiply(vertex_data.position, transform_xmmatrix);
-        vertex_data.normal = MathHelper::Multiply(vertex_data.normal, transform_xmmatrix);
-        vertex_data.tangent = MathHelper::Multiply(vertex_data.tangent, transform_xmmatrix);
-        vertex_data.uv = MathHelper::Multiply(vertex_data.uv, transform_xmmatrix);
+        vertex_data.normal = MathHelper::Multiply(vertex_data.normal, rotate_xmmatrix);
+        vertex_data.tangent = MathHelper::Multiply(vertex_data.tangent, rotate_xmmatrix);
+        //vertex_data.uv = MathHelper::Multiply(vertex_data.uv, transform_xmmatrix);
 
         mesh_data.vertices.emplace_back(vertex_data);
 

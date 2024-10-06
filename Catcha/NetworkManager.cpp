@@ -110,11 +110,16 @@ void NetworkManager::SendInput(uint8_t& input_key)
 	CS_MOVE_PACKET p;
 	p.size = sizeof(p);
 	p.type = CS_MOVE;
-	//p.camera_yaw = static_cast<short>(camera_->GetYaw());
-	p.camera_yaw = 0;
-	//p.player_yaw = static_cast<short>(rotation_component_->yaw());
-	p.player_yaw = 0;
 	p.keyinput = input_key;
+	DoSend(&p);
+}
+
+void NetworkManager::SendRotate(short& pitch)
+{
+	CS_ROTATE_PACKET p;
+	p.size = sizeof(p);
+	p.type = CS_ROTATE;
+	p.player_pitch = pitch;
 	DoSend(&p);
 }
 
@@ -244,8 +249,8 @@ void NetworkManager::ProcessPacket(char* ptr)
 		m_myid = p->id;
 		DirectX::XMFLOAT3 coord = { static_cast<float>(p->x), static_cast<float>(p->y), static_cast<float>(p->z) };
 		characters[m_myid].Location = coord;
-		float yaw = 0;
-		characters[m_myid].yaw = yaw;
+		short pitch = 0;
+		characters[m_myid].pitch = pitch;
 
 		break;
 	}
@@ -263,30 +268,28 @@ void NetworkManager::ProcessPacket(char* ptr)
 		{
 			DirectX::XMFLOAT3 coord = { static_cast<float>(p->x), static_cast<float>(p->y), static_cast<float>(p->z) };
 			characters[id].Location = coord;
-			float yaw = 0;
-			characters[id].yaw = yaw;
+			short pitch = 0;
+			characters[id].pitch = pitch;
 		}
 		break;
 	}
 	case SC_MOVE_PLAYER:
 	{
 		SC_MOVE_PLAYER_PACKET* p = reinterpret_cast<SC_MOVE_PLAYER_PACKET*>(ptr);
-		int other_id = p->id;
-		if (other_id == m_myid)
+		int id = p->id;
+		if (id == m_myid)
 		{
 			// 자신의 받은 움직임과 look
 			DirectX::XMFLOAT3 coord = { static_cast<float>(p->x), static_cast<float>(p->y), static_cast<float>(p->z) };
 			characters[m_myid].Location = coord;
-			float yaw = p->yaw;
-			characters[m_myid].yaw = yaw;
+			characters[m_myid].pitch = p->player_pitch;
 		}
 		else
 		{
 			// 다른 캐릭터의 받은 움직임
 			DirectX::XMFLOAT3 coord = { static_cast<float>(p->x), static_cast<float>(p->y), static_cast<float>(p->z) };
-			characters[other_id].Location = coord;
-			float yaw = p->yaw;
-			characters[other_id].yaw = yaw;
+			characters[id].Location = coord;
+			characters[id].pitch = p->player_pitch;
 		}
 		break;
 	}

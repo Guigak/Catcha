@@ -70,6 +70,15 @@ protected:
 	//
 	DirectX::BoundingOrientedBox m_OBB;
 
+	// [SC] 위치 보간을 위한 변수
+	DirectX::XMFLOAT3 m_target_position{ 0, 0, 0 };  // Position received from the server
+	float m_lerp_progress = 0.0f;     // 선형 보간 비율
+
+	// [SC] 회전 보간을 위한 변수
+	float m_last_sent_pitch = 0.0f;    
+	const float pitchSendThreshold = 0.1f;  // 100 ms (0.1 seconds)
+	std::chrono::high_resolution_clock::time_point m_lastSendTime;
+
 public:
 	Object() {}
 	Object(std::wstring object_name, MeshInfo* mesh_info, std::wstring mesh_name,
@@ -135,6 +144,11 @@ public:
 
 	void Udt_WM();	// Update World Matrix
 	void Udt_LUR();	// Update Look Up Right
+
+	// [SC] 위치 보간을 위한 함수
+	void LerpPosition(float deltaTime);
+	void SetTargetPosition(const DirectX::XMFLOAT3& newPosition);
+
 
 	//
 	void Set_Position(float position_x, float position_y, float position_z);

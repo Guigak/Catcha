@@ -13,7 +13,7 @@
 #include <WS2tcpip.h>
 #include <MSWSock.h>
 #include <stdint.h>
-
+#include <chrono>
 #pragma comment(lib, "WS2_32.lib")
 #pragma comment(lib, "MSWSock.lib")
 
@@ -258,6 +258,28 @@ struct MathHelper {
 		return result;
 	}
 };
+
+// Math Helper XMFLOAT3 사용을 위한 오버로딩
+// Overload + for XMFLOAT3
+static DirectX::XMFLOAT3 operator+(const DirectX::XMFLOAT3& a, const DirectX::XMFLOAT3& b) {
+	return MathHelper::Add(a, b);
+}
+
+// Overload - for XMFLOAT3
+static DirectX::XMFLOAT3 operator-(const DirectX::XMFLOAT3& a, const DirectX::XMFLOAT3& b) {
+	return MathHelper::Subtract(a, b);
+}
+
+// Overload * for scalar
+static DirectX::XMFLOAT3 operator*(const DirectX::XMFLOAT3& a, float scalar) {
+	return MathHelper::Multiply(a, scalar);
+}
+
+// Overload * for scalar
+static DirectX::XMFLOAT3 operator*(float scalar, const DirectX::XMFLOAT3& a) {
+	return MathHelper::Multiply(a, scalar);
+}
+
 
 // utility
 class DXException {

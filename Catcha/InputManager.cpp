@@ -77,7 +77,7 @@ void InputManager::Prcs_Input() {
 
 	POINT new_point;
 	GetCursorPos(&new_point);
-
+	
 	if (m_previous_point.x != -1 && m_previous_point.y != -1) {
 		if (m_previous_point.x != new_point.x || m_previous_point.y != new_point.y) {
 			m_mouse_move_info.value = POINTF((float)(new_point.x - m_previous_point.x), (float)(new_point.y - m_previous_point.y));

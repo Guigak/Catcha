@@ -187,8 +187,9 @@ void Object::Calc_Delta_Characters(float elapsed_time)
 		// [SC] NetworkManager 싱글톤 인스턴스 사용
 		//		서버에서 받은 위치 동기화
 		NetworkManager& network_manager = NetworkManager::GetInstance();
-		m_position = network_manager.characters[network_manager.m_myid].Location;
-		//Set_Position(m_position.x, m_position.y, m_position.z);
+		SetTargetPosition(network_manager.characters[network_manager.m_myid].Location);
+		LerpPosition(elapsed_time);
+
 
 		Udt_WM();
 
@@ -234,6 +235,23 @@ void Object::Udt_LUR() {
 	m_look = MathHelper::Normalize(MathHelper::Multiply(DirectX::XMFLOAT3(0.0f, 0.0f, 1.0f), rotate_matrix));
 	m_up = MathHelper::Normalize(MathHelper::Multiply(DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f), rotate_matrix));
 	m_right = MathHelper::Normalize(MathHelper::Cross(Get_Up(), Get_Look()));
+}
+
+void Object::LerpPosition(float deltaTime)
+{
+	const float interp_duration = 0.05f;
+
+	if (m_lerp_progress < 1.0f) {
+		m_lerp_progress += deltaTime / interp_duration;
+		m_lerp_progress = m_lerp_progress < 1.0f ? m_lerp_progress : 1.0f;
+		m_position = MathHelper::Lerp(m_position, m_target_position, m_lerp_progress);
+	}
+}
+
+void Object::SetTargetPosition(const DirectX::XMFLOAT3& newPosition)
+{
+	m_target_position = newPosition;
+	m_lerp_progress = 0.0f;
 }
 
 void Object::Set_Position(float position_x, float position_y, float position_z) {
@@ -392,6 +410,20 @@ void Object::Rotate(float degree_roll, float degree_pitch, float degree_yaw) {
 	m_rotate.x += degree_roll;
 	m_rotate.y += degree_pitch;
 	m_rotate.z += degree_yaw;
+
+	// [SC] 시간이 지날때만 시야각 보냄
+	auto current_time = std::chrono::high_resolution_clock::now();
+	float timeSinceLastSend = std::chrono::duration<float>(current_time - m_lastSendTime).count();
+
+	NetworkManager& network_manager = NetworkManager::GetInstance();
+	if (timeSinceLastSend >= pitchSendThreshold) {
+		// [CS] 시야각 보냄
+		short pitch = static_cast<short>(m_rotate.y);
+		network_manager.SendRotate(pitch);
+		m_lastSendTime = current_time;
+	}
+
+	m_rotate.y = network_manager.characters[network_manager.m_myid].pitch;
 
 	m_rotate.x = MathHelper::Min(90.0f, MathHelper::Max(-90.0f, m_rotate.x));
 	m_dirty = true;

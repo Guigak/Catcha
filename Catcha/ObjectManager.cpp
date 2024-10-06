@@ -12,13 +12,15 @@ void ObjectManager::Add_Obj(std::wstring object_name, MeshInfo* mesh_info, std::
     switch (object_type) {
     case ObjectType::OPAQUE_OBJECT:
     case ObjectType::TRANSPARENT_OBJECT:
-        object = std::make_unique<Object>(object_name, mesh_info, mesh_name, material_info, m_object_count++, primitive_topology, physics);
+        object = std::make_unique<Object>(object_name, mesh_info, mesh_name, material_info, 0, primitive_topology, physics);
+        m_object_count++;
         break;
     case ObjectType::CAMERA_OBJECT:
         object = std::make_unique<Camera>();
         break;
     case ObjectType::CHARACTER_OBJECT:
-        object = std::make_unique<Object>(object_name, mesh_info, mesh_name, material_info, m_character_count++, primitive_topology, physics);
+        object = std::make_unique<Object>(object_name, mesh_info, mesh_name, material_info, 1, primitive_topology, physics);
+        m_character_count++;
         break;
     default:
         break;
@@ -170,7 +172,6 @@ void ObjectManager::Update(float elapsed_time) {
         o->Update();
     }
     for (auto& o : m_objects) {
-        if (o->Get_Name() == L"box") continue;
         o->Update();
     }
 

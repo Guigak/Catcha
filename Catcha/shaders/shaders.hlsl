@@ -43,6 +43,8 @@ cbuffer CB_Pass : register(b2) {
 struct Vertex_In {
 	float3 position_local  : POSITION;
     float3 normal_local : NORMAL;
+    float3 tangent : TANGENT;
+    float2 uv : UV;
 };
 
 struct Vertex_Out {
@@ -79,6 +81,11 @@ float4 PS(Vertex_Out pixel_in) : SV_Target {
     float4 result = ambient + direct_light;
 
     result.a = g_diffuse_albedo.a;
+
+    float luminance = dot(result.rgb, float3(0.299, 0.587, 0.114));
+    result = float4(luminance, luminance, luminance, result.a);
+
+    result = lerp(0.2, 1.0, result);
 
     return result;
 }

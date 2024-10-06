@@ -13,6 +13,25 @@ Object::Object(std::wstring object_name, MeshInfo* mesh_info, std::wstring mesh_
 	Set_Visiable(visiable);
 }
 
+Object::Object(std::wstring object_name, Mesh_Info* mesh, DirectX::XMMATRIX world_matrix, UINT constant_buffer_index, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, bool physics, bool visiable) {
+	Set_Name(object_name);
+	Set_CB_Index(constant_buffer_index);
+	Add_Mesh(mesh, MathHelper::Identity_4x4());
+	Set_WM(world_matrix);
+	Set_PT(primitive_topology);
+	Set_Phys(physics);
+	Set_Visiable(visiable);
+}
+
+Object::Object(std::wstring object_name, std::vector<Mesh>& mesh_array, UINT constant_buffer_index, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, bool physics, bool visiable) {
+	Set_Name(object_name);
+	Set_CB_Index(constant_buffer_index);
+	Add_Mesh(mesh_array);
+	Set_PT(primitive_topology);
+	Set_Phys(physics);
+	Set_Visiable(visiable);
+}
+
 void Object::Set_Mesh_Info(MeshInfo* mesh_info, std::wstring mesh_name) {
 	if (mesh_info == nullptr) {
 		return;
@@ -155,16 +174,18 @@ void Object::Update() {
 
 void Object::Udt_WM() {
 	DirectX::XMMATRIX translate_matrix = DirectX::XMMatrixTranslation(m_position.x, m_position.y, m_position.z);
-	DirectX::XMMATRIX rotate_matrix = DirectX::XMMatrixRotationRollPitchYaw(
-		DirectX::XMConvertToRadians(m_rotate.x), DirectX::XMConvertToRadians(m_rotate.y), DirectX::XMConvertToRadians(m_rotate.z));
-	DirectX::XMMATRIX scale_matrix = DirectX::XMMatrixTranslation(m_scale.x, m_scale.y, m_scale.z);
+	//DirectX::XMMATRIX rotate_matrix = DirectX::XMMatrixRotationRollPitchYaw(
+	//	DirectX::XMConvertToRadians(m_rotate.x), DirectX::XMConvertToRadians(m_rotate.y), DirectX::XMConvertToRadians(m_rotate.z));
+	DirectX::XMMATRIX rotate_matrix = DirectX::XMMatrixRotationQuaternion(DirectX::XMLoadFloat4(&m_rotate_quat));
+	DirectX::XMMATRIX scale_matrix = DirectX::XMMatrixScaling(m_scale.x, m_scale.y, m_scale.z);
 
 	DirectX::XMStoreFloat4x4(&m_world_matrix, scale_matrix * rotate_matrix * translate_matrix);
 }
 
 void Object::Udt_LUR() {
-	DirectX::XMMATRIX rotate_matrix = DirectX::XMMatrixRotationRollPitchYaw(
-		DirectX::XMConvertToRadians(m_rotate.x), DirectX::XMConvertToRadians(m_rotate.y), DirectX::XMConvertToRadians(m_rotate.z));
+	//DirectX::XMMATRIX rotate_matrix = DirectX::XMMatrixRotationRollPitchYaw(
+	//	DirectX::XMConvertToRadians(m_rotate.x), DirectX::XMConvertToRadians(m_rotate.y), DirectX::XMConvertToRadians(m_rotate.z));
+	DirectX::XMMATRIX rotate_matrix = DirectX::XMMatrixRotationQuaternion(DirectX::XMLoadFloat4(&m_rotate_quat));
 
 	m_look = MathHelper::Normalize(MathHelper::Multiply(DirectX::XMFLOAT3(0.0f, 0.0f, 1.0f), rotate_matrix));
 	m_up = MathHelper::Normalize(MathHelper::Multiply(DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f), rotate_matrix));
@@ -324,33 +345,65 @@ void Object::TP_Down(float distance) {
 }
 
 void Object::Rotate(float degree_roll, float degree_pitch, float degree_yaw) {
-	m_rotate.x += degree_roll;
-	m_rotate.y += degree_pitch;
-	m_rotate.z += degree_yaw;
-
-	m_rotate.x = MathHelper::Min(90.0f, MathHelper::Max(-90.0f, m_rotate.x));
-	m_dirty = true;
+	Rotate_Roll(degree_roll / 100.0f);
+	Rotate_Pitch(degree_pitch / 100.0f);
+	Rotate_Yaw(degree_yaw / 100.0f);
 }
 
 void Object::Rotate_Roll(float degree) {
-	m_rotate.x += degree;
+	DirectX::XMStoreFloat4(&m_rotate_quat,
+		DirectX::XMQuaternionMultiply(DirectX::XMLoadFloat4(&m_rotate_quat),
+			DirectX::XMQuaternionRotationAxis(DirectX::XMLoadFloat3(&Get_Right()), degree)));
 
-	m_rotate.x = MathHelper::Min(90.0f, MathHelper::Max(-90.0f, m_rotate.x));
 	m_dirty = true;
 }
 
 void Object::Rotate_Pitch(float degree) {
-	m_rotate.y += degree;
+	DirectX::XMStoreFloat4(&m_rotate_quat,
+		DirectX::XMQuaternionMultiply(DirectX::XMLoadFloat4(&m_rotate_quat),
+			DirectX::XMQuaternionRotationAxis(DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f), degree)));
 
 	m_dirty = true;
 }
 
 void Object::Rotate_Yaw(float degree) {
-	m_rotate.z += degree;
+	DirectX::XMStoreFloat4(&m_rotate_quat,
+		DirectX::XMQuaternionMultiply(DirectX::XMLoadFloat4(&m_rotate_quat),
+			DirectX::XMQuaternionRotationAxis(DirectX::XMLoadFloat3(&Get_Look()), degree)));
 
 	m_dirty = true;
 }
 
 void Object::Bind_Camera(Camera* camera) {
 	m_camera = camera;
+}
+
+void Object::Add_Mesh(Mesh_Info* mesh_info, DirectX::XMFLOAT4X4 local_transform_matrix) {
+	m_meshes.emplace_back(mesh_info, local_transform_matrix);
+}
+
+void Object::Add_Mesh(std::vector<Mesh>& mesh_array) {
+	m_meshes.insert(m_meshes.end(), mesh_array.begin(), mesh_array.end());
+}
+
+void Object::Set_WM(DirectX::XMMATRIX world_matrix) {
+	//world_matrix = DirectX::XMMatrixMultiply(world_matrix, DirectX::XMMatrixRotationRollPitchYaw(0.0f, 0.0f, DirectX::XMConvertToRadians(180.0f)));
+
+	DirectX::XMVECTOR translate, rotate, scale;
+
+	DirectX::XMMatrixDecompose(&scale, &rotate, &translate, world_matrix);
+
+	DirectX::XMStoreFloat3(&m_position, translate);
+	DirectX::XMStoreFloat4(&m_rotate_quat, rotate);
+	DirectX::XMStoreFloat3(&m_scale, scale);
+
+	Udt_WM();
+
+	//m_world_matrix = XMMATRIX_2_XMFLOAT4X4(world_matrix);
+}
+
+void Object::Draw(ID3D12GraphicsCommandList* command_list) {
+	for (auto& m : m_meshes) {
+		m.mesh_info->Draw(command_list);
+	}
 }

@@ -1,6 +1,8 @@
 #pragma once
 #include "common.h"
 #include "Object.h"
+#include "MeshManager.h"
+#include "FBXManager.h"
 
 enum class Action;
 
@@ -26,11 +28,14 @@ private:
 	std::unordered_map<std::wstring, std::vector<Object*>> m_object_set_map;
 	std::unordered_map<std::wstring, std::wstring> m_collision_pair_map;
 
+	//
+	MeshManager m_mesh_manager;
+
 public:
 	ObjectManager() {}
 	~ObjectManager() {}
 
-	void Add_Obj(std::wstring object_name, MeshInfo* mesh_info, std::wstring mesh_name, MaterialInfo* material_info,
+	Object* Add_Obj(std::wstring object_name, MeshInfo* mesh_info, std::wstring mesh_name, MaterialInfo* material_info,
 		D3D12_PRIMITIVE_TOPOLOGY primitive_topology, ObjectType object_type, bool physics, bool visiable, std::wstring set_name);
 
 	Object* Get_Obj(std::wstring object_name);
@@ -61,5 +66,21 @@ public:
 
 	//
 	void Bind_Cam_2_Obj(std::wstring camera_name, std::wstring object_name, float distance);	// Bind Camera to Object
+
+	//
+	MeshManager& Get_Mesh_Manager() { return m_mesh_manager; }
+
+	void Ipt_From_FBX(std::wstring file_name, bool merge_mesh, bool add_object, bool merge_object, BYTE info_flag);
+
+	Object* Add_Obj(std::wstring object_name, std::wstring mesh_name, std::wstring set_name = L"Object",
+		DirectX::XMMATRIX world_matrix = DirectX::XMMatrixIdentity(),
+		D3D12_PRIMITIVE_TOPOLOGY primitive_topology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType object_type = ObjectType::OPAQUE_OBJECT,
+		bool physics = false, bool visiable = true);
+	Object* Add_Obj(std::wstring object_name, std::vector<Mesh>& mesh_array, std::wstring set_name = L"Object",
+		D3D12_PRIMITIVE_TOPOLOGY primitive_topology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType object_type = ObjectType::OPAQUE_OBJECT,
+		bool physics = false, bool visiable = true);
+
+	//
+	void Build_BV(ID3D12Device* device, ID3D12GraphicsCommandList* command_list);
 };
 

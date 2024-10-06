@@ -3,6 +3,8 @@
 
 struct MeshData;
 
+class ObjectManager;
+
 class FBXManager {
 private:
 	//static FBXManager* fbx_manager;
@@ -24,5 +26,18 @@ public:
 	DirectX::XMFLOAT3 Get_Norm(FbxMesh* mesh, UINT control_point_index, UINT vertex_count);	// Get Normal
 	DirectX::XMFLOAT3 Get_Tan(FbxMesh* mesh, UINT control_point_index, UINT vertex_count);	// Get Tangent
 	DirectX::XMFLOAT2 Get_UV(FbxMesh* mesh, UINT control_point_index, UINT vertex_count);	// Get UV
-};
 
+	void Ipt_From_File(ObjectManager* object_maanger, std::wstring file_name, bool merge_mesh, bool add_object, bool merge_object, BYTE info_flag);	// Import From File
+
+	FbxScene* Ipt_Scene(FbxManager* manager, std::wstring file_name);	// Import Scene
+
+	void Prcs_Node(
+		FbxNode* node, ObjectManager* object_maanger,
+		Mesh_Info& mesh_info, std::vector<Mesh> mesh_array,
+		bool merge_mesh, bool add_object, bool merge_object, BYTE info_flag);
+
+	void Prcs_Mesh_Node(
+		FbxNode* node, ObjectManager* object_maanger,
+		Mesh_Info& mesh_info, std::vector<Mesh> mesh_array,
+		bool merge_mesh, bool add_object, bool merge_object, BYTE info_flag);
+};

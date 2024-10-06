@@ -69,10 +69,17 @@ protected:
 	//
 	DirectX::BoundingOrientedBox m_OBB;
 
+	//
+	std::vector<Mesh> m_meshes;
+
+	DirectX::XMFLOAT4 m_rotate_quat = { 0.0f, 0.0f, 0.0f, 1.0f };
+
 public:
 	Object() {}
 	Object(std::wstring object_name, MeshInfo* mesh_info, std::wstring mesh_name,
-		MaterialInfo* material_info, UINT constant_buffer_info, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, bool physics, bool visiable);
+		MaterialInfo* material_info, UINT constant_buffer_index, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, bool physics, bool visiable);
+	Object(std::wstring object_name, Mesh_Info* mesh, DirectX::XMMATRIX world_matrix, UINT constant_buffer_index, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, bool physics, bool visiable);
+	Object(std::wstring object_name, std::vector<Mesh>& mesh_array, UINT constant_buffer_index, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, bool physics, bool visiable);
 	~Object() {}
 
 	void Set_Name(std::wstring object_name) { m_name = object_name; }
@@ -169,5 +176,12 @@ public:
 
 	//
 	void Bind_Camera(Camera* camera);
+
+	//
+	void Add_Mesh(Mesh_Info* mesh_info, DirectX::XMFLOAT4X4 local_transform_matrix);
+	void Add_Mesh(std::vector<Mesh>& mesh_array);
+
+	void Set_WM(DirectX::XMMATRIX world_matrix);
+	void Draw(ID3D12GraphicsCommandList* command_list);
 };
 

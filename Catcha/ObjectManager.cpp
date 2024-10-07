@@ -2,8 +2,8 @@
 #include "InputManager.h"
 #include "Camera.h"
 
-void ObjectManager::Add_Obj(std::wstring object_name, MeshInfo* mesh_info, std::wstring mesh_name, MaterialInfo* material_info,
-    D3D12_PRIMITIVE_TOPOLOGY primitive_topology, ObjectType object_type, bool physics, std::wstring set_name)
+Object* ObjectManager::Add_Obj(std::wstring object_name, MeshInfo* mesh_info, std::wstring mesh_name, MaterialInfo* material_info,
+    D3D12_PRIMITIVE_TOPOLOGY primitive_topology, ObjectType object_type, bool physics, bool visiable, std::wstring set_name)
 {
     //auto object = std::make_unique<Object>(object_name, mesh_info, mesh_name, material_info, m_object_count++, primitive_topology, physics);
 
@@ -12,13 +12,13 @@ void ObjectManager::Add_Obj(std::wstring object_name, MeshInfo* mesh_info, std::
     switch (object_type) {
     case ObjectType::OPAQUE_OBJECT:
     case ObjectType::TRANSPARENT_OBJECT:
-        object = std::make_unique<Object>(object_name, mesh_info, mesh_name, material_info, 0, primitive_topology, physics);
-        m_object_count++;
+        object = std::make_unique<Object>(object_name, mesh_info, mesh_name, material_info, m_object_count++, primitive_topology, physics, visiable);
         break;
     case ObjectType::CAMERA_OBJECT:
         object = std::make_unique<Camera>();
         break;
     case ObjectType::CHARACTER_OBJECT:
+        // TODO : merge 수정 필요
         object = std::make_unique<Object>(object_name, mesh_info, mesh_name, material_info, 1, primitive_topology, physics);
         m_character_count++;
         break;
@@ -56,6 +56,8 @@ void ObjectManager::Add_Obj(std::wstring object_name, MeshInfo* mesh_info, std::
     }
 
     m_object_set_map[set_name].emplace_back(object_pointer);
+
+    return m_object_map[object_name].get();
 }
 
 Object* ObjectManager::Get_Obj(std::wstring object_name) {
@@ -208,4 +210,54 @@ void ObjectManager::Bind_Cam_2_Obj(std::wstring camera_name, std::wstring object
 
     object->Bind_Camera(camera);
     camera->Bind_Obj(object, distance);
+}
+
+void ObjectManager::Ipt_From_FBX(std::wstring file_name, bool merge_mesh, bool add_object, bool merge_object, BYTE info_flag) {
+    FBXManager* fbx_manager = FBXManager::Get_Inst();
+
+    fbx_manager->Ipt_From_File(this, file_name, merge_mesh, add_object, merge_mesh, info_flag);
+}
+
+Object* ObjectManager::Add_Obj(std::wstring object_name, std::wstring mesh_name, std::wstring set_name,
+    DirectX::XMMATRIX world_matrix,
+    D3D12_PRIMITIVE_TOPOLOGY primitive_topology, ObjectType object_type,
+    bool physics, bool visiable)
+{
+    std::unique_ptr<Object> object;
+    object = std::make_unique<Object>(object_name, m_mesh_manager.Get_Mesh(mesh_name), world_matrix, m_object_count++, primitive_topology, physics, visiable);
+
+    m_object_map[object_name] = std::move(object);
+
+    Object* object_pointer = m_object_map[object_name].get();
+    m_objects.emplace_back(object_pointer);
+
+    m_opaque_objects.emplace_back(object_pointer);
+
+    m_object_set_map[set_name].emplace_back(object_pointer);
+
+    return m_object_map[object_name].get();
+
+}
+
+Object* ObjectManager::Add_Obj(std::wstring object_name, std::vector<Mesh>& mesh_array, std::wstring set_name,
+    D3D12_PRIMITIVE_TOPOLOGY primitive_topology, ObjectType object_type,
+    bool physics, bool visiable)
+{
+    std::unique_ptr<Object> object;
+    object = std::make_unique<Object>(object_name, mesh_array, m_object_count++, primitive_topology, physics, visiable);
+
+    m_object_map[object_name] = std::move(object);
+
+    Object* object_pointer = m_object_map[object_name].get();
+    m_objects.emplace_back(object_pointer);
+
+    m_opaque_objects.emplace_back(object_pointer);
+
+    m_object_set_map[set_name].emplace_back(object_pointer);
+
+    return m_object_map[object_name].get();
+}
+
+void ObjectManager::Build_BV(ID3D12Device* device, ID3D12GraphicsCommandList* command_list) {
+    m_mesh_manager.Crt_BV(device, command_list);
 }

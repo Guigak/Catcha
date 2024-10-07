@@ -1,5 +1,6 @@
 #include "FBXManager.h"
 #include "MeshCreater.h"
+#include "ObjectManager.h"
 
 std::unique_ptr<FBXManager> FBXManager::fbx_manager = nullptr;
 
@@ -93,23 +94,25 @@ void FBXManager::Add_Mesh_From_Node(FbxNode* node, MeshData& mesh_data) {
     OutputDebugStringA(str);
 
     FbxAMatrix local_transform_matrix = node->EvaluateLocalTransform();
-    FbxAMatrix global_transform_matrix = node->GetParent()->EvaluateLocalTransform();
+    FbxAMatrix global_transform_matrix = node->EvaluateGlobalTransform();
 
-    FbxAMatrix transform_matrix = local_transform_matrix;
-    //FbxAMatrix transform_matrix = global_transform_matrix * local_transform_matrix;
-
-    //DirectX::XMMATRIX transform_xmmatrix = {
-    //    (float)transform_matrix[0][0], (float)transform_matrix[1][0], (float)transform_matrix[2][0], (float)transform_matrix[3][0],
-    //    (float)transform_matrix[0][1], (float)transform_matrix[1][1], (float)transform_matrix[2][1], (float)transform_matrix[3][1],
-    //    (float)transform_matrix[0][2], (float)transform_matrix[1][2], (float)transform_matrix[2][2], (float)transform_matrix[3][2],
-    //    (float)transform_matrix[0][3], (float)transform_matrix[1][3], (float)transform_matrix[2][3], (float)transform_matrix[3][3],
-    //};
+    //FbxAMatrix transform_matrix = local_transform_matrix;
+    FbxAMatrix transform_matrix = global_transform_matrix;// *local_transform_matrix;
+    FbxAMatrix rotate_matrix;
+    rotate_matrix.SetR(global_transform_matrix.GetR());
 
     DirectX::XMMATRIX transform_xmmatrix = {
         (float)transform_matrix[0][0], (float)transform_matrix[0][1], (float)transform_matrix[0][2], (float)transform_matrix[0][3],
         (float)transform_matrix[1][0], (float)transform_matrix[1][1], (float)transform_matrix[1][2], (float)transform_matrix[1][3],
         (float)transform_matrix[2][0], (float)transform_matrix[2][1], (float)transform_matrix[2][2], (float)transform_matrix[2][3],
         (float)transform_matrix[3][0], (float)transform_matrix[3][1], (float)transform_matrix[3][2], (float)transform_matrix[3][3],
+    };
+
+    DirectX::XMMATRIX rotate_xmmatrix = {
+        (float)rotate_matrix[0][0], (float)rotate_matrix[0][1], (float)rotate_matrix[0][2], (float)rotate_matrix[0][3],
+        (float)rotate_matrix[1][0], (float)rotate_matrix[1][1], (float)rotate_matrix[1][2], (float)rotate_matrix[1][3],
+        (float)rotate_matrix[2][0], (float)rotate_matrix[2][1], (float)rotate_matrix[2][2], (float)rotate_matrix[2][3],
+        (float)rotate_matrix[3][0], (float)rotate_matrix[3][1], (float)rotate_matrix[3][2], (float)rotate_matrix[3][3],
     };
 
     //
@@ -132,9 +135,9 @@ void FBXManager::Add_Mesh_From_Node(FbxNode* node, MeshData& mesh_data) {
         vertex_data.uv = Get_UV(mesh, control_point_index, i);
 
         vertex_data.position = MathHelper::Multiply(vertex_data.position, transform_xmmatrix);
-        vertex_data.normal = MathHelper::Multiply(vertex_data.normal, transform_xmmatrix);
-        vertex_data.tangent = MathHelper::Multiply(vertex_data.tangent, transform_xmmatrix);
-        vertex_data.uv = MathHelper::Multiply(vertex_data.uv, transform_xmmatrix);
+        vertex_data.normal = MathHelper::Multiply(vertex_data.normal, rotate_xmmatrix);
+        vertex_data.tangent = MathHelper::Multiply(vertex_data.tangent, rotate_xmmatrix);
+        //vertex_data.uv = MathHelper::Multiply(vertex_data.uv, transform_xmmatrix);
 
         mesh_data.vertices.emplace_back(vertex_data);
 
@@ -389,4 +392,155 @@ DirectX::XMFLOAT2 FBXManager::Get_UV(FbxMesh* mesh, UINT control_point_index, UI
     }
 
     return DirectX::XMFLOAT2(0.0f, 0.0f);
+}
+
+void FBXManager::Ipt_From_File(ObjectManager* object_maanger, std::wstring file_name, bool merge_mesh, bool add_object, bool merge_object, BYTE info_flag) {
+    FbxManager* manager = FbxManager::Create();
+    FbxScene* scene = Ipt_Scene(manager, file_name);
+
+    // Prcs Nodes
+    Mesh_Info mesh_info;
+    std::vector<Mesh> mesh_array;
+
+    Prcs_Node(scene->GetRootNode(), object_maanger,
+        mesh_info, mesh_array,
+        merge_mesh, add_object, merge_object, info_flag);
+
+    // Prcs Animation Data
+
+    // Add object
+    if (merge_mesh) {
+        object_maanger->Get_Mesh_Manager().Add_Mesh(file_name, mesh_info.vertices, mesh_info.indices_32);
+    }
+
+    if (add_object) {
+        if (merge_mesh) {
+            object_maanger->Add_Obj(file_name, file_name);
+        }
+        else {
+            if (merge_object) {
+                object_maanger->Add_Obj(file_name, mesh_array);
+            }
+        }
+    }
+
+    //
+    manager->Destroy();
+}
+
+FbxScene* FBXManager::Ipt_Scene(FbxManager* manager, std::wstring file_name) {
+    FbxIOSettings* ios = FbxIOSettings::Create(manager, IOSROOT);
+    manager->SetIOSettings(ios);
+
+    FbxImporter* importer = FbxImporter::Create(manager, "");
+    bool result = importer->Initialize(WStr_2_Str(file_name).c_str(), -1, manager->GetIOSettings());
+
+    if (!result) {
+        OutputDebugString(L"Importer Initialize Failed");
+        exit(-1);
+    }
+
+    FbxScene* scene = FbxScene::Create(manager, "scene");
+
+    importer->Import(scene);
+    importer->Destroy();
+
+    FbxAxisSystem axis_system = FbxAxisSystem::OpenGL;
+    //FbxAxisSystem axis_system = FbxAxisSystem::DirectX;
+    axis_system.ConvertScene(scene);
+
+    FbxGeometryConverter converter(manager);
+    converter.Triangulate(scene, true);
+
+    return scene;
+}
+
+void FBXManager::Prcs_Node(
+    FbxNode* node, ObjectManager* object_maanger,
+    Mesh_Info& mesh_info, std::vector<Mesh> mesh_array,
+    bool merge_mesh, bool add_object, bool merge_object, BYTE info_flag)
+{
+    FbxNodeAttribute* node_attribute = node->GetNodeAttribute();
+
+    if (node_attribute) {
+        switch (node_attribute->GetAttributeType()) {
+        case FbxNodeAttribute::eMesh:
+            Prcs_Mesh_Node(node, object_maanger,
+                mesh_info, mesh_array,
+                merge_mesh, add_object, merge_object, info_flag);
+            break;
+        }
+    }
+
+    UINT child_count = node->GetChildCount();
+
+    for (UINT i = 0; i < child_count; ++i) {
+        Prcs_Node(node->GetChild(i), object_maanger,
+            mesh_info, mesh_array,
+            merge_mesh, add_object, merge_object, info_flag);
+    }
+}
+
+void FBXManager::Prcs_Mesh_Node(
+    FbxNode* node, ObjectManager* object_maanger,
+    Mesh_Info& mesh_info, std::vector<Mesh> mesh_array,
+    bool merge_mesh, bool add_object, bool merge_object, BYTE info_flag)
+{
+    if (!(info_flag & MESH_INFO)) {
+        return;
+    }
+
+    std::wstring node_name = Str_2_WStr(node->GetName());
+
+    std::vector<Vertex_Info> vertex_array;
+    std::vector<std::uint32_t> index_array;
+
+    FbxAMatrix global_transform_matrix = node->EvaluateGlobalTransform();
+    FbxAMatrix rotate_matrix;
+    rotate_matrix.SetR(global_transform_matrix.GetR());
+
+    DirectX::XMMATRIX global_transform_xmmatrix = FbxAMatrix_2_XMMATRIX(global_transform_matrix);
+    DirectX::XMMATRIX rotate_xmmatrix = FbxAMatrix_2_XMMATRIX(rotate_matrix);
+
+    //
+    FbxMesh* mesh = node->GetMesh();
+
+    UINT triangle_count = mesh->GetPolygonCount();
+    UINT vertex_count = triangle_count * 3;
+
+    for (UINT i = 0; i < vertex_count; ++i) {
+        std::uint32_t control_point_index = mesh->GetPolygonVertex(i / 3, i % 3);
+
+        index_array.emplace_back(i);
+
+        Vertex_Info vertex_info;
+        vertex_info.position = Get_Pos(mesh, i / 3, i % 3);
+        vertex_info.normal = Get_Norm(mesh, control_point_index, i);
+        vertex_info.tangent = Get_Tan(mesh, control_point_index, i);
+        vertex_info.uv = Get_UV(mesh, control_point_index, i);
+
+        if (merge_mesh) {
+            vertex_info.position = MathHelper::Multiply(vertex_info.position, global_transform_xmmatrix);
+            vertex_info.normal = MathHelper::Multiply(vertex_info.normal, rotate_xmmatrix);
+            vertex_info.tangent = MathHelper::Multiply(vertex_info.tangent, rotate_xmmatrix);
+        }
+
+        vertex_array.emplace_back(vertex_info);
+    }
+
+    if (merge_mesh) {
+        mesh_info.Add_Info(vertex_array, index_array);
+    }
+    else {
+        Mesh_Info* added_mesh_info = object_maanger->Get_Mesh_Manager().Add_Mesh(node_name, vertex_array, index_array);
+
+        if (add_object) {
+            if (merge_object) {
+                mesh_array.emplace_back(added_mesh_info, XMMATRIX_2_XMFLOAT4X4(global_transform_xmmatrix));
+            }
+            else {
+                object_maanger->Add_Obj(node_name, node_name, L"Object", global_transform_xmmatrix);
+            }
+        }
+    }
 }

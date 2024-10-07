@@ -69,10 +69,12 @@ extern void print_error(const char* msg, int err_no);
 #include "fbxsdk.h"
 
 // constant
-constexpr int CLIENT_WIDTH = 800;
-constexpr int CLIENT_HEIGHT = 600;
+constexpr int CLIENT_WIDTH = 1600;
+constexpr int CLIENT_HEIGHT = 900;
 
 constexpr int FRAME_RESOURCES_NUMBER = 3;
+
+constexpr int MAX_BONE_COUNT = 4;
 
 // virtual key
 #define VK_NUM0 0x30
@@ -112,6 +114,11 @@ constexpr int FRAME_RESOURCES_NUMBER = 3;
 #define VK_X 0x58
 #define VK_Y 0x59
 #define VK_Z 0x5A
+
+#define MESH_INFO 0b0001
+#define MATERIAL_INFO 0b0010
+#define SKELETON_INFO 0b0100
+#define ANIMATION_INFO 0b1000
 
 // struct
 struct D3D12_DEFAULT;
@@ -333,6 +340,48 @@ inline std::wstring Str_2_WStr(const std::string& str) {
 	return std::wstring(wstr);
 }
 
+inline DirectX::XMMATRIX FbxAMatrix_2_XMMATRIX(const FbxAMatrix& fbx_matrix) {
+	DirectX::XMMATRIX xmmatrix = {
+		(float)fbx_matrix[0][0], (float)fbx_matrix[0][1], (float)fbx_matrix[0][2], (float)fbx_matrix[0][3],
+		(float)fbx_matrix[1][0], (float)fbx_matrix[1][1], (float)fbx_matrix[1][2], (float)fbx_matrix[1][3],
+		(float)fbx_matrix[2][0], (float)fbx_matrix[2][1], (float)fbx_matrix[2][2], (float)fbx_matrix[2][3],
+		(float)fbx_matrix[3][0], (float)fbx_matrix[3][1], (float)fbx_matrix[3][2], (float)fbx_matrix[3][3]
+	};
+
+	return xmmatrix;
+}
+
+inline DirectX::XMFLOAT4X4 XMMATRIX_2_XMFLOAT4X4(const DirectX::XMMATRIX& xmmatrix) {
+	DirectX::XMFLOAT4X4 xmfloat4x4;
+	DirectX::XMStoreFloat4x4(&xmfloat4x4, xmmatrix);
+
+	return xmfloat4x4;
+}
+
+inline DirectX::XMFLOAT3 Quat_2_Euler(const DirectX::XMVECTOR& quaternion) {
+	DirectX::XMFLOAT3 euler;
+	DirectX::XMVECTOR quat = DirectX::XMQuaternionNormalize(quaternion);
+
+	float ysqr = DirectX::XMVectorGetY(quat) * DirectX::XMVectorGetY(quat);
+
+	// Roll
+	float t0 = 2.0f * (DirectX::XMVectorGetW(quat) * DirectX::XMVectorGetX(quat) + DirectX::XMVectorGetY(quat) * DirectX::XMVectorGetZ(quat));
+	float t1 = 1.0f - 2.0f * (DirectX::XMVectorGetX(quat) * DirectX::XMVectorGetX(quat) + ysqr);
+	euler.x = std::atan2(t0, t1);
+
+	// Pitch
+	float t2 = 2.0f * (DirectX::XMVectorGetW(quat) * DirectX::XMVectorGetY(quat) - DirectX::XMVectorGetZ(quat) * DirectX::XMVectorGetX(quat));
+	t2 = std::clamp(t2, -1.0f, 1.0f);
+	euler.y = std::asin(t2);
+
+	// Yaw
+	float t3 = 2.0f * (DirectX::XMVectorGetW(quat) * DirectX::XMVectorGetZ(quat) + DirectX::XMVectorGetX(quat) * DirectX::XMVectorGetY(quat));
+	float t4 = 1.0f - 2.0f * (ysqr + DirectX::XMVectorGetZ(quat) * DirectX::XMVectorGetZ(quat));
+	euler.z = std::atan2(t3, t4);
+
+	return euler;
+}
+
 #define Throw_If_Failed(x)															\
 {																					\
 	HRESULT hresult = (x);															\
@@ -343,10 +392,21 @@ inline std::wstring Str_2_WStr(const std::string& str) {
 #define Release_Com(x) { if (x) { x->Release(); x = 0; } }
 
 // info
+struct VertexInfo {
+	DirectX::XMFLOAT3 position;
+	DirectX::XMFLOAT3 normal;
+	DirectX::XMFLOAT3 tangent;
+	DirectX::XMFLOAT2 uv;
+	UINT material_index;
+	UINT bone_count;
+	UINT bone_indicies[MAX_BONE_COUNT];
+	DirectX::XMFLOAT4 bone_weights;
+};
+
 struct SubmeshInfo {
 	UINT index_count = 0;
 	UINT start_index_location = 0;
-	INT base_vertex_location = 0;
+	UINT base_vertex_location = 0;
 
 	float minimum_x = FLT_MAX;
 	float minimum_y = FLT_MAX;
@@ -418,22 +478,21 @@ struct MaterialInfo {
 	float roughness = 0.25f;
 };
 
-//struct ObjectInfo {
-//	DirectX::XMFLOAT4X4 world_matrix = MathHelper::Identity_4x4();
-//
-//	UINT constant_buffer_index = -1;
-//
-//	MeshInfo* mesh_info = nullptr;
-//	MaterialInfo* material_info = nullptr;
-//
-//	D3D12_PRIMITIVE_TOPOLOGY primitive_topology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-//
-//	UINT index_count = 0;
-//	UINT start_index_location = 0;
-//	int base_vertex_location = 0;
-//
-//	int dirty_frame_count = FRAME_RESOURCES_NUMBER;
-//};
+struct BoneInfo {
+	std::wstring name;
+};
+
+struct SkeletonInfo {
+	std::unique_ptr<BoneInfo> root_bone;
+};
+
+struct KeyframeInfo {
+	float time;
+};
+
+struct AnimationInfo {
+	std::wstring name;
+};
 
 struct LightInfo {
 	DirectX::XMFLOAT3 strength = { 0.5f, 0.5f, 0.5f };
@@ -1585,3 +1644,146 @@ inline Microsoft::WRL::ComPtr<ID3DBlob> Compile_Shader(
 
 	return code_blob;
 }
+
+// _Info
+struct Vertex_Info {
+	DirectX::XMFLOAT3 position;
+	DirectX::XMFLOAT3 normal;
+	DirectX::XMFLOAT3 tangent;
+	DirectX::XMFLOAT2 uv;
+	//UINT material_index;
+	//UINT bone_count;
+	//UINT bone_indicies[MAX_BONE_COUNT];
+	//DirectX::XMFLOAT4 bone_weights;
+};
+
+struct Mesh_Info {
+	std::vector<Vertex_Info> vertices;
+
+	std::vector<std::uint16_t> indices_16;
+	std::vector<std::uint32_t> indices_32;
+	UINT index_count = 0;
+
+	Microsoft::WRL::ComPtr<ID3DBlob> vertex_buffer_cpu = nullptr;
+	Microsoft::WRL::ComPtr<ID3DBlob> index_buffer_cpu = nullptr;
+
+	Microsoft::WRL::ComPtr<ID3D12Resource> vertex_buffer_gpu = nullptr;
+	Microsoft::WRL::ComPtr<ID3D12Resource> index_buffer_gpu = nullptr;
+
+	Microsoft::WRL::ComPtr<ID3D12Resource> vertex_upload_buffer = nullptr;
+	Microsoft::WRL::ComPtr<ID3D12Resource> index_upload_buffer = nullptr;
+
+	UINT vertex_buffer_stride = 0;
+	UINT vertex_buffer_size = 0;
+
+	DXGI_FORMAT index_format = DXGI_FORMAT_R32_UINT;
+	UINT index_buffer_size = 0;
+
+	D3D12_PRIMITIVE_TOPOLOGY primitive_topology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+
+	//
+	Mesh_Info() {}
+	Mesh_Info(std::vector<Vertex_Info>& vertex_array, std::vector<std::uint32_t>& index_array_32) {
+		vertices.assign(vertex_array.begin(), vertex_array.end());
+		indices_32.assign(index_array_32.begin(), index_array_32.end());
+	}
+
+	void Add_Info(std::vector<Vertex_Info>& vertex_array, std::vector<std::uint32_t>& index_array_32) {
+		size_t vertex_count = vertices.size();
+
+		vertices.insert(vertices.end(), vertex_array.begin(), vertex_array.end());
+
+		size_t index_count = indices_32.size();
+		for (size_t i = 0; i < index_array_32.size(); ++i) {
+			indices_32.emplace_back((std::uint32_t)(vertex_count + index_array_32[i]));
+		}
+	}
+
+	D3D12_VERTEX_BUFFER_VIEW Get_VBV() const {	// Get Vertex Buffer View
+		D3D12_VERTEX_BUFFER_VIEW vertex_buffer_view;
+		vertex_buffer_view.BufferLocation = vertex_buffer_gpu->GetGPUVirtualAddress();
+		vertex_buffer_view.StrideInBytes = vertex_buffer_stride;
+		vertex_buffer_view.SizeInBytes = vertex_buffer_size;
+
+		return vertex_buffer_view;
+	}
+
+	D3D12_INDEX_BUFFER_VIEW Get_IBV() const {	// Get Index Buffer View
+		D3D12_INDEX_BUFFER_VIEW index_buffer_view;
+		index_buffer_view.BufferLocation = index_buffer_gpu->GetGPUVirtualAddress();
+		index_buffer_view.Format = index_format;
+		index_buffer_view.SizeInBytes = index_buffer_size;
+
+		return index_buffer_view;
+	}
+
+	void Crt_BV(ID3D12Device* device, ID3D12GraphicsCommandList* command_list) {	// Creat Buffer View
+		size_t vertex_count = vertices.size();
+
+		vertex_buffer_size = (UINT)vertices.size() * sizeof(Vertex_Info);
+
+		if (vertex_count <= UINT16_MAX) {
+			if (indices_16.empty()) {
+				indices_16.resize(indices_32.size());
+
+				for (size_t i = 0; i < indices_32.size(); ++i) {
+					indices_16[i] = (std::uint16_t)indices_32[i];
+				}
+			}
+
+			index_buffer_size = (UINT)indices_16.size() * sizeof(std::uint16_t);
+		}
+		else {
+			index_buffer_size = (UINT)indices_32.size() * sizeof(std::uint32_t);
+		}
+
+		Throw_If_Failed(D3DCreateBlob(vertex_buffer_size, &vertex_buffer_cpu));
+		CopyMemory(vertex_buffer_cpu->GetBufferPointer(), vertices.data(), vertex_buffer_size);
+
+		Throw_If_Failed(D3DCreateBlob(index_buffer_size, &index_buffer_cpu));
+		if (vertex_count <= UINT16_MAX) {
+			CopyMemory(index_buffer_cpu->GetBufferPointer(), indices_16.data(), index_buffer_size);
+		}
+		else {
+			CopyMemory(index_buffer_cpu->GetBufferPointer(), indices_32.data(), index_buffer_size);
+		}
+
+		vertex_buffer_gpu = Crt_DB(device, command_list, vertices.data(), vertex_buffer_size, vertex_upload_buffer);
+
+		if (vertex_count <= UINT16_MAX) {
+			index_buffer_gpu = Crt_DB(device, command_list, indices_16.data(), index_buffer_size, index_upload_buffer);
+		}
+		else {
+			index_buffer_gpu = Crt_DB(device, command_list, indices_32.data(), index_buffer_size, index_upload_buffer);
+		}
+
+		vertex_buffer_stride = sizeof(Vertex_Info);
+
+		if (vertex_count <= UINT16_MAX) {
+			index_format = DXGI_FORMAT_R16_UINT;
+		}
+		else {
+			index_format = DXGI_FORMAT_R32_UINT;
+		}
+
+		index_count = (UINT)indices_32.size();
+	}
+
+	void Draw(ID3D12GraphicsCommandList* command_list) {
+		command_list->IASetVertexBuffers(0, 1, &Get_VBV());
+		command_list->IASetIndexBuffer(&Get_IBV());
+		command_list->IASetPrimitiveTopology(primitive_topology);
+
+		command_list->DrawIndexedInstanced(index_count, 1, 0, 0, 0);
+	}
+
+	void Free_UB() {	// Free Upload Buffer
+		vertex_upload_buffer = nullptr;
+		index_upload_buffer = nullptr;
+	}
+};
+
+struct Mesh {
+	Mesh_Info* mesh_info = nullptr;
+	DirectX::XMFLOAT4X4 local_transform_matrix = MathHelper::Identity_4x4();
+};

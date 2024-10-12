@@ -10,6 +10,8 @@
     #define SPOT_LIGHTS_NUMBER 1
 #endif
 
+#define MAX_BONE_COUNT 4
+
 #include "lighting.hlsl"
 
 cbuffer CB_Object : register(b0) {
@@ -41,10 +43,13 @@ cbuffer CB_Pass : register(b2) {
 };
 
 struct Vertex_In {
-	float3 position_local  : POSITION;
+	float3 position_local : POSITION;
     float3 normal_local : NORMAL;
     float3 tangent : TANGENT;
     float2 uv : UV;
+    uint bone_count : BONECOUNT;
+    uint bone_indices[4] : BONEINDICES;
+    float bone_weights[4] : BONEWEIGHTS;
 };
 
 struct Vertex_Out {

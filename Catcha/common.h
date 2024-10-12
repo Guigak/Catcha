@@ -35,6 +35,7 @@
 #include <algorithm>
 #include <vector>
 #include <array>
+#include <map>
 #include <stack>
 #include <unordered_set>
 #include <unordered_map>
@@ -54,7 +55,8 @@ constexpr int CLIENT_HEIGHT = 900;
 
 constexpr int FRAME_RESOURCES_NUMBER = 3;
 
-constexpr int MAX_BONE_COUNT = 4;
+constexpr int MAX_BONE_COUNT = 128;
+constexpr int MAX_WEIGHT_BONE_COUNT = 4;
 
 // virtual key
 #define VK_NUM0 0x30
@@ -146,6 +148,10 @@ struct MathHelper {
 		DirectX::XMVECTOR determinant = DirectX::XMMatrixDeterminant(m);
 		
 		return DirectX::XMMatrixTranspose(DirectX::XMMatrixInverse(&determinant, m));
+	}
+
+	static DirectX::XMMATRIX Inverse(DirectX::XMMATRIX m) {
+		return  DirectX::XMMatrixInverse(nullptr, m);
 	}
 
 	static DirectX::XMFLOAT4X4 Identity_4x4() {
@@ -357,7 +363,7 @@ struct VertexInfo {
 	DirectX::XMFLOAT2 uv;
 	UINT material_index;
 	UINT bone_count;
-	UINT bone_indicies[MAX_BONE_COUNT];
+	UINT bone_indices[MAX_BONE_COUNT];
 	DirectX::XMFLOAT4 bone_weights;
 };
 
@@ -1610,9 +1616,9 @@ struct Vertex_Info {
 	DirectX::XMFLOAT3 tangent;
 	DirectX::XMFLOAT2 uv;
 	//UINT material_index;
-	//UINT bone_count;
-	//UINT bone_indicies[MAX_BONE_COUNT];
-	//DirectX::XMFLOAT4 bone_weights;
+	UINT bone_count = 0;
+	UINT bone_indices[MAX_WEIGHT_BONE_COUNT];
+	float bone_weights[MAX_WEIGHT_BONE_COUNT];
 };
 
 struct Mesh_Info {
@@ -1744,4 +1750,35 @@ struct Mesh_Info {
 struct Mesh {
 	Mesh_Info* mesh_info = nullptr;
 	DirectX::XMFLOAT4X4 local_transform_matrix = MathHelper::Identity_4x4();
+};
+
+struct Bone_Info {
+	std::wstring name;
+	DirectX::XMFLOAT4X4 offset_matrix;
+	UINT parent_bone_index;
+	UINT bone_index;
+};
+
+struct Skeleton_Info {
+	std::wstring name;
+	UINT bone_count;
+	std::vector<Bone_Info> bone_array;
+	DirectX::XMFLOAT4X4 bone_offset_matrix_array[MAX_BONE_COUNT];
+};
+
+struct Transform_Info {
+	DirectX::XMFLOAT3 trenslate = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
+	DirectX::XMFLOAT4 rotate = DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
+	DirectX::XMFLOAT3 scale = DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f);
+};
+
+struct Ketframe_Info {
+	float time;
+	Transform_Info animation_transform_array[MAX_BONE_COUNT];
+};
+
+struct Animation_Info {
+	std::wstring name;
+	float animation_time;
+	std::map<float, KeyframeInfo> keyframe_map;
 };

@@ -3,6 +3,12 @@
 
 struct MeshData;
 
+struct Weight_Info {
+	UINT bone_count;
+	UINT bone_indices[MAX_WEIGHT_BONE_COUNT];
+	float bone_weights[MAX_WEIGHT_BONE_COUNT];
+};
+
 class ObjectManager;
 
 class FBXManager {
@@ -33,11 +39,17 @@ public:
 
 	void Prcs_Node(
 		FbxNode* node, ObjectManager* object_maanger,
-		Mesh_Info& mesh_info, std::vector<Mesh> mesh_array,
+		std::vector<Bone_Info>& bone_array, std::unordered_map<std::wstring, UINT>& bone_index_map,
+		Mesh_Info& mesh_info, std::vector<Mesh>& mesh_array,
 		bool merge_mesh, bool add_object, bool merge_object, BYTE info_flag);
 
 	void Prcs_Mesh_Node(
 		FbxNode* node, ObjectManager* object_maanger,
-		Mesh_Info& mesh_info, std::vector<Mesh> mesh_array,
+		std::unordered_map<std::wstring, UINT>& bone_index_map,
+		Mesh_Info& mesh_info, std::vector<Mesh>& mesh_array,
 		bool merge_mesh, bool add_object, bool merge_object, BYTE info_flag);
+
+	void Prcs_Skeleton_Node(
+		FbxNode* node,
+		std::vector<Bone_Info>& bone_array, std::unordered_map<std::wstring, UINT>& bone_index_map);
 };

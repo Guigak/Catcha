@@ -299,14 +299,23 @@ void TestScene::Build_S_N_L() {
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "UV", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 36, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+		{ "UV", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 36, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "BONECOUNT", 0, DXGI_FORMAT_R32_UINT, 0, 44, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "BONEINDICES", 0, DXGI_FORMAT_R32_UINT, 0, 48, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "BONEINDICES", 1, DXGI_FORMAT_R32_UINT, 0, 52, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "BONEINDICES", 2, DXGI_FORMAT_R32_UINT, 0, 56, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "BONEINDICES", 3, DXGI_FORMAT_R32_UINT, 0, 60, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "BONEWEIGHTS", 0, DXGI_FORMAT_R32_FLOAT, 0, 64, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "BONEWEIGHTS", 1, DXGI_FORMAT_R32_FLOAT, 0, 68, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "BONEWEIGHTS", 2, DXGI_FORMAT_R32_FLOAT, 0, 72, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "BONEWEIGHTS", 3, DXGI_FORMAT_R32_FLOAT, 0, 76, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 	};
 }
 
 void TestScene::Build_Mesh(ID3D12Device* device, ID3D12GraphicsCommandList* command_list) {
-	m_object_manager->Ipt_From_FBX(L"cat_mesh.fbx", true, false, true, MESH_INFO);
-	m_object_manager->Ipt_From_FBX(L"mouse_mesh.fbx", true, false, true, MESH_INFO);
-	m_object_manager->Ipt_From_FBX(L"housetest.fbx", false, true, false, MESH_INFO);
+	m_object_manager->Ipt_From_FBX(L"cat.fbx", true, false, true, MESH_INFO | SKELETON_INFO);
+	m_object_manager->Ipt_From_FBX(L"mouse.fbx", true, false, true, MESH_INFO | SKELETON_INFO);
+	m_object_manager->Ipt_From_FBX(L"house.fbx", false, true, false, MESH_INFO);
 
 	m_object_manager->Build_BV(device, command_list);
 }
@@ -324,15 +333,14 @@ void TestScene::Build_Material() {
 }
 
 void TestScene::Build_O() {
-	m_object_manager->Add_Obj(L"player", L"mouse_mesh.fbx");
-	m_object_manager->Add_Obj(L"cat_test", L"cat_mesh.fbx");
-	m_object_manager->Add_Obj(L"mouse_test", L"mouse_mesh.fbx");
+	m_object_manager->Add_Obj(L"player", L"mouse.fbx");
+	m_object_manager->Add_Obj(L"cat_test", L"cat.fbx");
+	m_object_manager->Add_Obj(L"mouse_test", L"mouse.fbx");
 
 	m_object_manager->Get_Obj(L"player")->Set_Visiable(false);
 }
 
 void TestScene::Build_C(D3DManager* d3d_manager) {
-
 	m_object_manager->Add_Obj(
 		L"maincamera",
 		nullptr,

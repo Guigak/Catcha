@@ -48,8 +48,8 @@ struct Vertex_In {
     float3 tangent : TANGENT;
     float2 uv : UV;
     uint bone_count : BONECOUNT;
-    uint bone_indices[4] : BONEINDICES;
-    float bone_weights[4] : BONEWEIGHTS;
+    uint4 bone_indices : BONEINDICES;
+    float4 bone_weights : BONEWEIGHTS;
 };
 
 struct Vertex_Out {
@@ -73,7 +73,7 @@ Vertex_Out VS(Vertex_In vertex_in) {
 float4 PS(Vertex_Out pixel_in) : SV_Target {
     pixel_in.normal_world = normalize(pixel_in.normal_world);
 
-    float3 to_eye_world = normalize(pixel_in.normal_world);
+    float3 to_eye_world = normalize(g_camera_position - pixel_in.position_world);
 
     float4 ambient = g_ambient_light * g_diffuse_albedo;
 
@@ -81,7 +81,9 @@ float4 PS(Vertex_Out pixel_in) : SV_Target {
     Material material = { g_diffuse_albedo, g_fresnel, shininess };
     float shadow_factor = 1.0f;
     
-    float4 direct_light = Cpt_Lighting(g_lights, material, pixel_in.position_world, pixel_in.normal_world, to_eye_world, shadow_factor);
+    float4 direct_light;
+    
+    direct_light = Cpt_Lighting(g_lights, material, pixel_in.position_world, pixel_in.normal_world, to_eye_world, shadow_factor);
 
     float4 result = ambient + direct_light;
 

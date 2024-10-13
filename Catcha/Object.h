@@ -71,6 +71,7 @@ protected:
 
 	//
 	std::vector<Mesh> m_meshes;
+	Skeleton_Info* m_skeleton_info = nullptr;
 
 	DirectX::XMFLOAT4 m_rotate_quat = { 0.0f, 0.0f, 0.0f, 1.0f };
 
@@ -183,5 +184,8 @@ public:
 
 	void Set_WM(DirectX::XMMATRIX world_matrix);
 	void Draw(ID3D12GraphicsCommandList* command_list);
+
+	//
+	void Set_Skeleton(Skeleton_Info* skeleton_info) { m_skeleton_info = skeleton_info; }
 };
 

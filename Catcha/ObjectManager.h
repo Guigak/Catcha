@@ -3,6 +3,7 @@
 #include "Object.h"
 #include "MeshManager.h"
 #include "FBXManager.h"
+#include "SkeletonManager.h"
 
 enum class Action;
 
@@ -30,6 +31,7 @@ private:
 
 	//
 	MeshManager m_mesh_manager;
+	SkeletonManager m_skeleton_manager;
 
 public:
 	ObjectManager() {}
@@ -69,6 +71,7 @@ public:
 
 	//
 	MeshManager& Get_Mesh_Manager() { return m_mesh_manager; }
+	SkeletonManager& Get_Skeleton_Manager() { return m_skeleton_manager; }
 
 	void Ipt_From_FBX(std::wstring file_name, bool merge_mesh, bool add_object, bool merge_object, BYTE info_flag);
 
@@ -82,5 +85,8 @@ public:
 
 	//
 	void Build_BV(ID3D12Device* device, ID3D12GraphicsCommandList* command_list);
+
+	//
+	void Set_Sklt_2_Obj(std::wstring object_name, std::wstring skeleton_name);
 };
 

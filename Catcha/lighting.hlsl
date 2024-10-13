@@ -33,7 +33,7 @@ float3 Blinn_Phong(float3 light_strength, float3 light_vector, float3 normal, fl
 	float shininess = material.shininess * 256.0f;
 	float3 half_vector = normalize(to_eye + light_vector);
 
-	float roughness = (shininess + 8.0f) * pow(max(dot(half_vector, light_vector), 0.0f), shininess) / 8.0f;
+	float roughness = (shininess + 8.0f) * pow(max(dot(half_vector, normal), 0.0f), shininess) / 8.0f;
 	float3 fresnel_factor = Schlick_Fresnel(material.fresnel, light_vector, half_vector);
 
 	float3 specular_albedo = fresnel_factor * roughness;
@@ -61,6 +61,9 @@ float3 Cpt_PL(Light light, Material material,float3 position, float3 normal, flo
 	light_vector /= distance;
 
 	float3 light_strength = light.strength * max(dot(light_vector, normal), 0.0f);
+
+	float attenuation = Calc_Attenuation(distance, light.falloff_start, light.falloff_end);
+	light_strength *= attenuation;
 
 	return Blinn_Phong(light_strength, light_vector, normal, to_eye, material);
 }

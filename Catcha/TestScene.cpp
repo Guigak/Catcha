@@ -141,7 +141,9 @@ void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
 	//
 	//m_main_pass_constant_buffer.lights[0].direction = { 0.57735f, -0.57735f, 1.0f };
 	m_main_pass_constant_buffer.lights[0].direction = { 0.5f, -1.0f, 0.5f };
+	//m_main_pass_constant_buffer.lights[0].direction = { 0.5f, -1.0f, 0.5f };
 	m_main_pass_constant_buffer.lights[0].strength = { 0.6f, 0.6f, 0.6f };
+	//m_main_pass_constant_buffer.lights[0].strength = { 1.0f, 1.0f, 1.0f };
 	//m_main_pass_constant_buffer.lights[0].strength = { 0.0f, 0.0f, 0.0f };
 	//
 	m_main_pass_constant_buffer.lights[1].position = { 0.0f, 100.0f, -300.0f };
@@ -301,14 +303,8 @@ void TestScene::Build_S_N_L() {
 		{ "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "UV", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 36, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "BONECOUNT", 0, DXGI_FORMAT_R32_UINT, 0, 44, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "BONEINDICES", 0, DXGI_FORMAT_R32_UINT, 0, 48, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "BONEINDICES", 1, DXGI_FORMAT_R32_UINT, 0, 52, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "BONEINDICES", 2, DXGI_FORMAT_R32_UINT, 0, 56, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "BONEINDICES", 3, DXGI_FORMAT_R32_UINT, 0, 60, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "BONEWEIGHTS", 0, DXGI_FORMAT_R32_FLOAT, 0, 64, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "BONEWEIGHTS", 1, DXGI_FORMAT_R32_FLOAT, 0, 68, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "BONEWEIGHTS", 2, DXGI_FORMAT_R32_FLOAT, 0, 72, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "BONEWEIGHTS", 3, DXGI_FORMAT_R32_FLOAT, 0, 76, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+		{ "BONEINDICES", 0, DXGI_FORMAT_R32G32B32A32_UINT, 0, 48, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "BONEWEIGHTS", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 64, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 	};
 }
 
@@ -325,7 +321,7 @@ void TestScene::Build_Material() {
 	default_material->name = L"default";
 	default_material->constant_buffer_index = 0;
 	default_material->diffuse_heap_index = 0;
-	default_material->diffuse_albedo = DirectX::XMFLOAT4(DirectX::Colors::Green);
+	default_material->diffuse_albedo = DirectX::XMFLOAT4(DirectX::Colors::LightBlue);
 	default_material->fresnel = DirectX::XMFLOAT3(0.01f, 0.01f, 0.01f);
 	default_material->roughness = 0.1f;
 
@@ -335,7 +331,9 @@ void TestScene::Build_Material() {
 void TestScene::Build_O() {
 	m_object_manager->Add_Obj(L"player", L"mouse.fbx");
 	m_object_manager->Add_Obj(L"cat_test", L"cat.fbx");
+	m_object_manager->Set_Sklt_2_Obj(L"cat_test", L"cat.fbx");
 	m_object_manager->Add_Obj(L"mouse_test", L"mouse.fbx");
+	m_object_manager->Set_Sklt_2_Obj(L"mouse_test", L"mouse.fbx");
 
 	m_object_manager->Get_Obj(L"player")->Set_Visiable(false);
 }

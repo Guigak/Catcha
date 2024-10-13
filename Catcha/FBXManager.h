@@ -38,18 +38,18 @@ public:
 	FbxScene* Ipt_Scene(FbxManager* manager, std::wstring file_name);	// Import Scene
 
 	void Prcs_Node(
-		FbxNode* node, ObjectManager* object_maanger,
+		std::wstring file_name, FbxNode* node, ObjectManager* object_maanger,
 		std::vector<Bone_Info>& bone_array, std::unordered_map<std::wstring, UINT>& bone_index_map,
 		Mesh_Info& mesh_info, std::vector<Mesh>& mesh_array,
 		bool merge_mesh, bool add_object, bool merge_object, BYTE info_flag);
 
 	void Prcs_Mesh_Node(
-		FbxNode* node, ObjectManager* object_maanger,
+		std::wstring file_name, FbxNode* node, ObjectManager* object_maanger,
 		std::unordered_map<std::wstring, UINT>& bone_index_map,
 		Mesh_Info& mesh_info, std::vector<Mesh>& mesh_array,
 		bool merge_mesh, bool add_object, bool merge_object, BYTE info_flag);
 
 	void Prcs_Skeleton_Node(
-		FbxNode* node,
+		std::wstring file_name, FbxNode* node,
 		std::vector<Bone_Info>& bone_array, std::unordered_map<std::wstring, UINT>& bone_index_map);
 };

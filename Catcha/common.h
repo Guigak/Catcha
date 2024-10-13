@@ -1761,9 +1761,21 @@ struct Bone_Info {
 
 struct Skeleton_Info {
 	std::wstring name;
-	UINT bone_count;
+	UINT bone_count = 0;
 	std::vector<Bone_Info> bone_array;
 	DirectX::XMFLOAT4X4 bone_offset_matrix_array[MAX_BONE_COUNT];
+
+	Skeleton_Info() {}
+	Skeleton_Info(std::wstring skeleton_name, std::vector<Bone_Info>& bone_array_in) {
+		name = skeleton_name;
+
+		bone_array.assign(bone_array_in.begin(), bone_array_in.end());
+		bone_count = (UINT)bone_array.size();
+
+		for (UINT i = 0; i < bone_count; ++i) {
+			bone_offset_matrix_array[i] = bone_array[i].offset_matrix;
+		}
+	}
 };
 
 struct Transform_Info {

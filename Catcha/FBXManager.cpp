@@ -392,14 +392,16 @@ void FBXManager::Ipt_From_File(ObjectManager* object_maanger, std::wstring file_
 
     // process skeleton info first
     if (info_flag & SKELETON_INFO) {
-        Prcs_Node(scene->GetRootNode(), object_maanger,
+        Prcs_Node(file_name, scene->GetRootNode(), object_maanger,
             bone_array, bone_index_map,
             mesh_info, mesh_array,
             merge_mesh, add_object, merge_object, SKELETON_INFO);
+
+        object_maanger->Get_Skeleton_Manager().Add_Skeleton(file_name, bone_array);
     }
 
     // process mesh info
-    Prcs_Node(scene->GetRootNode(), object_maanger,
+    Prcs_Node(file_name, scene->GetRootNode(), object_maanger,
         bone_array, bone_index_map,
         mesh_info, mesh_array,
         merge_mesh, add_object, merge_object, info_flag);
@@ -414,10 +416,18 @@ void FBXManager::Ipt_From_File(ObjectManager* object_maanger, std::wstring file_
     if (add_object) {
         if (merge_mesh) {
             object_maanger->Add_Obj(file_name, file_name);
+
+            if (info_flag & SKELETON_INFO) {
+                object_maanger->Set_Sklt_2_Obj(file_name, file_name);
+            }
         }
         else {
             if (merge_object) {
                 object_maanger->Add_Obj(file_name, mesh_array);
+
+                if (info_flag & SKELETON_INFO) {
+                    object_maanger->Set_Sklt_2_Obj(file_name, file_name);
+                }
             }
         }
     }
@@ -454,7 +464,7 @@ FbxScene* FBXManager::Ipt_Scene(FbxManager* manager, std::wstring file_name) {
 }
 
 void FBXManager::Prcs_Node(
-    FbxNode* node, ObjectManager* object_maanger,
+    std::wstring file_name, FbxNode* node, ObjectManager* object_maanger,
     std::vector<Bone_Info>& bone_array, std::unordered_map<std::wstring, UINT>& bone_index_map,
     Mesh_Info& mesh_info, std::vector<Mesh>& mesh_array,
     bool merge_mesh, bool add_object, bool merge_object, BYTE info_flag
@@ -465,7 +475,7 @@ void FBXManager::Prcs_Node(
         switch (node_attribute->GetAttributeType()) {
         case FbxNodeAttribute::eMesh:
             if (info_flag & MESH_INFO) {
-                Prcs_Mesh_Node(node, object_maanger,
+                Prcs_Mesh_Node(file_name, node, object_maanger,
                     bone_index_map,
                     mesh_info, mesh_array,
                     merge_mesh, add_object, merge_object, info_flag);
@@ -475,7 +485,7 @@ void FBXManager::Prcs_Node(
         case FbxNodeAttribute::eSkeleton:   // bone
             if (info_flag == SKELETON_INFO) {
                 Prcs_Skeleton_Node(
-                    node,
+                    file_name, node,
                     bone_array, bone_index_map);
             }
             break;
@@ -487,7 +497,7 @@ void FBXManager::Prcs_Node(
     UINT child_count = node->GetChildCount();
 
     for (UINT i = 0; i < child_count; ++i) {
-        Prcs_Node(node->GetChild(i), object_maanger,
+        Prcs_Node(file_name, node->GetChild(i), object_maanger,
             bone_array, bone_index_map,
             mesh_info, mesh_array,
             merge_mesh, add_object, merge_object, info_flag);
@@ -495,7 +505,7 @@ void FBXManager::Prcs_Node(
 }
 
 void FBXManager::Prcs_Mesh_Node(
-    FbxNode* node, ObjectManager* object_maanger,
+    std::wstring file_name, FbxNode* node, ObjectManager* object_maanger,
     std::unordered_map<std::wstring, UINT>& bone_index_map,
     Mesh_Info& mesh_info, std::vector<Mesh>& mesh_array,
     bool merge_mesh, bool add_object, bool merge_object, BYTE info_flag
@@ -610,13 +620,17 @@ void FBXManager::Prcs_Mesh_Node(
             }
             else {
                 object_maanger->Add_Obj(node_name, node_name, L"Object", global_transform_xmmatrix);
+
+                if (info_flag & SKELETON_INFO) {
+                    object_maanger->Set_Sklt_2_Obj(node_name, file_name);
+                }
             }
         }
     }
 }
 
 void FBXManager::Prcs_Skeleton_Node(
-    FbxNode* node,
+    std::wstring file_name, FbxNode* node,
     std::vector<Bone_Info>& bone_array, std::unordered_map<std::wstring, UINT>& bone_index_map
 ) {
     Bone_Info bone_info;

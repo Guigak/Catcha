@@ -230,3 +230,7 @@ Object* ObjectManager::Add_Obj(std::wstring object_name, std::vector<Mesh>& mesh
 void ObjectManager::Build_BV(ID3D12Device* device, ID3D12GraphicsCommandList* command_list) {
     m_mesh_manager.Crt_BV(device, command_list);
 }
+
+void ObjectManager::Set_Sklt_2_Obj(std::wstring object_name, std::wstring skeleton_name) {
+    Get_Obj(object_name)->Set_Skeleton(m_skeleton_manager.Get_Skeleton(skeleton_name));
+}

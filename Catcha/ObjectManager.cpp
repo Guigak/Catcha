@@ -17,11 +17,6 @@ Object* ObjectManager::Add_Obj(std::wstring object_name, MeshInfo* mesh_info, st
     case ObjectType::CAMERA_OBJECT:
         object = std::make_unique<Camera>();
         break;
-    case ObjectType::CHARACTER_OBJECT:
-        // TODO : merge 수정 필요
-        object = std::make_unique<Object>(object_name, mesh_info, mesh_name, material_info, 1, primitive_topology, physics);
-        m_character_count++;
-        break;
     default:
         break;
     }
@@ -30,18 +25,9 @@ Object* ObjectManager::Add_Obj(std::wstring object_name, MeshInfo* mesh_info, st
 
     Object* object_pointer = m_object_map[object_name].get();
     
-    // player와 다른 오브젝트 구분
-    if (set_name == L"player") 
-    {
-        m_characters.emplace_back(object_pointer);
-    }
-    else
-    {
-        m_objects.emplace_back(object_pointer);
-    }
+    m_objects.emplace_back(object_pointer);
 
     switch (object_type) {
-    case ObjectType::CHARACTER_OBJECT:
     case ObjectType::OPAQUE_OBJECT:
         m_opaque_objects.emplace_back(object_pointer);
         break;
@@ -165,15 +151,17 @@ void ObjectManager::Update(float elapsed_time) {
     for (auto& o : m_characters)
     {
         o->Calc_Delta_Characters(elapsed_time);
+        o->Rotate_Character(elapsed_time);
     }
 
     Solve_Collision();
 
-    for (auto& o : m_characters)
-    {
+    for (auto& o : m_objects) {
         o->Update();
     }
-    for (auto& o : m_objects) {
+
+    for (auto& o : m_characters)
+    {
         o->Update();
     }
 
@@ -229,6 +217,15 @@ Object* ObjectManager::Add_Obj(std::wstring object_name, std::wstring mesh_name,
     m_object_map[object_name] = std::move(object);
 
     Object* object_pointer = m_object_map[object_name].get();
+
+    // [CS] 서버 캐릭터 구분
+    switch (object_type)
+    {
+    case ObjectType::CHARACTER_OBJECT:
+        m_characters.emplace_back(object_pointer);
+        break;
+    }
+
     m_objects.emplace_back(object_pointer);
 
     m_opaque_objects.emplace_back(object_pointer);

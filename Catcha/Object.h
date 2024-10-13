@@ -76,13 +76,15 @@ protected:
 	DirectX::XMFLOAT4 m_rotate_quat = { 0.0f, 0.0f, 0.0f, 1.0f };
 
 	// [SC] 위치 보간을 위한 변수
-	DirectX::XMFLOAT3 m_target_position{ 0, 0, 0 };  // Position received from the server
+	DirectX::XMFLOAT3 m_target_position{ 0, 0, 0 };  // 서버에서 받은 Position
 	float m_lerp_progress = 0.0f;     // 선형 보간 비율
 
 	// [SC] 회전 보간을 위한 변수
 	float m_last_sent_pitch = 0.0f;    
-	const float pitchSendThreshold = 0.1f;  // 100 ms (0.1 seconds)
-	std::chrono::high_resolution_clock::time_point m_lastSendTime;
+	const float m_pitch_send_delay = 0.1f;  // 100 ms (0.1 seconds)
+	std::chrono::high_resolution_clock::time_point m_last_sent_time;
+    float m_target_pitch = 0.0f;   // 목표 Pitch 값
+    float m_lerp_pitch_progress = 1.0f;  // 보간 진행도 (0.0~1.0)
 
 public:
 	Object() {}
@@ -159,7 +161,6 @@ public:
 	void LerpPosition(float deltaTime);
 	void SetTargetPosition(const DirectX::XMFLOAT3& newPosition);
 
-
 	//
 	void Set_Position(float position_x, float position_y, float position_z);
 
@@ -183,12 +184,18 @@ public:
 	void TP_Up(float distance);
 	void TP_Down(float distance);
 
+	void Rotate_Character(float elapsed_time);
+
 	// rotate
 	void Rotate(float degree_roll, float degree_pitch, float degree_yaw);
 
 	void Rotate_Roll(float degree);
 	void Rotate_Pitch(float degree);
 	void Rotate_Yaw(float degree);
+
+	// [SC] 회전 보간을 위한 함수
+	void LerpRotate(float deltaTime);
+	void SetTargetPitch(float newPitch);
 
 	//
 	void Bind_Camera(Camera* camera);

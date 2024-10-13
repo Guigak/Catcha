@@ -8,7 +8,7 @@ struct Client
 {
 	ANIM_TYPE Type;
 	DirectX::XMFLOAT3 Location;
-	short pitch;
+	float pitch;
 };
 
 

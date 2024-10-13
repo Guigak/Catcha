@@ -428,32 +428,37 @@ void Object::TP_Down(float distance) {
 	m_dirty = true;
 }
 
+// 자신만 Rotate할때 시야각 보내줌
 void Object::Rotate(float degree_roll, float degree_pitch, float degree_yaw) {
 	Rotate_Roll(degree_roll / 100.0f);
 	Rotate_Pitch(degree_pitch / 100.0f);
 	Rotate_Yaw(degree_yaw / 100.0f);
 
-	// TODO : 쿼터니언으로 변경
-	m_rotate.x += degree_roll;
-	m_rotate.y += degree_pitch;
-	m_rotate.z += degree_yaw;
-
-	// [SC] 시간이 지날때만 시야각 보냄
+	// [CS] 시간이 지날때만 시야각 보냄
 	auto current_time = std::chrono::high_resolution_clock::now();
-	float timeSinceLastSend = std::chrono::duration<float>(current_time - m_lastSendTime).count();
+	float delta_time = std::chrono::duration<float>(current_time - m_last_sent_time).count();
 
 	NetworkManager& network_manager = NetworkManager::GetInstance();
-	if (timeSinceLastSend >= pitchSendThreshold) {
+	if (delta_time >= m_pitch_send_delay) 
+	{
 		// [CS] 시야각 보냄
-		short pitch = static_cast<short>(m_rotate.y);
+		short pitch = static_cast<short>(degree_pitch);
 		network_manager.SendRotate(pitch);
-		m_lastSendTime = current_time;
+		m_last_sent_time = current_time;
+	}
+}
+
+void Object::Rotate_Character(float elapsed_time) {
+
+	// [SC] 다른 캐릭터들 시야 보간
+	NetworkManager& network_manager = NetworkManager::GetInstance();
+	// 새로운 Pitch 값이 기존 Pitch와 다를 경우에만 목표 Pitch를 설정
+	if (std::fabs(network_manager.characters[network_manager.m_myid].pitch - m_target_pitch) > std::numeric_limits<float>::epsilon())
+	{
+		SetTargetPitch(network_manager.characters[network_manager.m_myid].pitch);
 	}
 
-	m_rotate.y = network_manager.characters[network_manager.m_myid].pitch;
-
-	m_rotate.x = MathHelper::Min(90.0f, MathHelper::Max(-90.0f, m_rotate.x));
-	m_dirty = true;
+	LerpRotate(elapsed_time);
 }
 
 void Object::Rotate_Roll(float degree) {
@@ -478,6 +483,27 @@ void Object::Rotate_Yaw(float degree) {
 			DirectX::XMQuaternionRotationAxis(DirectX::XMLoadFloat3(&Get_Look()), degree)));
 
 	m_dirty = true;
+}
+
+void Object::LerpRotate(float deltaTime)
+{
+	const float interp_duration = 0.05f;  // 보간 시간 (50ms)
+
+	if (m_lerp_pitch_progress < 1.0f) {
+		// 진행도를 업데이트하고 1.0으로 제한
+		m_lerp_pitch_progress += deltaTime / interp_duration;
+		m_lerp_pitch_progress = m_lerp_pitch_progress < 1.0f ? m_lerp_pitch_progress : 1.0f;
+
+		// 선형 보간을 통해 현재 Pitch 업데이트
+		float rotate_pitch = MathHelper::Lerp(m_rotate_quat.y, m_target_pitch, m_lerp_pitch_progress);
+		Rotate_Pitch(rotate_pitch / 100.0f);
+	}
+}
+
+void Object::SetTargetPitch(float newPitch)
+{
+	m_target_pitch = newPitch;  // 목표 Pitch 설정
+	m_lerp_progress = 0.0f;     // 보간 진행도 초기화
 }
 
 void Object::Bind_Camera(Camera* camera) {

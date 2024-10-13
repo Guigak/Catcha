@@ -7,7 +7,8 @@ void print_error(const char* msg, int err_no)
 		NULL, err_no,
 		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
 		reinterpret_cast<LPWSTR>(&msg_buf), 0, NULL);
-	std::cout << msg;
+	//std::cout << msg;
+	OutputDebugStringA(msg);
 	std::wcout << L" : ¿¡·¯ : " << msg_buf;
 	while (true);
 	LocalFree(msg_buf);

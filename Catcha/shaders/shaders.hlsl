@@ -42,6 +42,8 @@ cbuffer CB_Pass : register(b2) {
     Light g_lights[MAX_LIGHTS];
 };
 
+//cbuffer CB_Skin : register(b3)
+
 struct Vertex_In {
 	float3 position_local : POSITION;
     float3 normal_local : NORMAL;

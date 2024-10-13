@@ -310,7 +310,7 @@ void TestScene::Build_S_N_L() {
 
 void TestScene::Build_Mesh(ID3D12Device* device, ID3D12GraphicsCommandList* command_list) {
 	m_object_manager->Ipt_From_FBX(L"cat.fbx", true, false, true, MESH_INFO | SKELETON_INFO);
-	m_object_manager->Ipt_From_FBX(L"mouse.fbx", true, false, true, MESH_INFO | SKELETON_INFO);
+	m_object_manager->Ipt_From_FBX(L"mouse.fbx", true, false, true, MESH_INFO | SKELETON_INFO | ANIMATION_INFO);
 	m_object_manager->Ipt_From_FBX(L"house.fbx", false, true, false, MESH_INFO);
 
 	m_object_manager->Build_BV(device, command_list);

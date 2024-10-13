@@ -38,7 +38,7 @@ public:
 	FbxScene* Ipt_Scene(FbxManager* manager, std::wstring file_name);	// Import Scene
 
 	void Prcs_Node(
-		std::wstring file_name, FbxNode* node, ObjectManager* object_maanger,
+		std::wstring file_name, FbxNode* node, ObjectManager* object_maanger, std::vector<FbxNode*>& bone_node_array,
 		std::vector<Bone_Info>& bone_array, std::unordered_map<std::wstring, UINT>& bone_index_map,
 		Mesh_Info& mesh_info, std::vector<Mesh>& mesh_array,
 		bool merge_mesh, bool add_object, bool merge_object, BYTE info_flag);
@@ -50,6 +50,13 @@ public:
 		bool merge_mesh, bool add_object, bool merge_object, BYTE info_flag);
 
 	void Prcs_Skeleton_Node(
-		std::wstring file_name, FbxNode* node,
+		std::wstring file_name, FbxNode* node, std::vector<FbxNode*>& bone_node_array,
 		std::vector<Bone_Info>& bone_array, std::unordered_map<std::wstring, UINT>& bone_index_map);
+
+	void Prcs_Animation(std::wstring file_name, FbxScene* scene, ObjectManager* object_maanger,
+		std::vector<FbxNode*>& bone_node_array, std::map<float, Ketframe_Info>& keyframe_map);
+
+	void Calc_Keyframe_Times(std::set<FbxTime>& keyframe_times, FbxNode* node, FbxAnimLayer* animlayer);
+	void Get_Keyframe_Times_From_Curve(std::set<FbxTime>& keyframe_times, FbxAnimCurve* curve);
+	void Add_Keyframe(FbxTime time, std::vector<FbxNode*>& bone_node_array, std::map<float, Ketframe_Info>& keyframe_map);
 };

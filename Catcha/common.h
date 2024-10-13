@@ -35,6 +35,7 @@
 #include <algorithm>
 #include <vector>
 #include <array>
+#include <set>
 #include <map>
 #include <stack>
 #include <unordered_set>
@@ -320,6 +321,27 @@ inline DirectX::XMFLOAT4X4 XMMATRIX_2_XMFLOAT4X4(const DirectX::XMMATRIX& xmmatr
 	DirectX::XMStoreFloat4x4(&xmfloat4x4, xmmatrix);
 
 	return xmfloat4x4;
+}
+
+inline DirectX::XMFLOAT4 FbxVector4_2_XMFLOAT4(const FbxVector4& fbxvector4) {
+	DirectX::XMFLOAT4 xmfloat4 = DirectX::XMFLOAT4(
+		(float)fbxvector4[0], (float)fbxvector4[1], (float)fbxvector4[2], (float)fbxvector4[3]);
+
+	return xmfloat4;
+}
+
+inline DirectX::XMFLOAT3 FbxVector4_2_XMFLOAT3(const FbxVector4& fbxvector4) {
+	DirectX::XMFLOAT3 xmfloat3 = DirectX::XMFLOAT3(
+		(float)fbxvector4[0], (float)fbxvector4[1], (float)fbxvector4[2]);
+
+	return xmfloat3;
+}
+
+inline DirectX::XMFLOAT4 FbxQuaternion_2_XMFLOAT4(const FbxQuaternion& fbxquaternion) {
+	DirectX::XMFLOAT4 xmfloat4 = DirectX::XMFLOAT4(
+		(float)fbxquaternion[0], (float)fbxquaternion[1], (float)fbxquaternion[2], (float)fbxquaternion[3]);
+
+	return xmfloat4;
 }
 
 inline DirectX::XMFLOAT3 Quat_2_Euler(const DirectX::XMVECTOR& quaternion) {
@@ -1792,5 +1814,13 @@ struct Ketframe_Info {
 struct Animation_Info {
 	std::wstring name;
 	float animation_time;
-	std::map<float, KeyframeInfo> keyframe_map;
+	std::map<float, Ketframe_Info> keyframe_map;
+
+	Animation_Info() {}
+	Animation_Info(std::wstring animation_name, float animation_time_in, std::map<float, Ketframe_Info>& keyframe_map_in) {
+		name = animation_name;
+		animation_time = animation_time_in;
+
+		keyframe_map.insert(keyframe_map_in.begin(), keyframe_map_in.end());
+	}
 };

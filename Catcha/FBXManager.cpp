@@ -384,6 +384,7 @@ void FBXManager::Ipt_From_File(ObjectManager* object_maanger, std::wstring file_
     FbxScene* scene = Ipt_Scene(manager, file_name);
 
     // Prcs Nodes
+    std::vector<FbxNode*> bone_node_array;
     std::vector<Bone_Info> bone_array;
     std::unordered_map<std::wstring, UINT> bone_index_map;
 
@@ -392,7 +393,7 @@ void FBXManager::Ipt_From_File(ObjectManager* object_maanger, std::wstring file_
 
     // process skeleton info first
     if (info_flag & SKELETON_INFO) {
-        Prcs_Node(file_name, scene->GetRootNode(), object_maanger,
+        Prcs_Node(file_name, scene->GetRootNode(), object_maanger, bone_node_array,
             bone_array, bone_index_map,
             mesh_info, mesh_array,
             merge_mesh, add_object, merge_object, SKELETON_INFO);
@@ -401,12 +402,17 @@ void FBXManager::Ipt_From_File(ObjectManager* object_maanger, std::wstring file_
     }
 
     // process mesh info
-    Prcs_Node(file_name, scene->GetRootNode(), object_maanger,
+    Prcs_Node(file_name, scene->GetRootNode(), object_maanger, bone_node_array,
         bone_array, bone_index_map,
         mesh_info, mesh_array,
         merge_mesh, add_object, merge_object, info_flag);
 
     // Prcs Animation Data
+    std::map<float, Ketframe_Info> keyframe_map;
+
+    if (info_flag & ANIMATION_INFO) {
+        Prcs_Animation(file_name, scene, object_maanger, bone_node_array, keyframe_map);
+    }
 
     // Add object
     if (merge_mesh) {
@@ -464,7 +470,7 @@ FbxScene* FBXManager::Ipt_Scene(FbxManager* manager, std::wstring file_name) {
 }
 
 void FBXManager::Prcs_Node(
-    std::wstring file_name, FbxNode* node, ObjectManager* object_maanger,
+    std::wstring file_name, FbxNode* node, ObjectManager* object_maanger, std::vector<FbxNode*>& bone_node_array,
     std::vector<Bone_Info>& bone_array, std::unordered_map<std::wstring, UINT>& bone_index_map,
     Mesh_Info& mesh_info, std::vector<Mesh>& mesh_array,
     bool merge_mesh, bool add_object, bool merge_object, BYTE info_flag
@@ -485,7 +491,7 @@ void FBXManager::Prcs_Node(
         case FbxNodeAttribute::eSkeleton:   // bone
             if (info_flag == SKELETON_INFO) {
                 Prcs_Skeleton_Node(
-                    file_name, node,
+                    file_name, node, bone_node_array,
                     bone_array, bone_index_map);
             }
             break;
@@ -497,7 +503,7 @@ void FBXManager::Prcs_Node(
     UINT child_count = node->GetChildCount();
 
     for (UINT i = 0; i < child_count; ++i) {
-        Prcs_Node(file_name, node->GetChild(i), object_maanger,
+        Prcs_Node(file_name, node->GetChild(i), object_maanger, bone_node_array,
             bone_array, bone_index_map,
             mesh_info, mesh_array,
             merge_mesh, add_object, merge_object, info_flag);
@@ -630,7 +636,7 @@ void FBXManager::Prcs_Mesh_Node(
 }
 
 void FBXManager::Prcs_Skeleton_Node(
-    std::wstring file_name, FbxNode* node,
+    std::wstring file_name, FbxNode* node, std::vector<FbxNode*>& bone_node_array,
     std::vector<Bone_Info>& bone_array, std::unordered_map<std::wstring, UINT>& bone_index_map
 ) {
     Bone_Info bone_info;
@@ -650,4 +656,82 @@ void FBXManager::Prcs_Skeleton_Node(
 
     bone_array.emplace_back(bone_info);
     bone_index_map[bone_info.name] = bone_info.bone_index;
+
+    bone_node_array.emplace_back(node);
+}
+
+void FBXManager::Prcs_Animation(std::wstring file_name, FbxScene* scene, ObjectManager* object_maanger,
+    std::vector<FbxNode*>& bone_node_array, std::map<float, Ketframe_Info>& keyframe_map
+) {
+    int animstack_count = scene->GetSrcObjectCount<FbxAnimStack>();
+
+    if (animstack_count) {
+        FbxAnimStack* animstack = scene->GetSrcObject<FbxAnimStack>(0);
+        FbxAnimLayer* animlayer = animstack->GetMember<FbxAnimLayer>();
+
+        std::set<FbxTime> keyframe_times;
+        for (auto& bn : bone_node_array) {
+            Calc_Keyframe_Times(keyframe_times, bn, animlayer);
+        }
+
+        for (auto& t : keyframe_times) {
+            Add_Keyframe(t, bone_node_array, keyframe_map);
+        }
+
+        float total_time = keyframe_map.rbegin()->second.time;
+        object_maanger->Get_Animation_Manager().Add_Animation(file_name, total_time, keyframe_map);
+    }
+}
+
+void FBXManager::Calc_Keyframe_Times(std::set<FbxTime>& keyframe_times, FbxNode* node, FbxAnimLayer* animlayer) {
+    FbxAnimCurve* translationXCurve = node->LclTranslation.GetCurve(animlayer, FBXSDK_CURVENODE_COMPONENT_X);
+    FbxAnimCurve* translationYCurve = node->LclTranslation.GetCurve(animlayer, FBXSDK_CURVENODE_COMPONENT_Y);
+    FbxAnimCurve* translationZCurve = node->LclTranslation.GetCurve(animlayer, FBXSDK_CURVENODE_COMPONENT_Z);
+
+    FbxAnimCurve* rotationXCurve = node->LclRotation.GetCurve(animlayer, FBXSDK_CURVENODE_COMPONENT_X);
+    FbxAnimCurve* rotationYCurve = node->LclRotation.GetCurve(animlayer, FBXSDK_CURVENODE_COMPONENT_Y);
+    FbxAnimCurve* rotationZCurve = node->LclRotation.GetCurve(animlayer, FBXSDK_CURVENODE_COMPONENT_Z);
+
+    FbxAnimCurve* scaleXCurve = node->LclScaling.GetCurve(animlayer, FBXSDK_CURVENODE_COMPONENT_X);
+    FbxAnimCurve* scaleYCurve = node->LclScaling.GetCurve(animlayer, FBXSDK_CURVENODE_COMPONENT_Y);
+    FbxAnimCurve* scaleZCurve = node->LclScaling.GetCurve(animlayer, FBXSDK_CURVENODE_COMPONENT_Z);
+
+    Get_Keyframe_Times_From_Curve(keyframe_times, translationXCurve);
+    Get_Keyframe_Times_From_Curve(keyframe_times, translationYCurve);
+    Get_Keyframe_Times_From_Curve(keyframe_times, translationZCurve);
+    Get_Keyframe_Times_From_Curve(keyframe_times, rotationXCurve);
+    Get_Keyframe_Times_From_Curve(keyframe_times, rotationYCurve);
+    Get_Keyframe_Times_From_Curve(keyframe_times, rotationZCurve);
+    Get_Keyframe_Times_From_Curve(keyframe_times, scaleXCurve);
+    Get_Keyframe_Times_From_Curve(keyframe_times, scaleYCurve);
+    Get_Keyframe_Times_From_Curve(keyframe_times, scaleZCurve);
+}
+
+void FBXManager::Get_Keyframe_Times_From_Curve(std::set<FbxTime>& keyframe_times, FbxAnimCurve* curve) {
+    if (curve) {
+        int keyframe_count = curve->KeyGetCount();
+
+        for (int i = 0; i < keyframe_count; ++i) {
+            keyframe_times.insert(curve->KeyGetTime(i));
+        }
+    }
+}
+
+void FBXManager::Add_Keyframe(FbxTime time, std::vector<FbxNode*>& bone_node_array, std::map<float, Ketframe_Info>& keyframe_map) {
+    Ketframe_Info keyframe_info;
+    keyframe_info.time = (float)time.GetSecondDouble();
+
+    UINT bone_count = 0;
+    FbxAMatrix global_transform_matrix;
+
+    for (auto& bn : bone_node_array) {
+        global_transform_matrix = bn->EvaluateGlobalTransform(time);
+
+        keyframe_info.animation_transform_array[bone_count].trenslate = FbxVector4_2_XMFLOAT3(global_transform_matrix.GetT());
+        keyframe_info.animation_transform_array[bone_count].rotate = FbxQuaternion_2_XMFLOAT4(global_transform_matrix.GetQ());
+        keyframe_info.animation_transform_array[bone_count].scale = FbxVector4_2_XMFLOAT3(global_transform_matrix.GetS());
+        bone_count++;
+    }
+
+    keyframe_map[keyframe_info.time] = keyframe_info;
 }

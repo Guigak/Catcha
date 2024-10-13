@@ -4,6 +4,7 @@
 #include "MeshManager.h"
 #include "FBXManager.h"
 #include "SkeletonManager.h"
+#include "AnimationManager.h"
 
 enum class Action;
 
@@ -32,6 +33,7 @@ private:
 	//
 	MeshManager m_mesh_manager;
 	SkeletonManager m_skeleton_manager;
+	AnimationManager m_animation_manager;
 
 public:
 	ObjectManager() {}
@@ -72,6 +74,7 @@ public:
 	//
 	MeshManager& Get_Mesh_Manager() { return m_mesh_manager; }
 	SkeletonManager& Get_Skeleton_Manager() { return m_skeleton_manager; }
+	AnimationManager& Get_Animation_Manager() { return m_animation_manager; }
 
 	void Ipt_From_FBX(std::wstring file_name, bool merge_mesh, bool add_object, bool merge_object, BYTE info_flag);
 

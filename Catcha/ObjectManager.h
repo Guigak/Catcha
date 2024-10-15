@@ -76,7 +76,7 @@ public:
 	SkeletonManager& Get_Skeleton_Manager() { return m_skeleton_manager; }
 	AnimationManager& Get_Animation_Manager() { return m_animation_manager; }
 
-	void Ipt_From_FBX(std::wstring file_name, bool merge_mesh, bool add_object, bool merge_object, BYTE info_flag);
+	void Ipt_From_FBX(std::wstring file_name, bool merge_mesh, bool add_object, bool merge_object, BYTE info_flag, std::wstring skeleton_name = L"");
 
 	Object* Add_Obj(std::wstring object_name, std::wstring mesh_name, std::wstring set_name = L"Object",
 		DirectX::XMMATRIX world_matrix = DirectX::XMMatrixIdentity(),

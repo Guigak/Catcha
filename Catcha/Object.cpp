@@ -1,9 +1,11 @@
 #include "Object.h"
 #include "Camera.h"
+#include "ObjectManager.h"
 
-Object::Object(std::wstring object_name, MeshInfo* mesh_info, std::wstring mesh_name,
+Object::Object(ObjectManager* object_manager, std::wstring object_name, MeshInfo* mesh_info, std::wstring mesh_name,
 	MaterialInfo* material_info, UINT constant_buffer_index, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, bool physics, bool visiable)
 {
+	Set_Object_Manager(object_manager);
 	Set_Name(object_name);
 	Set_CB_Index(constant_buffer_index);
 	Set_Mesh_Info(mesh_info, mesh_name);
@@ -13,7 +15,8 @@ Object::Object(std::wstring object_name, MeshInfo* mesh_info, std::wstring mesh_
 	Set_Visiable(visiable);
 }
 
-Object::Object(std::wstring object_name, Mesh_Info* mesh, DirectX::XMMATRIX world_matrix, UINT constant_buffer_index, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, bool physics, bool visiable) {
+Object::Object(ObjectManager* object_manager, std::wstring object_name, Mesh_Info* mesh, DirectX::XMMATRIX world_matrix, UINT constant_buffer_index, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, bool physics, bool visiable) {
+	Set_Object_Manager(object_manager);
 	Set_Name(object_name);
 	Set_CB_Index(constant_buffer_index);
 	Add_Mesh(mesh, MathHelper::Identity_4x4());
@@ -23,7 +26,8 @@ Object::Object(std::wstring object_name, Mesh_Info* mesh, DirectX::XMMATRIX worl
 	Set_Visiable(visiable);
 }
 
-Object::Object(std::wstring object_name, std::vector<Mesh>& mesh_array, UINT constant_buffer_index, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, bool physics, bool visiable) {
+Object::Object(ObjectManager* object_manager, std::wstring object_name, std::vector<Mesh>& mesh_array, UINT constant_buffer_index, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, bool physics, bool visiable) {
+	Set_Object_Manager(object_manager);
 	Set_Name(object_name);
 	Set_CB_Index(constant_buffer_index);
 	Add_Mesh(mesh_array);
@@ -157,7 +161,15 @@ void Object::Calc_Delta(float elapsed_time) {
 //	// solve collision
 //}
 
-void Object::Update() {
+void Object::Update(float elapsed_time) {
+	if (m_animated) {
+		m_animated_time += elapsed_time;
+
+		m_object_manager->Get_Animation_Manager().Get_Animated_Matrix(m_playing_animation_name, m_animated_time, m_animation_matrix_array);
+
+		Rst_Dirty_Count();
+	}
+
 	if (m_dirty) {
 		if (m_camera) {
 			//m_rotate = m_camera->Get_Rotate_3f();

@@ -10,12 +10,14 @@
     #define SPOT_LIGHTS_NUMBER 1
 #endif
 
-#define MAX_BONE_COUNT 4
+#define MAX_WEIGHT_BONE_COUNT 4
+#define MAX_BONE_COUNT 128
 
 #include "lighting.hlsl"
 
 cbuffer CB_Object : register(b0) {
 	float4x4 g_world; 
+    uint g_animated;
 };
 
 cbuffer CB_Material : register(b1) {
@@ -42,7 +44,9 @@ cbuffer CB_Pass : register(b2) {
     Light g_lights[MAX_LIGHTS];
 };
 
-//cbuffer CB_Skin : register(b3)
+cbuffer CB_Animation : register(b3) {
+    float4x4 g_animation_transform_matrix[MAX_BONE_COUNT];
+}
 
 struct Vertex_In {
 	float3 position_local : POSITION;
@@ -63,11 +67,37 @@ struct Vertex_Out {
 Vertex_Out VS(Vertex_In vertex_in) {
     Vertex_Out vertex_out = (Vertex_Out)0.0f;
 
-    float4 position_world = mul(float4(vertex_in.position_local, 1.0f), g_world);
-    vertex_out.position_world = position_world.xyz;
+    if (g_animated) {
+        float4 position_world = float4(0.0f, 0.0f, 0.0f, 0.0f);
+        float3 normal_world = float3(0.0f, 0.0f, 0.0f);
 
-    vertex_out.normal_world = mul(vertex_in.normal_local, (float3x3)g_world);
-    vertex_out.position_screen = mul(position_world, g_view_projection);
+        for (uint i = 0; i < MAX_WEIGHT_BONE_COUNT; ++i) {
+            uint bone_index = vertex_in.bone_indices[i];
+
+            if (bone_index != -1) {
+                float4x4 bone_matrix = g_animation_transform_matrix[bone_index];
+                float4 weighted_position = mul(float4(vertex_in.position_local, 1.0f), bone_matrix) * vertex_in.bone_weights[i];
+                float3 weighted_normal = mul(vertex_in.normal_local, (float3x3)bone_matrix) * vertex_in.bone_weights[i];
+
+                position_world += weighted_position;
+                normal_world += weighted_normal;
+            }
+        }
+
+        position_world = mul(position_world, g_world);
+        normal_world = mul(normal_world, (float3x3)g_world);
+
+        vertex_out.position_world = position_world.xyz;
+        vertex_out.position_screen = mul(position_world, g_view_projection);
+        vertex_out.normal_world = normalize(normal_world);
+    }
+    else {
+        float4 position_world = mul(float4(vertex_in.position_local, 1.0f), g_world);
+
+        vertex_out.position_world = position_world.xyz;
+        vertex_out.normal_world = mul(vertex_in.normal_local, (float3x3)g_world);
+        vertex_out.position_screen = mul(position_world, g_view_projection);
+    }
 
     return vertex_out;
 }

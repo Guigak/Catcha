@@ -12,7 +12,7 @@ Object* ObjectManager::Add_Obj(std::wstring object_name, MeshInfo* mesh_info, st
     switch (object_type) {
     case ObjectType::OPAQUE_OBJECT:
     case ObjectType::TRANSPARENT_OBJECT:
-        object = std::make_unique<Object>(object_name, mesh_info, mesh_name, material_info, m_object_count++, primitive_topology, physics, visiable);
+        object = std::make_unique<Object>(this, object_name, mesh_info, mesh_name, material_info, m_object_count++, primitive_topology, physics, visiable);
         break;
     case ObjectType::CAMERA_OBJECT:
         object = std::make_unique<Camera>();
@@ -144,7 +144,7 @@ void ObjectManager::Update(float elapsed_time) {
     Solve_Collision();
 
     for (auto& o : m_objects) {
-        o->Update();
+        o->Update(elapsed_time);
     }
 }
 
@@ -181,10 +181,10 @@ void ObjectManager::Bind_Cam_2_Obj(std::wstring camera_name, std::wstring object
     camera->Bind_Obj(object, distance);
 }
 
-void ObjectManager::Ipt_From_FBX(std::wstring file_name, bool merge_mesh, bool add_object, bool merge_object, BYTE info_flag) {
+void ObjectManager::Ipt_From_FBX(std::wstring file_name, bool merge_mesh, bool add_object, bool merge_object, BYTE info_flag, std::wstring skeleton_name) {
     FBXManager* fbx_manager = FBXManager::Get_Inst();
 
-    fbx_manager->Ipt_From_File(this, file_name, merge_mesh, add_object, merge_mesh, info_flag);
+    fbx_manager->Ipt_From_File(this, file_name, merge_mesh, add_object, merge_mesh, info_flag, skeleton_name);
 }
 
 Object* ObjectManager::Add_Obj(std::wstring object_name, std::wstring mesh_name, std::wstring set_name,
@@ -193,7 +193,7 @@ Object* ObjectManager::Add_Obj(std::wstring object_name, std::wstring mesh_name,
     bool physics, bool visiable)
 {
     std::unique_ptr<Object> object;
-    object = std::make_unique<Object>(object_name, m_mesh_manager.Get_Mesh(mesh_name), world_matrix, m_object_count++, primitive_topology, physics, visiable);
+    object = std::make_unique<Object>(this, object_name, m_mesh_manager.Get_Mesh(mesh_name), world_matrix, m_object_count++, primitive_topology, physics, visiable);
 
     m_object_map[object_name] = std::move(object);
 
@@ -213,7 +213,7 @@ Object* ObjectManager::Add_Obj(std::wstring object_name, std::vector<Mesh>& mesh
     bool physics, bool visiable)
 {
     std::unique_ptr<Object> object;
-    object = std::make_unique<Object>(object_name, mesh_array, m_object_count++, primitive_topology, physics, visiable);
+    object = std::make_unique<Object>(this, object_name, mesh_array, m_object_count++, primitive_topology, physics, visiable);
 
     m_object_map[object_name] = std::move(object);
 

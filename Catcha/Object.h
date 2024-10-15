@@ -6,6 +6,7 @@ enum class Object_State {
 };
 
 class Camera;
+class ObjectManager;
 
 class Object {
 protected:
@@ -75,14 +76,24 @@ protected:
 
 	DirectX::XMFLOAT4 m_rotate_quat = { 0.0f, 0.0f, 0.0f, 1.0f };
 
+	//
+	bool m_animated = false;
+	float m_animated_time = 0.0f;
+	std::array<DirectX::XMFLOAT4X4, MAX_BONE_COUNT> m_animation_matrix_array;
+	std::wstring m_playing_animation_name = L"";
+
+	//
+	ObjectManager* m_object_manager = nullptr;
+
 public:
 	Object() {}
-	Object(std::wstring object_name, MeshInfo* mesh_info, std::wstring mesh_name,
+	Object(ObjectManager* object_manager, std::wstring object_name, MeshInfo* mesh_info, std::wstring mesh_name,
 		MaterialInfo* material_info, UINT constant_buffer_index, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, bool physics, bool visiable);
-	Object(std::wstring object_name, Mesh_Info* mesh, DirectX::XMMATRIX world_matrix, UINT constant_buffer_index, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, bool physics, bool visiable);
-	Object(std::wstring object_name, std::vector<Mesh>& mesh_array, UINT constant_buffer_index, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, bool physics, bool visiable);
+	Object(ObjectManager* object_manager, std::wstring object_name, Mesh_Info* mesh, DirectX::XMMATRIX world_matrix, UINT constant_buffer_index, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, bool physics, bool visiable);
+	Object(ObjectManager* object_manager, std::wstring object_name, std::vector<Mesh>& mesh_array, UINT constant_buffer_index, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, bool physics, bool visiable);
 	~Object() {}
 
+	void Set_Object_Manager(ObjectManager* object_manager) { m_object_manager = object_manager; }
 	void Set_Name(std::wstring object_name) { m_name = object_name; }
 	void Set_Mesh_Info(MeshInfo* mesh_info, std::wstring mesh_name);
 	void Set_Material_Info(MaterialInfo* material_info) { m_material_info = material_info; }
@@ -140,7 +151,7 @@ public:
 
 	void Calc_Delta(float elapsed_time);
 	//void Move_N_Solve_Collision();
-	virtual void Update();
+	virtual void Update(float elapsed_time);
 
 	void Udt_WM();	// Update World Matrix
 	void Udt_LUR();	// Update Look Up Right
@@ -187,5 +198,16 @@ public:
 
 	//
 	void Set_Skeleton(Skeleton_Info* skeleton_info) { m_skeleton_info = skeleton_info; }
+
+	//
+	void Set_Animated(bool animated) { m_animated = animated; }
+	bool Get_Animated() { return m_animated; }
+
+	void Set_Animation(std::wstring animation_name) {
+		m_playing_animation_name = animation_name;
+		m_animated_time = 0.0f;
+	}
+
+	std::array<DirectX::XMFLOAT4X4, MAX_BONE_COUNT>& Get_Animation_Matrix() { return m_animation_matrix_array; }
 };
 

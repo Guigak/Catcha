@@ -33,7 +33,8 @@ public:
 	DirectX::XMFLOAT3 Get_Tan(FbxMesh* mesh, UINT control_point_index, UINT vertex_count);	// Get Tangent
 	DirectX::XMFLOAT2 Get_UV(FbxMesh* mesh, UINT control_point_index, UINT vertex_count);	// Get UV
 
-	void Ipt_From_File(ObjectManager* object_maanger, std::wstring file_name, bool merge_mesh, bool add_object, bool merge_object, BYTE info_flag);	// Import From File
+	void Ipt_From_File(ObjectManager* object_maanger, std::wstring file_name,
+		bool merge_mesh, bool add_object, bool merge_object, BYTE info_flag, std::wstring skeleton_name);	// Import From File
 
 	FbxScene* Ipt_Scene(FbxManager* manager, std::wstring file_name);	// Import Scene
 
@@ -54,9 +55,9 @@ public:
 		std::vector<Bone_Info>& bone_array, std::unordered_map<std::wstring, UINT>& bone_index_map);
 
 	void Prcs_Animation(std::wstring file_name, FbxScene* scene, ObjectManager* object_maanger,
-		std::vector<FbxNode*>& bone_node_array, std::map<float, Ketframe_Info>& keyframe_map);
+		Skeleton_Info* skeleton_info, std::vector<FbxNode*>& bone_node_array, std::map<float, Keyframe_Info>& keyframe_map);
 
 	void Calc_Keyframe_Times(std::set<FbxTime>& keyframe_times, FbxNode* node, FbxAnimLayer* animlayer);
 	void Get_Keyframe_Times_From_Curve(std::set<FbxTime>& keyframe_times, FbxAnimCurve* curve);
-	void Add_Keyframe(FbxTime time, std::vector<FbxNode*>& bone_node_array, std::map<float, Ketframe_Info>& keyframe_map);
+	void Add_Keyframe(FbxTime time, Skeleton_Info* skeleton_info, std::vector<FbxNode*>& bone_node_array, std::map<float, Keyframe_Info>& keyframe_map);
 };

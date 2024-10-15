@@ -11,8 +11,11 @@ public:
 	AnimationManager() {}
 	~AnimationManager() {}
 
-	Animation_Info* Add_Animation(std::wstring animation_name, float animation_time, std::map<float, Ketframe_Info> keyframe_map);
+	Animation_Info* Add_Animation(std::wstring animation_name, UINT bone_count, float animation_time, std::map<float, Keyframe_Info>& keyframe_map);
 
 	Animation_Info* Get_Animation(std::wstring animation_name);
+
+	void Get_Animated_Matrix(std::wstring animation_name, float animation_time,
+		std::array<DirectX::XMFLOAT4X4, MAX_BONE_COUNT>& animation_matrix_array);
 };
 

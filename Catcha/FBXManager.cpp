@@ -2,6 +2,32 @@
 #include "MeshCreater.h"
 #include "ObjectManager.h"
 
+FbxAMatrix Normalization_FbxMatrix(const FbxAMatrix& fbxamatrix) {
+    FbxAMatrix result;
+
+    result[0][0] = fbxamatrix[0][0];
+    result[1][0] = fbxamatrix[1][0];
+    result[2][0] = fbxamatrix[2][0];
+    result[3][0] = fbxamatrix[3][0];
+
+    result[0][1] = -fbxamatrix[0][2];
+    result[1][1] = -fbxamatrix[1][2];
+    result[2][1] = -fbxamatrix[2][2];
+    result[3][1] = -fbxamatrix[3][2];
+
+    result[0][2] = fbxamatrix[0][1];
+    result[1][2] = fbxamatrix[1][1];
+    result[2][2] = fbxamatrix[2][1];
+    result[3][2] = fbxamatrix[3][1];
+
+    result[0][3] = fbxamatrix[0][3];
+    result[1][3] = fbxamatrix[1][3];
+    result[2][3] = fbxamatrix[2][3];
+    result[3][3] = fbxamatrix[3][3];
+
+    return result;
+}
+
 std::unique_ptr<FBXManager> FBXManager::fbx_manager = nullptr;
 
 FBXManager* FBXManager::Get_Inst() {
@@ -379,7 +405,7 @@ DirectX::XMFLOAT2 FBXManager::Get_UV(FbxMesh* mesh, UINT control_point_index, UI
     return DirectX::XMFLOAT2(0.0f, 0.0f);
 }
 
-void FBXManager::Ipt_From_File(ObjectManager* object_maanger, std::wstring file_name, bool merge_mesh, bool add_object, bool merge_object, BYTE info_flag) {
+void FBXManager::Ipt_From_File(ObjectManager* object_maanger, std::wstring file_name, bool merge_mesh, bool add_object, bool merge_object, BYTE info_flag, std::wstring skeleton_name) {
     FbxManager* manager = FbxManager::Create();
     FbxScene* scene = Ipt_Scene(manager, file_name);
 
@@ -392,13 +418,15 @@ void FBXManager::Ipt_From_File(ObjectManager* object_maanger, std::wstring file_
     std::vector<Mesh> mesh_array;
 
     // process skeleton info first
-    if (info_flag & SKELETON_INFO) {
+    if (info_flag & SKELETON_INFO || info_flag & ANIMATION_INFO) {
         Prcs_Node(file_name, scene->GetRootNode(), object_maanger, bone_node_array,
             bone_array, bone_index_map,
             mesh_info, mesh_array,
             merge_mesh, add_object, merge_object, SKELETON_INFO);
 
-        object_maanger->Get_Skeleton_Manager().Add_Skeleton(file_name, bone_array);
+        if (info_flag & SKELETON_INFO) {
+            object_maanger->Get_Skeleton_Manager().Add_Skeleton(file_name, bone_array);
+        }
     }
 
     // process mesh info
@@ -408,10 +436,19 @@ void FBXManager::Ipt_From_File(ObjectManager* object_maanger, std::wstring file_
         merge_mesh, add_object, merge_object, info_flag);
 
     // Prcs Animation Data
-    std::map<float, Ketframe_Info> keyframe_map;
+    std::map<float, Keyframe_Info> keyframe_map;
 
     if (info_flag & ANIMATION_INFO) {
-        Prcs_Animation(file_name, scene, object_maanger, bone_node_array, keyframe_map);
+        Skeleton_Info* skeleton_info;
+
+        if (info_flag & SKELETON_INFO) {
+            skeleton_info = object_maanger->Get_Skeleton_Manager().Get_Skeleton(file_name);
+        }
+        else {
+            skeleton_info = object_maanger->Get_Skeleton_Manager().Get_Skeleton(skeleton_name);
+        }
+
+        Prcs_Animation(file_name, scene, object_maanger, skeleton_info, bone_node_array, keyframe_map);
     }
 
     // Add object
@@ -644,12 +681,12 @@ void FBXManager::Prcs_Skeleton_Node(
 
     FbxNode* parent_node = node->GetParent();
     if (parent_node->GetNodeAttribute() != NULL) {
-        DirectX::XMStoreFloat4x4(&bone_info.offset_matrix, MathHelper::Inverse(FbxAMatrix_2_XMMATRIX(parent_node->EvaluateGlobalTransform())));
+        DirectX::XMStoreFloat4x4(&bone_info.offset_matrix, FbxAMatrix_2_XMMATRIX(node->EvaluateGlobalTransform().Inverse()));
         bone_info.parent_bone_index = bone_index_map[Str_2_WStr(parent_node->GetName())];
         bone_info.bone_index = (UINT)bone_array.size();
     }
     else {
-        bone_info.offset_matrix = MathHelper::Identity_4x4();
+        DirectX::XMStoreFloat4x4(&bone_info.offset_matrix, FbxAMatrix_2_XMMATRIX(node->EvaluateGlobalTransform().Inverse()));
         bone_info.parent_bone_index = -1;
         bone_info.bone_index = 0;
     }
@@ -661,7 +698,7 @@ void FBXManager::Prcs_Skeleton_Node(
 }
 
 void FBXManager::Prcs_Animation(std::wstring file_name, FbxScene* scene, ObjectManager* object_maanger,
-    std::vector<FbxNode*>& bone_node_array, std::map<float, Ketframe_Info>& keyframe_map
+    Skeleton_Info* skeleton_info, std::vector<FbxNode*>& bone_node_array, std::map<float, Keyframe_Info>& keyframe_map
 ) {
     int animstack_count = scene->GetSrcObjectCount<FbxAnimStack>();
 
@@ -675,11 +712,11 @@ void FBXManager::Prcs_Animation(std::wstring file_name, FbxScene* scene, ObjectM
         }
 
         for (auto& t : keyframe_times) {
-            Add_Keyframe(t, bone_node_array, keyframe_map);
+            Add_Keyframe(t, skeleton_info, bone_node_array, keyframe_map);
         }
 
         float total_time = keyframe_map.rbegin()->second.time;
-        object_maanger->Get_Animation_Manager().Add_Animation(file_name, total_time, keyframe_map);
+        object_maanger->Get_Animation_Manager().Add_Animation(file_name, (UINT)bone_node_array.size(), total_time, keyframe_map);
     }
 }
 
@@ -717,19 +754,53 @@ void FBXManager::Get_Keyframe_Times_From_Curve(std::set<FbxTime>& keyframe_times
     }
 }
 
-void FBXManager::Add_Keyframe(FbxTime time, std::vector<FbxNode*>& bone_node_array, std::map<float, Ketframe_Info>& keyframe_map) {
-    Ketframe_Info keyframe_info;
+void FBXManager::Add_Keyframe(FbxTime time, Skeleton_Info* skeleton_info, std::vector<FbxNode*>& bone_node_array, std::map<float, Keyframe_Info>& keyframe_map) {
+    Keyframe_Info keyframe_info;
     keyframe_info.time = (float)time.GetSecondDouble();
 
+    //std::array<DirectX::XMMATRIX, MAX_BONE_COUNT> global_transform_matrix_array;
+
+    //global_transform_matrix_array[0] = FbxAMatrix_2_XMMATRIX(bone_node_array[0]->EvaluateLocalTransform(time));
+    ////global_transform_matrix_array[0] = FbxAMatrix_2_XMMATRIX(Normalization_FbxMatrix(bone_node_array[0]->EvaluateLocalTransform(time)));
+
+    //for (UINT i = 1; i < (UINT)bone_node_array.size(); ++ i) {
+    //    auto& bone_node = bone_node_array[i];
+
+    //    global_transform_matrix_array[i] = FbxAMatrix_2_XMMATRIX(bone_node->EvaluateLocalTransform(time))
+    //        * global_transform_matrix_array[skeleton_info->bone_array[i].parent_bone_index];
+    //}
+
+    //for (UINT i = 0; i < bone_node_array.size(); ++i) {
+    //    DirectX::XMMATRIX animation_fransform_matrix = DirectX::XMLoadFloat4x4(&skeleton_info->bone_offset_matrix_array[i])
+    //        * global_transform_matrix_array[i];
+
+    //    DirectX::XMVECTOR translate, rotate, scale;
+
+    //    DirectX::XMMatrixDecompose(&scale, &rotate, &translate, animation_fransform_matrix);
+
+    //    DirectX::XMStoreFloat3(&keyframe_info.animation_transform_array[i].trenslate, translate);
+    //    DirectX::XMStoreFloat4(&keyframe_info.animation_transform_array[i].rotate, rotate);
+    //    DirectX::XMStoreFloat3(&keyframe_info.animation_transform_array[i].scale, scale);
+    //}
+
     UINT bone_count = 0;
-    FbxAMatrix global_transform_matrix;
+    DirectX::XMMATRIX global_transform_matrix;
 
     for (auto& bn : bone_node_array) {
-        global_transform_matrix = bn->EvaluateGlobalTransform(time);
+        global_transform_matrix = FbxAMatrix_2_XMMATRIX(bn->EvaluateGlobalTransform(time));
+        DirectX::XMMATRIX animation_fransform_matrix = DirectX::XMLoadFloat4x4(&skeleton_info->bone_offset_matrix_array[bone_count]) * global_transform_matrix;
 
-        keyframe_info.animation_transform_array[bone_count].trenslate = FbxVector4_2_XMFLOAT3(global_transform_matrix.GetT());
-        keyframe_info.animation_transform_array[bone_count].rotate = FbxQuaternion_2_XMFLOAT4(global_transform_matrix.GetQ());
-        keyframe_info.animation_transform_array[bone_count].scale = FbxVector4_2_XMFLOAT3(global_transform_matrix.GetS());
+        DirectX::XMVECTOR translate, rotate, scale;
+
+        DirectX::XMMatrixDecompose(&scale, &rotate, &translate, animation_fransform_matrix);
+
+        DirectX::XMStoreFloat3(&keyframe_info.animation_transform_array[bone_count].trenslate, translate);
+        DirectX::XMStoreFloat4(&keyframe_info.animation_transform_array[bone_count].rotate, rotate);
+        DirectX::XMStoreFloat3(&keyframe_info.animation_transform_array[bone_count].scale, scale);
+
+        //keyframe_info.animation_transform_array[bone_count].trenslate = FbxVector4_2_XMFLOAT3(global_transform_matrix.GetT());
+        //keyframe_info.animation_transform_array[bone_count].rotate = FbxQuaternion_2_XMFLOAT4(global_transform_matrix.GetQ());
+        //keyframe_info.animation_transform_array[bone_count].scale = FbxVector4_2_XMFLOAT3(global_transform_matrix.GetS());
         bone_count++;
     }
 

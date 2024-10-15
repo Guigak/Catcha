@@ -166,6 +166,18 @@ struct MathHelper {
 		return identity;
 	}
 
+	static DirectX::XMMATRIX XMMATRIX_Translation(const DirectX::XMFLOAT3& xmfloat3) {
+		return DirectX::XMMatrixTranslation(xmfloat3.x, xmfloat3.y, xmfloat3.z);
+	}
+
+	static DirectX::XMMATRIX XMMATRIX_Rotation(const DirectX::XMFLOAT4& xmfloat4) {
+		return DirectX::XMMatrixRotationQuaternion(DirectX::XMLoadFloat4(&xmfloat4));
+	}
+
+	static DirectX::XMMATRIX XMMATRIX_Scaling(const DirectX::XMFLOAT3& xmfloat3) {
+		return DirectX::XMMatrixScaling(xmfloat3.x, xmfloat3.y, xmfloat3.z);
+	}
+
 	static DirectX::XMFLOAT2 Multiply(const DirectX::XMFLOAT2& xmfloat2, const DirectX::XMMATRIX& matrix) {
 		DirectX::XMVECTOR vector = DirectX::XMLoadFloat2(&xmfloat2);
 
@@ -1639,7 +1651,7 @@ struct Vertex_Info {
 	DirectX::XMFLOAT2 uv;
 	//UINT material_index;
 	UINT bone_count = 0;
-	UINT bone_indices[MAX_WEIGHT_BONE_COUNT];
+	UINT bone_indices[MAX_WEIGHT_BONE_COUNT] = { (UINT)-1, (UINT)-1, (UINT)-1, (UINT)-1 };
 	float bone_weights[MAX_WEIGHT_BONE_COUNT];
 };
 
@@ -1806,21 +1818,29 @@ struct Transform_Info {
 	DirectX::XMFLOAT3 scale = DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f);
 };
 
-struct Ketframe_Info {
+struct Keyframe_Info {
 	float time;
-	Transform_Info animation_transform_array[MAX_BONE_COUNT];
+	std::array<Transform_Info, MAX_BONE_COUNT> animation_transform_array;
 };
 
 struct Animation_Info {
 	std::wstring name;
+	UINT bone_count;
 	float animation_time;
-	std::map<float, Ketframe_Info> keyframe_map;
+	std::map<float, Keyframe_Info> keyframe_map;
 
 	Animation_Info() {}
-	Animation_Info(std::wstring animation_name, float animation_time_in, std::map<float, Ketframe_Info>& keyframe_map_in) {
+	Animation_Info(std::wstring animation_name, UINT bone_count_in, float animation_time_in, std::map<float, Keyframe_Info>& keyframe_map_in) {
 		name = animation_name;
+		bone_count = bone_count_in;
 		animation_time = animation_time_in;
 
 		keyframe_map.insert(keyframe_map_in.begin(), keyframe_map_in.end());
 	}
+
+	float Get_Upper_Keyframe_Time(float time) {
+		float keyframe_time = std::fmod(time, animation_time);
+
+		return keyframe_map.lower_bound(keyframe_time)->first;
+	 }
 };

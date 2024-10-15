@@ -48,7 +48,7 @@ void Camera::Look_At(const DirectX::XMFLOAT3 position, const DirectX::XMFLOAT3 t
 	Look_At(position_, target_, up_);
 }
 
-void Camera::Update() {
+void Camera::Update(float elapsed_time) {
 	if (m_object) {
 		Udt_LUR();
 

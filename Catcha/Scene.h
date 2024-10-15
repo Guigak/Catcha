@@ -42,6 +42,8 @@ protected:
 
 	UINT m_material_CBV_offset = 0;
 	UINT m_pass_CBV_offset = 0;
+	//
+	UINT m_animation_CBV_offset = 0;
 
 	bool m_wireframe = false;
 

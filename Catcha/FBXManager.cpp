@@ -452,7 +452,7 @@ void FBXManager::Ipt_From_File(ObjectManager* object_maanger, std::wstring file_
     }
 
     // Add object
-    if (merge_mesh) {
+    if (info_flag & MESH_INFO &&  merge_mesh) {
         object_maanger->Get_Mesh_Manager().Add_Mesh(file_name, mesh_info.vertices, mesh_info.indices_32);
     }
 
@@ -681,11 +681,13 @@ void FBXManager::Prcs_Skeleton_Node(
 
     FbxNode* parent_node = node->GetParent();
     if (parent_node->GetNodeAttribute() != NULL) {
+        //DirectX::XMStoreFloat4x4(&bone_info.offset_matrix, FbxAMatrix_2_XMMATRIX(parent_node->EvaluateGlobalTransform().Inverse()));
         DirectX::XMStoreFloat4x4(&bone_info.offset_matrix, FbxAMatrix_2_XMMATRIX(node->EvaluateGlobalTransform().Inverse()));
         bone_info.parent_bone_index = bone_index_map[Str_2_WStr(parent_node->GetName())];
         bone_info.bone_index = (UINT)bone_array.size();
     }
     else {
+        //bone_info.offset_matrix = MathHelper::Identity_4x4();
         DirectX::XMStoreFloat4x4(&bone_info.offset_matrix, FbxAMatrix_2_XMMATRIX(node->EvaluateGlobalTransform().Inverse()));
         bone_info.parent_bone_index = -1;
         bone_info.bone_index = 0;
@@ -703,6 +705,10 @@ void FBXManager::Prcs_Animation(std::wstring file_name, FbxScene* scene, ObjectM
     int animstack_count = scene->GetSrcObjectCount<FbxAnimStack>();
 
     if (animstack_count) {
+        if (bone_node_array.size() == 0) {
+            Get_Null_Bone(scene->GetRootNode(), bone_node_array);
+        }
+
         FbxAnimStack* animstack = scene->GetSrcObject<FbxAnimStack>(0);
         FbxAnimLayer* animlayer = animstack->GetMember<FbxAnimLayer>();
 
@@ -805,4 +811,16 @@ void FBXManager::Add_Keyframe(FbxTime time, Skeleton_Info* skeleton_info, std::v
     }
 
     keyframe_map[keyframe_info.time] = keyframe_info;
+}
+
+void FBXManager::Get_Null_Bone(FbxNode* node, std::vector<FbxNode*>& bone_node_array) {
+    if (strcmp(node->GetName(), "RootNode") && !node->GetNodeAttribute()) {
+        bone_node_array.emplace_back(node);
+    }
+
+    UINT child_count = node->GetChildCount();
+
+    for (UINT i = 0; i < child_count; ++i) {
+        Get_Null_Bone(node->GetChild(i), bone_node_array);
+    }
 }

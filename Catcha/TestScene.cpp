@@ -328,10 +328,12 @@ void TestScene::Build_S_N_L() {
 }
 
 void TestScene::Build_Mesh(ID3D12Device* device, ID3D12GraphicsCommandList* command_list) {
-	m_object_manager->Ipt_From_FBX(L"cat.fbx", true, false, true, MESH_INFO | SKELETON_INFO | ANIMATION_INFO);
-	m_object_manager->Ipt_From_FBX(L"mouse.fbx", true, false, true, MESH_INFO | SKELETON_INFO | ANIMATION_INFO);
-	//m_object_manager->Ipt_From_FBX(L"mouse_mesh.fbx", true, false, true, MESH_INFO | SKELETON_INFO);
-	//m_object_manager->Ipt_From_FBX(L"mouse_walk.fbx", true, false, true, ANIMATION_INFO, L"mouse_mesh.fbx");
+	m_object_manager->Ipt_From_FBX(L"cat_mesh.fbx", true, false, true, MESH_INFO | SKELETON_INFO);
+	m_object_manager->Ipt_From_FBX(L"cat_action.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh.fbx");
+	//m_object_manager->Ipt_From_FBX(L"mouse.fbx", true, false, true, MESH_INFO | SKELETON_INFO | ANIMATION_INFO);
+	m_object_manager->Ipt_From_FBX(L"mouse_mesh.fbx", true, false, true, MESH_INFO | SKELETON_INFO);
+	m_object_manager->Ipt_From_FBX(L"mouse_walk_test.fbx", true, false, true, ANIMATION_INFO, L"mouse_mesh.fbx");
+	m_object_manager->Ipt_From_FBX(L"mouse_walk.fbx", true, false, true, ANIMATION_INFO, L"mouse_mesh.fbx");
 	//m_object_manager->Ipt_From_FBX(L"animationtest_0.fbx", true, false, true, MESH_INFO | SKELETON_INFO | ANIMATION_INFO);
 	m_object_manager->Ipt_From_FBX(L"animationtest.fbx", true, false, true, MESH_INFO | SKELETON_INFO | ANIMATION_INFO);
 	m_object_manager->Ipt_From_FBX(L"house.fbx", false, true, false, MESH_INFO);
@@ -348,22 +350,23 @@ void TestScene::Build_Material() {
 	default_material->fresnel = DirectX::XMFLOAT3(0.01f, 0.01f, 0.01f);
 	default_material->roughness = 0.1f;
 
-	m_material_map[L"default"] = std::move(default_material);
+	m_material_map[L"default"] = std::move(default_material);                                                      
 }
 
 void TestScene::Build_O() {
-	m_object_manager->Add_Obj(L"player", L"cat.fbx");
-	m_object_manager->Add_Obj(L"cat_test", L"cat.fbx");
-	m_object_manager->Set_Sklt_2_Obj(L"cat_test", L"cat.fbx");
-	m_object_manager->Add_Obj(L"mouse_test", L"mouse.fbx");
-	m_object_manager->Set_Sklt_2_Obj(L"mouse_test", L"mouse.fbx");
+	m_object_manager->Add_Obj(L"player", L"cat_mesh.fbx");
+	m_object_manager->Add_Obj(L"cat_test", L"cat_mesh.fbx");
+	m_object_manager->Set_Sklt_2_Obj(L"cat_test", L"cat_mesh.fbx");
+	m_object_manager->Add_Obj(L"mouse_test", L"mouse_mesh.fbx");
+	m_object_manager->Set_Sklt_2_Obj(L"mouse_test", L"mouse_mesh.fbx");
 
 	m_object_manager->Get_Obj(L"player")->Set_Visiable(false);
 	//m_object_manager->Get_Obj(L"cat_test")->Set_Visiable(false);
 
-	m_object_manager->Get_Obj(L"mouse_test")->Set_Animation(L"mouse.fbx");
+	m_object_manager->Get_Obj(L"mouse_test")->Set_Animation(L"mouse_walk_test.fbx");
+	//m_object_manager->Get_Obj(L"mouse_test")->Set_Animation(L"mouse_walk.fbx");
 	m_object_manager->Get_Obj(L"mouse_test")->Set_Animated(true);
-	m_object_manager->Get_Obj(L"cat_test")->Set_Animation(L"cat.fbx");
+	m_object_manager->Get_Obj(L"cat_test")->Set_Animation(L"cat_action.fbx");
 	m_object_manager->Get_Obj(L"cat_test")->Set_Animated(true);
 }
 

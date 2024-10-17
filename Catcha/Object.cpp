@@ -163,7 +163,7 @@ void Object::Calc_Delta(float elapsed_time) {
 
 void Object::Update(float elapsed_time) {
 	if (m_animated) {
-		m_animated_time += elapsed_time;
+		m_animated_time += elapsed_time / 5.0f;
 
 		m_object_manager->Get_Animation_Manager().Get_Animated_Matrix(m_playing_animation_name, m_animated_time, m_animation_matrix_array);
 

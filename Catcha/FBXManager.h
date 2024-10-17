@@ -60,4 +60,6 @@ public:
 	void Calc_Keyframe_Times(std::set<FbxTime>& keyframe_times, FbxNode* node, FbxAnimLayer* animlayer);
 	void Get_Keyframe_Times_From_Curve(std::set<FbxTime>& keyframe_times, FbxAnimCurve* curve);
 	void Add_Keyframe(FbxTime time, Skeleton_Info* skeleton_info, std::vector<FbxNode*>& bone_node_array, std::map<float, Keyframe_Info>& keyframe_map);
+
+	void Get_Null_Bone(FbxNode* node, std::vector<FbxNode*>& bone_node_array);
 };

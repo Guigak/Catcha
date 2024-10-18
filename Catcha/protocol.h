@@ -16,6 +16,7 @@ constexpr char CS_LOGIN = 0;
 constexpr char CS_MOVE = 1;
 constexpr char CS_TIME = 2;
 constexpr char CS_ROTATE = 3;
+constexpr char CS_SYNC_PLAYER = 4;
 
 // Server -> Client
 constexpr char SC_LOGIN_INFO = 11;
@@ -24,6 +25,7 @@ constexpr char SC_REMOVE_PLAYER = 13;
 constexpr char SC_MOVE_PLAYER = 14;
 constexpr char SC_REBIRTH = 15;
 constexpr char SC_TIME = 16;
+constexpr char SC_SYNC_PLAYER = 17;
 
 #pragma pack (push, 1)
 ///////////////////////////////////////////////
@@ -48,8 +50,17 @@ struct CS_MOVE_PACKET {
 struct CS_ROTATE_PACKET {
 	unsigned char size;
 	char type;
-	short player_pitch;
+	float player_yaw;
 };
+
+struct CS_SYNC_PLAYER_PACKET {
+	unsigned char size;
+	char	type;
+	int		id;				// 서버에 접속해 있는 캐릭터 번호
+	float 	x, y, z;		// 움직인 위치
+	float	look_x, look_y, look_z;	// rotate 정보	
+};
+
 
 struct CS_TIME_PACKET {
 	unsigned char size;
@@ -96,8 +107,17 @@ struct SC_MOVE_PLAYER_PACKET {
 	char	type;
 	int		id;				// 서버에 접속해 있는 캐릭터 번호
 	float 	x, y, z;		// 움직인 위치
-	short	player_pitch;	// rotate 정보	
+	float	player_yaw;	// rotate 정보	
 };
+
+struct SC_SYNC_PLAYER_PACKET {
+	unsigned char size;
+	char	type;
+	int		id;				// 서버에 접속해 있는 캐릭터 번호
+	float 	x, y, z;		// 움직인 위치
+	float	look_x, look_y, look_z;	// rotate 정보	
+};
+
 
 // 현재 무기 및 스킬 키 인풋, 사용 스킬
 struct SC_REBIRTH_PACKET {

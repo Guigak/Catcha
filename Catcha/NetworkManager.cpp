@@ -14,6 +14,7 @@ void print_error(const char* msg, int err_no)
 	LocalFree(msg_buf);
 }
 
+#define NAGLEOFF
 void NetworkManager::InitSocket()
 {
 	std::wcout.imbue(std::locale("korean"));
@@ -51,7 +52,7 @@ void NetworkManager::InitSocket()
 
 #ifdef NAGLEOFF
 	int DelayZero = 1;
-	setsockopt(m_server_socket, SQL_SOCKET, TCP_NODELAY, (const char*)&DelayZero, sizeof(DelayZero));
+	setsockopt(m_server_socket, DelayZero, TCP_NODELAY, (const char*)&DelayZero, sizeof(DelayZero));
 #endif
 
 	// TCP NonBlocking으로 설정
@@ -115,12 +116,12 @@ void NetworkManager::SendInput(uint8_t& input_key)
 	DoSend(&p);
 }
 
-void NetworkManager::SendRotate(short& pitch)
+void NetworkManager::SendRotate(float& yaw)
 {
 	CS_ROTATE_PACKET p;
 	p.size = sizeof(p);
 	p.type = CS_ROTATE;
-	p.player_pitch = pitch;
+	p.player_yaw = yaw;
 	DoSend(&p);
 }
 
@@ -250,8 +251,8 @@ void NetworkManager::ProcessPacket(char* ptr)
 		m_myid = p->id;
 		DirectX::XMFLOAT3 coord = { static_cast<float>(p->x), static_cast<float>(p->y), static_cast<float>(p->z) };
 		characters[m_myid].Location = coord;
-		short pitch = 0;
-		characters[m_myid].pitch = pitch;
+		float yaw = 0.f;
+		characters[m_myid].yaw = yaw;
 
 		break;
 	}
@@ -269,8 +270,8 @@ void NetworkManager::ProcessPacket(char* ptr)
 		{
 			DirectX::XMFLOAT3 coord = { static_cast<float>(p->x), static_cast<float>(p->y), static_cast<float>(p->z) };
 			characters[id].Location = coord;
-			short pitch = 0;
-			characters[id].pitch = pitch;
+			float yaw = 0.f;
+			characters[id].yaw = yaw;
 		}
 		break;
 	}
@@ -283,14 +284,49 @@ void NetworkManager::ProcessPacket(char* ptr)
 			// 자신의 받은 움직임과 look
 			DirectX::XMFLOAT3 coord = { static_cast<float>(p->x), static_cast<float>(p->y), static_cast<float>(p->z) };
 			characters[m_myid].Location = coord;
-			characters[m_myid].pitch = p->player_pitch;
+			m_characters[m_myid]->SetTargetPosition(coord);
+			characters[m_myid].yaw = p->player_yaw;
+			m_characters[m_myid]->SetTargetYaw(p->player_yaw);
 		}
 		else
 		{
 			// 다른 캐릭터의 받은 움직임
 			DirectX::XMFLOAT3 coord = { static_cast<float>(p->x), static_cast<float>(p->y), static_cast<float>(p->z) };
 			characters[id].Location = coord;
-			characters[id].pitch = p->player_pitch;
+			characters[id].yaw = p->player_yaw;
+		}
+		break;
+	}
+	case SC_SYNC_PLAYER:
+	{
+		SC_SYNC_PLAYER_PACKET* p = reinterpret_cast<SC_SYNC_PLAYER_PACKET*>(ptr);
+		int id = p->id;
+		if (id == m_myid)
+		{
+			// 자신의 받은 움직임과 look
+			DirectX::XMFLOAT3 coord = { static_cast<float>(p->x), static_cast<float>(p->y), static_cast<float>(p->z) };
+			characters[m_myid].Location = coord;
+			m_characters[m_myid]->Set_Look(DirectX::XMFLOAT3(p->look_x, p->look_y, p->look_z));
+
+			// 다시 서버로 동기화 패킷 전송
+			CS_SYNC_PLAYER_PACKET sync;
+			sync.x = m_characters[m_myid]->Get_Position_3f().x;
+			sync.y = m_characters[m_myid]->Get_Position_3f().y;
+			sync.z = m_characters[m_myid]->Get_Position_3f().z;
+			sync.look_x = m_characters[m_myid]->GetCameraLook().x;
+			sync.look_y = m_characters[m_myid]->GetCameraLook().y;
+			sync.look_z = m_characters[m_myid]->GetCameraLook().z;
+			sync.size = sizeof(sync);
+			sync.type = CS_SYNC_PLAYER;
+			sync.id = m_myid;
+			DoSend(&sync);
+		}
+		else
+		{
+			// 다른 캐릭터의 받은 움직임
+			DirectX::XMFLOAT3 coord = { static_cast<float>(p->x), static_cast<float>(p->y), static_cast<float>(p->z) };
+			characters[id].Location = coord;
+			m_characters[id]->Set_Look(DirectX::XMFLOAT3(p->look_x, p->look_y, p->look_z));
 		}
 		break;
 	}

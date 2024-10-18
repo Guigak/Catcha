@@ -1,5 +1,6 @@
 #pragma once
 #include "common.h"
+#include "Object.h"
 
 
 enum class ANIM_TYPE { IDLE };
@@ -8,9 +9,10 @@ struct Client
 {
 	ANIM_TYPE Type;
 	DirectX::XMFLOAT3 Location;
-	float pitch;
+	float yaw;
 };
 
+class Object;
 
 class NetworkManager {
 private:
@@ -26,6 +28,7 @@ private:
 
 	std::string m_name;
 
+	std::vector<Object*> m_characters;
 
 	NetworkManager() {	}
 	NetworkManager(const NetworkManager&) = delete;
@@ -46,9 +49,13 @@ public:
 
 	void DoSend(void* packet);
 	void SendInput(uint8_t& input_key);
-	void SendRotate(short& pitch);
+	void SendRotate(float& yaw);
 	void DoSendUDP(void* packet);
 	void DoRecv();
 	void ProcessData(char* net_buf, size_t io_byte);
 	void ProcessPacket(char* packet);
+
+	void AddCharacter(Object& object) {
+		m_characters.emplace_back(&object);
+	}
 };

@@ -80,11 +80,14 @@ protected:
 	float m_lerp_progress = 0.0f;     // 선형 보간 비율
 
 	// [SC] 회전 보간을 위한 변수
-	float m_last_sent_pitch = 0.0f;    
+	float m_last_sent_yaw = 0.0f;    
 	const float m_pitch_send_delay = 0.1f;  // 100 ms (0.1 seconds)
 	std::chrono::high_resolution_clock::time_point m_last_sent_time;
-    float m_target_pitch = 0.0f;   // 목표 Pitch 값
-    float m_lerp_pitch_progress = 1.0f;  // 보간 진행도 (0.0~1.0)
+    float m_current_yaw = 0.0f;   // 현재 Pitch 값
+    float m_target_yaw = 0.0f;   // 목표 Pitch 값
+    float m_lerp_yaw_progress = 1.0f;  // 보간 진행도 (0.0~1.0)
+	bool m_change_yaw = false;    // 바꿔야하는지 여부
+	float yaw_count = 0.0f;
 
 public:
 	Object() {}
@@ -161,6 +164,8 @@ public:
 	void LerpPosition(float deltaTime);
 	void SetTargetPosition(const DirectX::XMFLOAT3& newPosition);
 
+	DirectX::XMFLOAT3 GetCameraLook();
+
 	//
 	void Set_Position(float position_x, float position_y, float position_z);
 
@@ -184,6 +189,8 @@ public:
 	void TP_Up(float distance);
 	void TP_Down(float distance);
 
+	void Rotate_Network(float degree_roll, float degree_pitch, float degree_yaw);
+
 	void Rotate_Character(float elapsed_time);
 
 	// rotate
@@ -195,7 +202,7 @@ public:
 
 	// [SC] 회전 보간을 위한 함수
 	void LerpRotate(float deltaTime);
-	void SetTargetPitch(float newPitch);
+	void SetTargetYaw(float newYaw);
 
 	//
 	void Bind_Camera(Camera* camera);
@@ -206,5 +213,7 @@ public:
 
 	void Set_WM(DirectX::XMMATRIX world_matrix);
 	void Draw(ID3D12GraphicsCommandList* command_list);
+
+	void Set_Look(DirectX::XMFLOAT3 look);
 };
 

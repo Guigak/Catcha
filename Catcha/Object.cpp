@@ -117,7 +117,10 @@ void Object::Calc_Delta(float elapsed_time) {
 				float deceleration = m_deceleration * elapsed_time;
 				float new_speed = MathHelper::Max(m_speed - deceleration, 0.0f);
 
-				m_velocity = MathHelper::Multiply(Get_Vel(), new_speed / m_speed);
+				float scale_factor = new_speed / m_speed;
+				m_velocity.x *= scale_factor;
+				m_velocity.z *= scale_factor;
+				//m_velocity = MathHelper::Multiply(Get_Vel(), new_speed / m_speed);
 			}
 		}
 
@@ -158,56 +161,59 @@ void Object::Calc_Delta_Characters(float elapsed_time)
 
 	if (m_physics) {
 		// Calc Vel
-		m_speed = MathHelper::Length_XZ(Get_Vel());
+		//m_speed = MathHelper::Length_XZ(Get_Vel());
 
-		if (m_speed > m_max_speed) {
-			m_velocity.x *= (m_max_speed / m_speed);
-			m_velocity.z *= (m_max_speed / m_speed);
+		//if (m_speed > m_max_speed) {
+		//	m_velocity.x *= (m_max_speed / m_speed);
+		//	m_velocity.z *= (m_max_speed / m_speed);
 
-			m_speed = m_max_speed;
-		}
+		//	m_speed = m_max_speed;
+		//}
 
-		DirectX::XMFLOAT3 delta = MathHelper::Multiply(Get_Vel(), elapsed_time);
+		//DirectX::XMFLOAT3 delta = MathHelper::Multiply(Get_Vel(), elapsed_time);
 
-		m_delta_position = MathHelper::Add(m_delta_position, delta);
+		//m_delta_position = MathHelper::Add(m_delta_position, delta);
 
-		// Calc deceleration
-		if (m_moving == false && m_state == Object_State::IDLE_STATE) {
-			if (m_speed > 0.0f) {
-				float deceleration = m_deceleration * elapsed_time;
-				float new_speed = MathHelper::Max(m_speed - deceleration, 0.0f);
+		//// Calc deceleration
+		//if (m_moving == false && m_state == Object_State::IDLE_STATE) {
+		//	if (m_speed > 0.0f) {
+		//		float deceleration = m_deceleration * elapsed_time;
+		//		float new_speed = MathHelper::Max(m_speed - deceleration, 0.0f);
 
-				m_velocity = MathHelper::Multiply(Get_Vel(), new_speed / m_speed);
-			}
-		}
+		//		float scale_factor = new_speed / m_speed;
+		//		m_velocity.x *= scale_factor;
+		//		m_velocity.z *= scale_factor;
+		//		//m_velocity = MathHelper::Multiply(Get_Vel(), new_speed / m_speed);
+		//	}
+		//}
 
-		// Calc Force
-		if (m_force.x != 0.0f || m_force.y != 0.0f || m_force.z != 0.0f) {
-			delta = MathHelper::Multiply(Get_Force(), elapsed_time);
+		//// Calc Force
+		//if (m_force.x != 0.0f || m_force.y != 0.0f || m_force.z != 0.0f) {
+		//	delta = MathHelper::Multiply(Get_Force(), elapsed_time);
 
-			m_delta_position = MathHelper::Add(m_delta_position, delta);
-		}
+		//	m_delta_position = MathHelper::Add(m_delta_position, delta);
+		//}
 
-		// Calc friction
-		float speed = MathHelper::Length(delta);
+		//// Calc friction
+		//float speed = MathHelper::Length(delta);
 
-		if (speed > 0.0f) {
-			float deceleration = m_deceleration * elapsed_time;
-			float new_speed = MathHelper::Max(speed - deceleration, 0.0f);
+		//if (speed > 0.0f) {
+		//	float deceleration = m_deceleration * elapsed_time;
+		//	float new_speed = MathHelper::Max(speed - deceleration, 0.0f);
 
-			m_force = MathHelper::Multiply(Get_Force(), new_speed / speed);
-		}
+		//	m_force = MathHelper::Multiply(Get_Force(), new_speed / speed);
+		//}
 
-		// Calc Grav
-		//m_velocity.y += m_gravity;
+		//// Calc Grav
+		////m_velocity.y += m_gravity;
 
-		// Move
-		m_position = MathHelper::Add(Get_Position_3f(), m_delta_position);
+		//// Move
+		//m_position = MathHelper::Add(Get_Position_3f(), m_delta_position);
 
 		// [SC] NetworkManager 싱글톤 인스턴스 사용
 		//		서버에서 받은 위치 동기화
-		NetworkManager& network_manager = NetworkManager::GetInstance();
-		SetTargetPosition(network_manager.characters[network_manager.m_myid].Location);
+		//NetworkManager& network_manager = NetworkManager::GetInstance();
+		//SetTargetPosition(network_manager.characters[network_manager.m_myid].Location);
 		LerpPosition(elapsed_time);
 
 
@@ -263,7 +269,8 @@ void Object::LerpPosition(float deltaTime)
 {
 	const float interp_duration = 0.05f;
 
-	if (m_lerp_progress < 1.0f) {
+	if (m_lerp_progress < 1.0f)
+	{
 		m_lerp_progress += deltaTime / interp_duration;
 		m_lerp_progress = m_lerp_progress < 1.0f ? m_lerp_progress : 1.0f;
 		m_position = MathHelper::Lerp(m_position, m_target_position, m_lerp_progress);
@@ -274,6 +281,16 @@ void Object::SetTargetPosition(const DirectX::XMFLOAT3& newPosition)
 {
 	m_target_position = newPosition;
 	m_lerp_progress = 0.0f;
+}
+
+DirectX::XMFLOAT3 Object::GetCameraLook()
+{
+	if (m_camera)
+	{
+		return m_camera->Get_Look();
+	}
+	else
+		return Get_Look();
 }
 
 void Object::Set_Position(float position_x, float position_y, float position_z) {
@@ -291,10 +308,10 @@ void Object::Move(DirectX::XMFLOAT3 direction) {
 }
 
 void Object::Move_Forward() {
-	if (m_camera) {
+	/*if (m_camera) {
 		m_velocity = MathHelper::Add(Get_Vel(), m_camera->Get_Look(), m_acceleration);
 	}
-	else {
+	else*/ {
 		m_velocity = MathHelper::Add(Get_Vel(), Get_Look(), m_acceleration);
 	}
 
@@ -302,10 +319,10 @@ void Object::Move_Forward() {
 }
 
 void Object::Move_Back() {
-	if (m_camera) {
+	/*if (m_camera) {
 		m_velocity = MathHelper::Add(Get_Vel(), m_camera->Get_Look(), -m_acceleration);
 	}
-	else {
+	else*/ {
 		m_velocity = MathHelper::Add(Get_Vel(), Get_Look(), -m_acceleration);
 	}
 
@@ -313,10 +330,10 @@ void Object::Move_Back() {
 }
 
 void Object::Move_Left() {
-	if (m_camera) {
+	/*if (m_camera) {
 		m_velocity = MathHelper::Add(Get_Vel(), m_camera->Get_Right(), -m_acceleration);
 	}
-	else {
+	else*/ {
 		m_velocity = MathHelper::Add(Get_Vel(), Get_Right(), -m_acceleration);
 	}
 
@@ -324,10 +341,10 @@ void Object::Move_Left() {
 }
 
 void Object::Move_Right() {
-	if (m_camera) {
+	/*if (m_camera) {
 		m_velocity = MathHelper::Add(Get_Vel(), m_camera->Get_Right(), m_acceleration);
 	}
-	else {
+	else*/ {
 		m_velocity = MathHelper::Add(Get_Vel(), Get_Right(), m_acceleration);
 	}
 
@@ -428,6 +445,12 @@ void Object::TP_Down(float distance) {
 	m_dirty = true;
 }
 
+//void Object::Rotate(float degree_roll, float degree_pitch, float degree_yaw) {
+//	Rotate_Roll(degree_roll / 100.0f);
+//	Rotate_Pitch(degree_pitch / 100.0f);
+//	Rotate_Yaw(degree_yaw / 100.0f);
+//}
+
 // 자신만 Rotate할때 시야각 보내줌
 void Object::Rotate(float degree_roll, float degree_pitch, float degree_yaw) {
 	Rotate_Roll(degree_roll / 100.0f);
@@ -437,13 +460,17 @@ void Object::Rotate(float degree_roll, float degree_pitch, float degree_yaw) {
 	// [CS] 시간이 지날때만 시야각 보냄
 	auto current_time = std::chrono::high_resolution_clock::now();
 	float delta_time = std::chrono::duration<float>(current_time - m_last_sent_time).count();
+	yaw_count += degree_pitch;
 
 	NetworkManager& network_manager = NetworkManager::GetInstance();
 	if (delta_time >= m_pitch_send_delay) 
 	{
 		// [CS] 시야각 보냄
-		short pitch = static_cast<short>(degree_pitch);
-		network_manager.SendRotate(pitch);
+		
+		float yaw = /*static_cast<short>*/(yaw_count);
+		network_manager.SendRotate(yaw);
+		yaw_count = 0.0f;
+
 		m_last_sent_time = current_time;
 	}
 }
@@ -452,13 +479,17 @@ void Object::Rotate_Character(float elapsed_time) {
 
 	// [SC] 다른 캐릭터들 시야 보간
 	NetworkManager& network_manager = NetworkManager::GetInstance();
-	// 새로운 Pitch 값이 기존 Pitch와 다를 경우에만 목표 Pitch를 설정
-	if (std::fabs(network_manager.characters[network_manager.m_myid].pitch - m_target_pitch) > std::numeric_limits<float>::epsilon())
+	//// 새로운 Pitch 값이 기존 Pitch와 다를 경우에만 목표 Pitch를 설정
+	//if (std::fabs(network_manager.characters[network_manager.m_myid].yaw - m_target_yaw) > std::numeric_limits<float>::epsilon())
+	//{
+	//	SetTargetYaw(network_manager.characters[network_manager.m_myid].yaw);
+	//}
+	if (m_change_yaw == true)
 	{
-		SetTargetPitch(network_manager.characters[network_manager.m_myid].pitch);
+		//LerpRotate(elapsed_time);
+		Rotate_Pitch(network_manager.characters[network_manager.m_myid].yaw / 100.0f);
+		m_change_yaw = false;
 	}
-
-	LerpRotate(elapsed_time);
 }
 
 void Object::Rotate_Roll(float degree) {
@@ -489,21 +520,31 @@ void Object::LerpRotate(float deltaTime)
 {
 	const float interp_duration = 0.05f;  // 보간 시간 (50ms)
 
-	if (m_lerp_pitch_progress < 1.0f) {
+	if (m_lerp_yaw_progress < 1.0f) 
+	{
 		// 진행도를 업데이트하고 1.0으로 제한
-		m_lerp_pitch_progress += deltaTime / interp_duration;
-		m_lerp_pitch_progress = m_lerp_pitch_progress < 1.0f ? m_lerp_pitch_progress : 1.0f;
+		m_lerp_yaw_progress += deltaTime / interp_duration;
+		m_lerp_yaw_progress = m_lerp_yaw_progress < 1.0f ? m_lerp_yaw_progress : 1.0f;
 
-		// 선형 보간을 통해 현재 Pitch 업데이트
-		float rotate_pitch = MathHelper::Lerp(m_rotate_quat.y, m_target_pitch, m_lerp_pitch_progress);
-		Rotate_Pitch(rotate_pitch / 100.0f);
+		float current_yaw = m_current_yaw;  // 기존 Yaw 각도 (시작 지점)
+		float target_yaw = m_target_yaw;    // 목표 Yaw 각도
+
+		float interpolated_yaw = MathHelper::Lerp(current_yaw, target_yaw, m_lerp_yaw_progress);
+
+		Rotate_Pitch(interpolated_yaw / 100.0f);
+	}
+	else
+	{
+		m_change_yaw = false;
 	}
 }
 
-void Object::SetTargetPitch(float newPitch)
+void Object::SetTargetYaw(float newYaw)
 {
-	m_target_pitch = newPitch;  // 목표 Pitch 설정
-	m_lerp_progress = 0.0f;     // 보간 진행도 초기화
+	m_change_yaw = true;
+	m_current_yaw = m_target_yaw;
+	m_target_yaw = newYaw;  // 목표 yaw 설정
+	m_lerp_yaw_progress = 0.0f;     // 보간 진행도 초기화
 }
 
 void Object::Bind_Camera(Camera* camera) {
@@ -538,4 +579,28 @@ void Object::Draw(ID3D12GraphicsCommandList* command_list) {
 	for (auto& m : m_meshes) {
 		m.mesh_info->Draw(command_list);
 	}
+}
+
+void Object::Set_Look(DirectX::XMFLOAT3 look)
+{
+	m_look = look;
+
+	//DirectX::XMVECTOR look_vector = DirectX::XMLoadFloat3(&m_look);
+	//look_vector = DirectX::XMVector3Normalize(look_vector);
+
+	//// Y축(Up 벡터) 설정
+	//DirectX::XMVECTOR up_vector = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+
+	//// Look 벡터와 Up 벡터로부터 회전 행렬 생성
+	//DirectX::XMMATRIX rotation_matrix = DirectX::XMMatrixLookToLH(
+	//	DirectX::XMVectorZero(),
+	//	look_vector,            
+	//	up_vector               
+	//);
+
+	//// 회전 행렬을 쿼터니언으로 변환
+	//DirectX::XMVECTOR quaternion = DirectX::XMQuaternionRotationMatrix(rotation_matrix);
+	//DirectX::XMStoreFloat4(&m_rotate_quat, quaternion);
+	
+	m_dirty = true;
 }

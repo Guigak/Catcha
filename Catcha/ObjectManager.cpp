@@ -152,6 +152,7 @@ void ObjectManager::Update(float elapsed_time) {
     {
         o->Calc_Delta_Characters(elapsed_time);
         o->Rotate_Character(elapsed_time);
+        
     }
 
     Solve_Collision();
@@ -223,6 +224,8 @@ Object* ObjectManager::Add_Obj(std::wstring object_name, std::wstring mesh_name,
     {
     case ObjectType::CHARACTER_OBJECT:
         m_characters.emplace_back(object_pointer);
+        // [CS] 서버 캐릭터 등록
+        NetworkManager::GetInstance().AddCharacter(*object_pointer);
         break;
     }
 

@@ -328,7 +328,7 @@ void TestScene::Build_O() {
 	m_object_manager->Add_Obj(L"cat_test", L"cat_mesh.fbx");
 	m_object_manager->Add_Obj(L"mouse_test", L"mouse_mesh.fbx");
 
-	m_object_manager->Get_Obj(L"player")->Set_Visiable(false);
+	//m_object_manager->Get_Obj(L"player")->Set_Visiable(false);
 }
 
 void TestScene::Build_C(D3DManager* d3d_manager) {
@@ -347,7 +347,7 @@ void TestScene::Build_C(D3DManager* d3d_manager) {
 	auto main_camera = reinterpret_cast<Camera*>(m_object_manager->Get_Obj(L"maincamera"));
 	main_camera->Set_Frustum(0.25f * MathHelper::Pi(), d3d_manager->Get_Aspect_Ratio(), 1.0f, 2000.0f);
 
-	m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"player", 0.1f);
+	m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"player", 50.1f);
 
 	m_main_camera = main_camera;
 }

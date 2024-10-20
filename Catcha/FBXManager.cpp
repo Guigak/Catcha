@@ -611,7 +611,11 @@ void FBXManager::Prcs_Mesh_Node(
     std::vector<Vertex_Info> vertex_array;
     std::vector<std::uint32_t> index_array;
 
-    FbxAMatrix global_transform_matrix = node->EvaluateGlobalTransform();
+    FbxAMatrix geometric_transform_matrix;
+    geometric_transform_matrix.SetT(node->GetGeometricTranslation(FbxNode::eSourcePivot));
+    geometric_transform_matrix.SetR(node->GetGeometricRotation(FbxNode::eSourcePivot));
+    geometric_transform_matrix.SetS(node->GetGeometricScaling(FbxNode::eSourcePivot));
+    FbxAMatrix global_transform_matrix = node->EvaluateGlobalTransform() * geometric_transform_matrix;
     FbxAMatrix rotate_matrix;
     rotate_matrix.SetR(global_transform_matrix.GetR());
 
@@ -707,6 +711,13 @@ void FBXManager::Prcs_Animation(std::wstring file_name, FbxScene* scene, ObjectM
     if (animstack_count) {
         if (bone_node_array.size() == 0) {
             Get_Null_Bone(scene->GetRootNode(), bone_node_array);
+        }
+
+        UINT bone_count = 0;
+        for (auto& bn : bone_node_array) {
+            if (Str_2_WStr(bn->GetName()) != skeleton_info->bone_array[bone_count++].name) {
+                OutputDebugStringW(L"Bone is wrong!!\n");
+            }
         }
 
         FbxAnimStack* animstack = scene->GetSrcObject<FbxAnimStack>(0);

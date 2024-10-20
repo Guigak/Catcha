@@ -50,7 +50,7 @@ struct CS_MOVE_PACKET {
 struct CS_ROTATE_PACKET {
 	unsigned char size;
 	char type;
-	float player_yaw;
+	float player_pitch;
 };
 
 struct CS_SYNC_PLAYER_PACKET {
@@ -107,7 +107,7 @@ struct SC_MOVE_PLAYER_PACKET {
 	char	type;
 	int		id;				// 서버에 접속해 있는 캐릭터 번호
 	float 	x, y, z;		// 움직인 위치
-	float	player_yaw;	// rotate 정보	
+	float	player_pitch;	// rotate 정보	
 };
 
 struct SC_SYNC_PLAYER_PACKET {

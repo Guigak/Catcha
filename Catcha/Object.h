@@ -75,19 +75,27 @@ protected:
 
 	DirectX::XMFLOAT4 m_rotate_quat = { 0.0f, 0.0f, 0.0f, 1.0f };
 
+	//////////////////////////////////////////////////////////////////
 	// [SC] 위치 보간을 위한 변수
-	DirectX::XMFLOAT3 m_target_position{ 0, 0, 0 };  // 서버에서 받은 Position
-	float m_lerp_progress = 0.0f;     // 선형 보간 비율
+	DirectX::XMFLOAT3 m_target_position{ 0, 0, 0 };						// 서버에서 받은 Position
+	float m_lerp_position_progress = 0.0f;								// Position 선형 보간 진행도 (0.0~1.0)
 
 	// [SC] 회전 보간을 위한 변수
-	float m_last_sent_yaw = 0.0f;    
-	const float m_pitch_send_delay = 0.1f;  // 100 ms (0.1 seconds)
-	std::chrono::high_resolution_clock::time_point m_last_sent_time;
-    float m_current_yaw = 0.0f;   // 현재 Pitch 값
-    float m_target_yaw = 0.0f;   // 목표 Pitch 값
-    float m_lerp_yaw_progress = 1.0f;  // 보간 진행도 (0.0~1.0)
-	bool m_change_yaw = false;    // 바꿔야하는지 여부
-	float yaw_count = 0.0f;
+	const float interp_duration = 0.05f;								// 보간 시간 상수 (20ms)
+
+	// [SC] 회전 변화각 보낼때 사용하는 변수
+	float m_last_sent_pitch = 0.0f;										// 마지막으로 보낸 Pitch 값
+	const float m_pitch_send_delay = 0.05f;								// 100 ms (0.1 seconds)
+	std::chrono::high_resolution_clock::time_point m_last_sent_time;	// 마지막으로 보낸 시간
+
+	// [SC] 회전 변화각 받아서 보간에 사용하는 변수
+    DirectX::XMFLOAT4 m_start_quat = { 0.0f, 0.0f, 0.0f, 1.0f };		// 보간 시작 쿼터니언 값
+	DirectX::XMFLOAT4 m_target_quat = { 0.0f, 0.0f, 0.0f, 1.0f };		// 목표 Pitch 값
+    float m_lerp_pitch_progress = 1.0f;									// Rotation 선형 보간 진행도 (0.0~1.0)
+	bool m_change_pitch = false;										// Rotation 바꿔야하는지 여부
+	float total_pitch = 0.0f;											// 각도 변화량의 합	
+
+	//////////////////////////////////////////////////////////////////
 
 public:
 	Object() {}
@@ -202,7 +210,7 @@ public:
 
 	// [SC] 회전 보간을 위한 함수
 	void LerpRotate(float deltaTime);
-	void SetTargetYaw(float newYaw);
+	void SetTargetPitch(float newpitch);
 
 	//
 	void Bind_Camera(Camera* camera);

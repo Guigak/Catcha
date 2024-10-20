@@ -116,12 +116,12 @@ void NetworkManager::SendInput(uint8_t& input_key)
 	DoSend(&p);
 }
 
-void NetworkManager::SendRotate(float& yaw)
+void NetworkManager::SendRotate(float& pitch)
 {
 	CS_ROTATE_PACKET p;
 	p.size = sizeof(p);
 	p.type = CS_ROTATE;
-	p.player_yaw = yaw;
+	p.player_pitch = pitch;
 	DoSend(&p);
 }
 
@@ -251,8 +251,8 @@ void NetworkManager::ProcessPacket(char* ptr)
 		m_myid = p->id;
 		DirectX::XMFLOAT3 coord = { static_cast<float>(p->x), static_cast<float>(p->y), static_cast<float>(p->z) };
 		characters[m_myid].Location = coord;
-		float yaw = 0.f;
-		characters[m_myid].yaw = yaw;
+		float pitch = 0.f;
+		characters[m_myid].pitch = pitch;
 
 		break;
 	}
@@ -263,15 +263,14 @@ void NetworkManager::ProcessPacket(char* ptr)
 
 		if (id == m_myid)
 		{
-			// 자신일 경우 자신의 움직임
-			//g_objects[id].move(my_packet->x, my_packet->y);
+
 		}
 		else
 		{
 			DirectX::XMFLOAT3 coord = { static_cast<float>(p->x), static_cast<float>(p->y), static_cast<float>(p->z) };
 			characters[id].Location = coord;
-			float yaw = 0.f;
-			characters[id].yaw = yaw;
+			float pitch = 0.f;
+			characters[id].pitch = pitch;
 		}
 		break;
 	}
@@ -285,15 +284,15 @@ void NetworkManager::ProcessPacket(char* ptr)
 			DirectX::XMFLOAT3 coord = { static_cast<float>(p->x), static_cast<float>(p->y), static_cast<float>(p->z) };
 			characters[m_myid].Location = coord;
 			m_characters[m_myid]->SetTargetPosition(coord);
-			characters[m_myid].yaw = p->player_yaw;
-			m_characters[m_myid]->SetTargetYaw(p->player_yaw);
+			characters[m_myid].pitch = p->player_pitch;
+			m_characters[m_myid]->SetTargetPitch(p->player_pitch);
 		}
 		else
 		{
 			// 다른 캐릭터의 받은 움직임
 			DirectX::XMFLOAT3 coord = { static_cast<float>(p->x), static_cast<float>(p->y), static_cast<float>(p->z) };
 			characters[id].Location = coord;
-			characters[id].yaw = p->player_yaw;
+			characters[id].pitch = p->player_pitch;
 		}
 		break;
 	}

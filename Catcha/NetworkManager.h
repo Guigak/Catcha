@@ -9,7 +9,7 @@ struct Client
 {
 	ANIM_TYPE Type;
 	DirectX::XMFLOAT3 Location;
-	float yaw;
+	float pitch;
 };
 
 class Object;
@@ -49,7 +49,7 @@ public:
 
 	void DoSend(void* packet);
 	void SendInput(uint8_t& input_key);
-	void SendRotate(float& yaw);
+	void SendRotate(float& pitch);
 	void DoSendUDP(void* packet);
 	void DoRecv();
 	void ProcessData(char* net_buf, size_t io_byte);

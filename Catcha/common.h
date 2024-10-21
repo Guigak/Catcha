@@ -56,7 +56,7 @@ constexpr int CLIENT_HEIGHT = 900;
 
 constexpr int FRAME_RESOURCES_NUMBER = 3;
 
-constexpr int MAX_BONE_COUNT = 128;
+constexpr int MAX_BONE_COUNT = 64;
 constexpr int MAX_WEIGHT_BONE_COUNT = 4;
 
 // virtual key
@@ -390,77 +390,6 @@ inline DirectX::XMFLOAT3 Quat_2_Euler(const DirectX::XMVECTOR& quaternion) {
 #define Release_Com(x) { if (x) { x->Release(); x = 0; } }
 
 // info
-struct VertexInfo {
-	DirectX::XMFLOAT3 position;
-	DirectX::XMFLOAT3 normal;
-	DirectX::XMFLOAT3 tangent;
-	DirectX::XMFLOAT2 uv;
-	UINT material_index;
-	UINT bone_count;
-	UINT bone_indices[MAX_BONE_COUNT];
-	DirectX::XMFLOAT4 bone_weights;
-};
-
-struct SubmeshInfo {
-	UINT index_count = 0;
-	UINT start_index_location = 0;
-	UINT base_vertex_location = 0;
-
-	float minimum_x = FLT_MAX;
-	float minimum_y = FLT_MAX;
-	float minimum_z = FLT_MAX;
-
-	float maximum_x = FLT_MIN;
-	float maximum_y = FLT_MIN;
-	float maximum_z = FLT_MIN;
-
-	//DirectX::BoundingBox bounding_box;
-};
-
-struct MeshInfo {
-	std::wstring name;
-
-	Microsoft::WRL::ComPtr<ID3DBlob> vertex_buffer_cpu = nullptr;
-	Microsoft::WRL::ComPtr<ID3DBlob> index_buffer_cpu = nullptr;
-
-	Microsoft::WRL::ComPtr<ID3D12Resource> vertex_buffer_gpu = nullptr;
-	Microsoft::WRL::ComPtr<ID3D12Resource> index_buffer_gpu = nullptr;
-
-	Microsoft::WRL::ComPtr<ID3D12Resource> vertex_upload_buffer = nullptr;
-	Microsoft::WRL::ComPtr<ID3D12Resource> index_upload_buffer = nullptr;
-
-	UINT vertex_buffer_stride = 0;
-	UINT vertex_buffer_size = 0;
-
-	DXGI_FORMAT index_format = DXGI_FORMAT_R16_UINT;
-	UINT index_buffer_size = 0;
-
-	std::unordered_map<std::wstring, SubmeshInfo> submesh_map;
-
-	D3D12_VERTEX_BUFFER_VIEW Get_VBV() const {	// Get Vertex Buffer View
-		D3D12_VERTEX_BUFFER_VIEW vertex_buffer_view;
-		vertex_buffer_view.BufferLocation = vertex_buffer_gpu->GetGPUVirtualAddress();
-		vertex_buffer_view.StrideInBytes = vertex_buffer_stride;
-		vertex_buffer_view.SizeInBytes = vertex_buffer_size;
-
-		return vertex_buffer_view;
-	}
-
-	D3D12_INDEX_BUFFER_VIEW Get_IBV() const {	// Get Index Buffer View
-		D3D12_INDEX_BUFFER_VIEW index_buffer_view;
-		index_buffer_view.BufferLocation = index_buffer_gpu->GetGPUVirtualAddress();
-		index_buffer_view.Format = index_format;
-		index_buffer_view.SizeInBytes = index_buffer_size;
-
-		return index_buffer_view;
-	}
-
-	void Free_UB() {	// Free Upload Buffer
-		vertex_upload_buffer = nullptr;
-		index_upload_buffer = nullptr;
-	}
-};
-
 struct MaterialInfo {
 	std::wstring name;
 
@@ -474,22 +403,6 @@ struct MaterialInfo {
 	DirectX::XMFLOAT4 diffuse_albedo = { 1.0f, 1.0f, 1.0f, 1.0f };
 	DirectX::XMFLOAT3 fresnel = { 0.01f, 0.01f, 0.01f };
 	float roughness = 0.25f;
-};
-
-struct BoneInfo {
-	std::wstring name;
-};
-
-struct SkeletonInfo {
-	std::unique_ptr<BoneInfo> root_bone;
-};
-
-struct KeyframeInfo {
-	float time;
-};
-
-struct AnimationInfo {
-	std::wstring name;
 };
 
 struct LightInfo {

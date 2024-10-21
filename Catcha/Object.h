@@ -24,7 +24,6 @@ protected:
 
 	UINT m_constant_buffer_index = -1;
 
-	MeshInfo* m_mesh_info = nullptr;
 	std::wstring m_submesh_name = L"";
 	MaterialInfo* m_material_info = nullptr;
 
@@ -87,25 +86,19 @@ protected:
 
 public:
 	Object() {}
-	Object(ObjectManager* object_manager, std::wstring object_name, MeshInfo* mesh_info, std::wstring mesh_name,
-		MaterialInfo* material_info, UINT constant_buffer_index, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, bool physics, bool visiable);
 	Object(ObjectManager* object_manager, std::wstring object_name, Mesh_Info* mesh, DirectX::XMMATRIX world_matrix, UINT constant_buffer_index, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, bool physics, bool visiable);
 	Object(ObjectManager* object_manager, std::wstring object_name, std::vector<Mesh>& mesh_array, UINT constant_buffer_index, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, bool physics, bool visiable);
 	~Object() {}
 
 	void Set_Object_Manager(ObjectManager* object_manager) { m_object_manager = object_manager; }
 	void Set_Name(std::wstring object_name) { m_name = object_name; }
-	void Set_Mesh_Info(MeshInfo* mesh_info, std::wstring mesh_name);
 	void Set_Material_Info(MaterialInfo* material_info) { m_material_info = material_info; }
 	void Set_CB_Index(UINT constant_buffer_index) { m_constant_buffer_index = constant_buffer_index; }
 	void Set_PT(D3D12_PRIMITIVE_TOPOLOGY primitive_topology) { m_primitive_topology = primitive_topology; }
 	void Set_Phys(bool physics) { m_physics = physics; }
 	void Set_Visiable(bool visiable) { m_visiable = visiable; }
 
-	void Chg_Mesh(std::wstring mesh_name);
-
 	//
-	void Crt_Simple_OBB();
 	DirectX::XMMATRIX Get_OBB_WM();
 	DirectX::BoundingOrientedBox Get_Calcd_OBB();
 
@@ -129,7 +122,6 @@ public:
 
 	UINT Get_CB_Index() { return m_constant_buffer_index; }
 
-	MeshInfo* Get_Mesh_Info() { return m_mesh_info; }
 	MaterialInfo* Get_Material_Info() { return m_material_info; }
 
 	D3D12_PRIMITIVE_TOPOLOGY Get_PT() { return m_primitive_topology; }

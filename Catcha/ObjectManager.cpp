@@ -2,49 +2,6 @@
 #include "InputManager.h"
 #include "Camera.h"
 
-Object* ObjectManager::Add_Obj(std::wstring object_name, MeshInfo* mesh_info, std::wstring mesh_name, MaterialInfo* material_info,
-    D3D12_PRIMITIVE_TOPOLOGY primitive_topology, ObjectType object_type, bool physics, bool visiable, std::wstring set_name)
-{
-    //auto object = std::make_unique<Object>(object_name, mesh_info, mesh_name, material_info, m_object_count++, primitive_topology, physics);
-
-    std::unique_ptr<Object> object;
-
-    switch (object_type) {
-    case ObjectType::OPAQUE_OBJECT:
-    case ObjectType::TRANSPARENT_OBJECT:
-        object = std::make_unique<Object>(this, object_name, mesh_info, mesh_name, material_info, m_object_count++, primitive_topology, physics, visiable);
-        break;
-    case ObjectType::CAMERA_OBJECT:
-        object = std::make_unique<Camera>();
-        break;
-    default:
-        break;
-    }
-
-    m_object_map[object_name] = std::move(object);
-
-    Object* object_pointer = m_object_map[object_name].get();
-    m_objects.emplace_back(object_pointer);
-
-    switch (object_type) {
-    case ObjectType::OPAQUE_OBJECT:
-        m_opaque_objects.emplace_back(object_pointer);
-        break;
-    case ObjectType::TRANSPARENT_OBJECT:
-        m_transparent_objects.emplace_back(object_pointer);
-        break;
-    case ObjectType::CAMERA_OBJECT:
-        m_camera_objects.emplace_back(object_pointer);
-        break;
-    default:
-        break;
-    }
-
-    m_object_set_map[set_name].emplace_back(object_pointer);
-
-    return m_object_map[object_name].get();
-}
-
 Object* ObjectManager::Get_Obj(std::wstring object_name) {
     return m_object_map[object_name].get();
 }
@@ -233,4 +190,23 @@ void ObjectManager::Build_BV(ID3D12Device* device, ID3D12GraphicsCommandList* co
 
 void ObjectManager::Set_Sklt_2_Obj(std::wstring object_name, std::wstring skeleton_name) {
     Get_Obj(object_name)->Set_Skeleton(m_skeleton_manager.Get_Skeleton(skeleton_name));
+}
+
+Object* ObjectManager::Add_Cam(std::wstring camera_name, std::wstring set_name, std::wstring bind_object_name, float distance) {
+    std::unique_ptr<Object> object;
+    object = std::make_unique<Camera>();
+
+    m_object_map[camera_name] = std::move(object);
+
+    Object* object_pointer = m_object_map[camera_name].get();
+    m_objects.emplace_back(object_pointer);
+    m_camera_objects.emplace_back(object_pointer);
+
+    m_object_set_map[set_name].emplace_back(object_pointer);
+
+    if (bind_object_name != L"") {
+        Bind_Cam_2_Obj(camera_name, bind_object_name, distance);
+    }
+
+    return object_pointer;
 }

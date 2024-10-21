@@ -2,19 +2,6 @@
 #include "Camera.h"
 #include "ObjectManager.h"
 
-Object::Object(ObjectManager* object_manager, std::wstring object_name, MeshInfo* mesh_info, std::wstring mesh_name,
-	MaterialInfo* material_info, UINT constant_buffer_index, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, bool physics, bool visiable)
-{
-	Set_Object_Manager(object_manager);
-	Set_Name(object_name);
-	Set_CB_Index(constant_buffer_index);
-	Set_Mesh_Info(mesh_info, mesh_name);
-	Set_Material_Info(material_info);
-	Set_PT(primitive_topology);
-	Set_Phys(physics);
-	Set_Visiable(visiable);
-}
-
 Object::Object(ObjectManager* object_manager, std::wstring object_name, Mesh_Info* mesh, DirectX::XMMATRIX world_matrix, UINT constant_buffer_index, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, bool physics, bool visiable) {
 	Set_Object_Manager(object_manager);
 	Set_Name(object_name);
@@ -34,52 +21,6 @@ Object::Object(ObjectManager* object_manager, std::wstring object_name, std::vec
 	Set_PT(primitive_topology);
 	Set_Phys(physics);
 	Set_Visiable(visiable);
-}
-
-void Object::Set_Mesh_Info(MeshInfo* mesh_info, std::wstring mesh_name) {
-	if (mesh_info == nullptr) {
-		return;
-	}
-
-	m_mesh_info = mesh_info;
-
-	m_submesh_name = mesh_name;
-
-	m_index_count = m_mesh_info->submesh_map[mesh_name].index_count;
-	m_start_index_location = m_mesh_info->submesh_map[mesh_name].start_index_location;
-	m_base_vertex_location = m_mesh_info->submesh_map[mesh_name].base_vertex_location;
-}
-
-void Object::Chg_Mesh(std::wstring mesh_name) {
-	if (mesh_name == L"") {
-		return;
-	}
-
-	m_submesh_name = mesh_name;
-
-	m_index_count = m_mesh_info->submesh_map[mesh_name].index_count;
-	m_start_index_location = m_mesh_info->submesh_map[mesh_name].start_index_location;
-	m_base_vertex_location = m_mesh_info->submesh_map[mesh_name].base_vertex_location;
-}
-
-void Object::Crt_Simple_OBB() {
-	DirectX::XMFLOAT3 center(
-		(m_mesh_info->submesh_map[m_submesh_name].maximum_x + m_mesh_info->submesh_map[m_submesh_name].minimum_x) / 2.0f,
-		(m_mesh_info->submesh_map[m_submesh_name].maximum_y + m_mesh_info->submesh_map[m_submesh_name].minimum_y) / 2.0f,
-		(m_mesh_info->submesh_map[m_submesh_name].maximum_z + m_mesh_info->submesh_map[m_submesh_name].minimum_z) / 2.0f
-	);
-
-	DirectX::XMFLOAT3 extents(
-		(m_mesh_info->submesh_map[m_submesh_name].maximum_x - m_mesh_info->submesh_map[m_submesh_name].minimum_x) / 2.0f,
-		(m_mesh_info->submesh_map[m_submesh_name].maximum_y - m_mesh_info->submesh_map[m_submesh_name].minimum_y) / 2.0f,
-		(m_mesh_info->submesh_map[m_submesh_name].maximum_z - m_mesh_info->submesh_map[m_submesh_name].minimum_z) / 2.0f
-	);
-
-	DirectX::XMFLOAT4 orientation(0.0f, 0.0f, 0.0f, 1.0f);
-
-	m_OBB.Center = center;
-	m_OBB.Extents = extents;
-	m_OBB.Orientation = orientation;
 }
 
 DirectX::XMMATRIX Object::Get_OBB_WM() {

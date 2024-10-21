@@ -39,9 +39,6 @@ public:
 	ObjectManager() {}
 	~ObjectManager() {}
 
-	Object* Add_Obj(std::wstring object_name, MeshInfo* mesh_info, std::wstring mesh_name, MaterialInfo* material_info,
-		D3D12_PRIMITIVE_TOPOLOGY primitive_topology, ObjectType object_type, bool physics, bool visiable, std::wstring set_name);
-
 	Object* Get_Obj(std::wstring object_name);
 	Object* Get_Obj(UINT object_number);
 	Object* Get_Opaque_Obj(UINT object_number);
@@ -91,5 +88,8 @@ public:
 
 	//
 	void Set_Sklt_2_Obj(std::wstring object_name, std::wstring skeleton_name);
+
+	//
+	Object* Add_Cam(std::wstring camera_name, std::wstring set_name = L"camera", std::wstring bind_object_name = L"", float distance = 0.0f);
 };
 

@@ -11,7 +11,7 @@
 #endif
 
 #define MAX_WEIGHT_BONE_COUNT 4
-#define MAX_BONE_COUNT 128
+#define MAX_BONE_COUNT 64
 
 #include "lighting.hlsl"
 

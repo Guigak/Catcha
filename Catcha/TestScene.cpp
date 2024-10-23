@@ -100,10 +100,6 @@ void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
 		}
 	}
 
-	//
-	//m_camera_position.x =100.0f * sinf(m_phi) * cosf(m_theta);
-	//m_camera_position.y =100.0f * sinf(m_phi) * sinf(m_theta);
-	//m_camera_position.z =100.0f * cosf(m_phi);
 	if (m_main_camera) {
 		m_main_camera->Udt_VM();
 
@@ -323,7 +319,8 @@ void TestScene::Build_S_N_L() {
 		{ "UV", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 36, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "BONECOUNT", 0, DXGI_FORMAT_R32_UINT, 0, 44, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "BONEINDICES", 0, DXGI_FORMAT_R32G32B32A32_UINT, 0, 48, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "BONEWEIGHTS", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 64, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+		{ "BONEWEIGHTS", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 64, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		//{ "MATERIAL", 0, DXGI_FORMAT_R32_UINT, 0, 80, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 	};
 }
 
@@ -345,7 +342,7 @@ void TestScene::Build_Mesh(ID3D12Device* device, ID3D12GraphicsCommandList* comm
 	m_object_manager->Ipt_From_FBX(L"mouse_walk.fbx", true, false, true, ANIMATION_INFO, L"mouse_mesh.fbx");
 	m_object_manager->Ipt_From_FBX(L"mouse_idle.fbx", true, false, true, ANIMATION_INFO, L"mouse_mesh.fbx");
 
-	m_object_manager->Ipt_From_FBX(L"house.fbx", false, true, false, MESH_INFO);
+	m_object_manager->Ipt_From_FBX(L"house.fbx", false, true, false, MESH_INFO | MATERIAL_INFO);
 
 	m_object_manager->Build_BV(device, command_list);
 }
@@ -357,7 +354,7 @@ void TestScene::Build_Material() {
 	default_material->diffuse_heap_index = 0;
 	default_material->diffuse_albedo = DirectX::XMFLOAT4(DirectX::Colors::LightBlue);
 	default_material->fresnel = DirectX::XMFLOAT3(0.01f, 0.01f, 0.01f);
-	default_material->roughness = 0.1f;
+	default_material->roughness = 0.001f;
 
 	m_material_map[L"default"] = std::move(default_material);                                                      
 }

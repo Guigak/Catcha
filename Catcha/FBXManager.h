@@ -41,12 +41,14 @@ public:
 	void Prcs_Node(
 		std::wstring file_name, FbxNode* node, ObjectManager* object_maanger, std::vector<FbxNode*>& bone_node_array,
 		std::vector<Bone_Info>& bone_array, std::unordered_map<std::wstring, UINT>& bone_index_map,
+		std::vector<Material_Info*>& material_info_array,
 		Mesh_Info& mesh_info, std::vector<Mesh>& mesh_array,
 		bool merge_mesh, bool add_object, bool merge_object, BYTE info_flag);
 
 	void Prcs_Mesh_Node(
 		std::wstring file_name, FbxNode* node, ObjectManager* object_maanger,
 		std::unordered_map<std::wstring, UINT>& bone_index_map,
+		std::vector<Material_Info*>& material_info_array,
 		Mesh_Info& mesh_info, std::vector<Mesh>& mesh_array,
 		bool merge_mesh, bool add_object, bool merge_object, BYTE info_flag);
 

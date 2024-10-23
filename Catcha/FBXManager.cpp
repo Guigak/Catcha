@@ -2,32 +2,6 @@
 #include "MeshCreater.h"
 #include "ObjectManager.h"
 
-FbxAMatrix Normalization_FbxMatrix(const FbxAMatrix& fbxamatrix) {
-    FbxAMatrix result;
-
-    result[0][0] = fbxamatrix[0][0];
-    result[1][0] = fbxamatrix[1][0];
-    result[2][0] = fbxamatrix[2][0];
-    result[3][0] = fbxamatrix[3][0];
-
-    result[0][1] = -fbxamatrix[0][2];
-    result[1][1] = -fbxamatrix[1][2];
-    result[2][1] = -fbxamatrix[2][2];
-    result[3][1] = -fbxamatrix[3][2];
-
-    result[0][2] = fbxamatrix[0][1];
-    result[1][2] = fbxamatrix[1][1];
-    result[2][2] = fbxamatrix[2][1];
-    result[3][2] = fbxamatrix[3][1];
-
-    result[0][3] = fbxamatrix[0][3];
-    result[1][3] = fbxamatrix[1][3];
-    result[2][3] = fbxamatrix[2][3];
-    result[3][3] = fbxamatrix[3][3];
-
-    return result;
-}
-
 std::unique_ptr<FBXManager> FBXManager::fbx_manager = nullptr;
 
 FBXManager* FBXManager::Get_Inst() {
@@ -414,6 +388,8 @@ void FBXManager::Ipt_From_File(ObjectManager* object_maanger, std::wstring file_
     std::vector<Bone_Info> bone_array;
     std::unordered_map<std::wstring, UINT> bone_index_map;
 
+    std::vector<Material_Info*> material_info_array;
+
     Mesh_Info mesh_info;
     std::vector<Mesh> mesh_array;
 
@@ -421,6 +397,7 @@ void FBXManager::Ipt_From_File(ObjectManager* object_maanger, std::wstring file_
     if (info_flag & SKELETON_INFO || info_flag & ANIMATION_INFO) {
         Prcs_Node(file_name, scene->GetRootNode(), object_maanger, bone_node_array,
             bone_array, bone_index_map,
+            material_info_array,
             mesh_info, mesh_array,
             merge_mesh, add_object, merge_object, SKELETON_INFO);
 
@@ -432,6 +409,7 @@ void FBXManager::Ipt_From_File(ObjectManager* object_maanger, std::wstring file_
     // process mesh info
     Prcs_Node(file_name, scene->GetRootNode(), object_maanger, bone_node_array,
         bone_array, bone_index_map,
+        material_info_array,
         mesh_info, mesh_array,
         merge_mesh, add_object, merge_object, info_flag);
 
@@ -453,7 +431,11 @@ void FBXManager::Ipt_From_File(ObjectManager* object_maanger, std::wstring file_
 
     // Add object
     if (info_flag & MESH_INFO &&  merge_mesh) {
-        object_maanger->Get_Mesh_Manager().Add_Mesh(file_name, mesh_info.vertices, mesh_info.indices_32);
+        Mesh_Info* mesh_info_pointer = object_maanger->Get_Mesh_Manager().Add_Mesh(file_name, mesh_info.vertices, mesh_info.indices_32);
+
+        if (info_flag & MATERIAL_INFO) {
+            mesh_info_pointer->material = object_maanger->Get_Material_Manager().Add_Material(file_name, material_info_array);
+        }
     }
 
     if (add_object) {
@@ -509,6 +491,7 @@ FbxScene* FBXManager::Ipt_Scene(FbxManager* manager, std::wstring file_name) {
 void FBXManager::Prcs_Node(
     std::wstring file_name, FbxNode* node, ObjectManager* object_maanger, std::vector<FbxNode*>& bone_node_array,
     std::vector<Bone_Info>& bone_array, std::unordered_map<std::wstring, UINT>& bone_index_map,
+    std::vector<Material_Info*>& material_info_array,
     Mesh_Info& mesh_info, std::vector<Mesh>& mesh_array,
     bool merge_mesh, bool add_object, bool merge_object, BYTE info_flag
 ) {
@@ -520,6 +503,7 @@ void FBXManager::Prcs_Node(
             if (info_flag & MESH_INFO) {
                 Prcs_Mesh_Node(file_name, node, object_maanger,
                     bone_index_map,
+                    material_info_array,
                     mesh_info, mesh_array,
                     merge_mesh, add_object, merge_object, info_flag);
             }
@@ -542,6 +526,7 @@ void FBXManager::Prcs_Node(
     for (UINT i = 0; i < child_count; ++i) {
         Prcs_Node(file_name, node->GetChild(i), object_maanger, bone_node_array,
             bone_array, bone_index_map,
+            material_info_array,
             mesh_info, mesh_array,
             merge_mesh, add_object, merge_object, info_flag);
     }
@@ -550,6 +535,7 @@ void FBXManager::Prcs_Node(
 void FBXManager::Prcs_Mesh_Node(
     std::wstring file_name, FbxNode* node, ObjectManager* object_maanger,
     std::unordered_map<std::wstring, UINT>& bone_index_map,
+    std::vector<Material_Info*>& material_info_array,
     Mesh_Info& mesh_info, std::vector<Mesh>& mesh_array,
     bool merge_mesh, bool add_object, bool merge_object, BYTE info_flag
 ) {
@@ -608,6 +594,53 @@ void FBXManager::Prcs_Mesh_Node(
     }
 
     //
+    std::vector<Material_Info*> material_info_temp_array;
+
+    if (info_flag & MATERIAL_INFO) {
+        int material_count = node->GetMaterialCount();
+        MaterialManager& material_manager = object_maanger->Get_Material_Manager();
+
+        for (int i = 0; i < material_count; ++i) {
+            FbxSurfaceMaterial* material = node->GetMaterial(i);
+
+            if (material) {
+                std::wstring material_name = Str_2_WStr(material->GetName());
+
+                FbxProperty diffuse_property = material->FindProperty(FbxSurfaceMaterial::sDiffuse);
+                FbxDouble3 diffuse;
+                if (diffuse_property.IsValid()) {
+                    diffuse = diffuse_property.Get<FbxDouble3>();
+                }
+
+                FbxProperty specular_property = material->FindProperty(FbxSurfaceMaterial::sSpecular);
+                FbxDouble3 specular;
+                if (specular_property.IsValid()) {
+                    specular = specular_property.Get<FbxDouble3>();
+                }
+
+                FbxProperty shininess_property = material->FindProperty(FbxSurfaceMaterial::sShininess);
+                double shininess = 0.0;
+                if (shininess_property.IsValid()) {
+                    shininess = shininess_property.Get<FbxDouble>();
+                }
+
+                //
+                Material_Factor material_factor;
+                material_factor.diffuse_albedo = DirectX::XMFLOAT4((float)diffuse[0], (float)diffuse[1], (float)diffuse[2], (float)1.0f);
+                material_factor.fresnel = DirectX::XMFLOAT3((float)specular[0], (float)specular[1], (float)specular[2]);
+                material_factor.shininess = (float)shininess;
+
+                if (material_manager.Contains_Material_Info(material_name)) {
+                    material_info_temp_array.emplace_back(material_manager.Add_Material_Info(node_name + L"_" + material_name, material_factor));
+                }
+                else {
+                    material_info_temp_array.emplace_back(material_manager.Add_Material_Info(material_name, material_factor));
+                }
+            }
+        }
+    }
+
+    //
     std::vector<Vertex_Info> vertex_array;
     std::vector<std::uint32_t> index_array;
 
@@ -625,6 +658,7 @@ void FBXManager::Prcs_Mesh_Node(
     //
     UINT triangle_count = mesh->GetPolygonCount();
     UINT vertex_count = triangle_count * 3;
+    FbxGeometryElementMaterial* material_element = mesh->GetElementMaterial();
 
     for (UINT i = 0; i < vertex_count; ++i) {
         std::uint32_t control_point_index = mesh->GetPolygonVertex(i / 3, i % 3);
@@ -646,6 +680,15 @@ void FBXManager::Prcs_Mesh_Node(
             }
         }
 
+        if (info_flag & MATERIAL_INFO) {
+            if (material_element->GetMappingMode() == FbxGeometryElement::eByPolygon) {
+                vertex_info.material_index = material_element->GetIndexArray().GetAt(i / 3);
+            }
+            //else if (material_element->GetMappingMode() == FbxGeometryElement::eByPolygonVertex) {
+            //    OutputDebugStringW(L"ByPolygonVertex\n");
+            //}
+        }
+
         if (merge_mesh) {
             vertex_info.position = MathHelper::Multiply(vertex_info.position, global_transform_xmmatrix);
             vertex_info.normal = MathHelper::Multiply(vertex_info.normal, rotate_xmmatrix);
@@ -657,9 +700,17 @@ void FBXManager::Prcs_Mesh_Node(
 
     if (merge_mesh) {
         mesh_info.Add_Info(vertex_array, index_array);
+
+        if (info_flag & MATERIAL_INFO) {
+            material_info_array.insert(material_info_array.end(), material_info_temp_array.begin(), material_info_temp_array.end());
+        }
     }
     else {
         Mesh_Info* added_mesh_info = object_maanger->Get_Mesh_Manager().Add_Mesh(node_name, vertex_array, index_array);
+
+        if (info_flag & MATERIAL_INFO) {
+            added_mesh_info->material = object_maanger->Get_Material_Manager().Add_Material(node_name, material_info_temp_array);
+        }
 
         if (add_object) {
             if (merge_object) {

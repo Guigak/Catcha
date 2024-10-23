@@ -59,6 +59,8 @@ constexpr int FRAME_RESOURCES_NUMBER = 3;
 constexpr int MAX_BONE_COUNT = 64;
 constexpr int MAX_WEIGHT_BONE_COUNT = 4;
 
+constexpr int MAX_MATERIAL_COUNT = 16;
+
 // virtual key
 #define VK_NUM0 0x30
 #define VK_NUM1 0x31
@@ -1557,15 +1559,71 @@ inline Microsoft::WRL::ComPtr<ID3DBlob> Compile_Shader(
 }
 
 // _Info
+struct Material_Factor {
+	DirectX::XMFLOAT4 diffuse_albedo = DirectX::XMFLOAT4(DirectX::Colors::LightBlue);
+	DirectX::XMFLOAT3 fresnel = { 0.01f, 0.01f, 0.01f };
+	float shininess = 0.25f;
+};
+
+struct Material_Info {
+	std::wstring name;
+
+	int dirty_count = FRAME_RESOURCES_NUMBER;
+
+	Material_Factor material_factor;
+
+	Material_Info() {}
+	Material_Info(std::wstring material_info_name, Material_Factor material_factor_in) {
+		name = material_info_name;
+		material_factor = material_factor_in;
+	}
+
+	void Rst_Dirty_Count() {
+		dirty_count = FRAME_RESOURCES_NUMBER;
+	}
+};
+
+struct Material {
+	std::wstring name;
+
+	UINT constant_buffer_index = -1;
+
+	UINT diffuse_heap_index = -1;
+	UINT normal_heap_index = -1;
+
+	std::vector<Material_Info*> material_info_array;
+
+	std::array<Material_Factor, MAX_MATERIAL_COUNT> material_factor_array;
+
+	//
+	Material() {}
+	Material(UINT constant_buffer_index_in, std::wstring material_name, std::vector<Material_Info*>& material_info_array_in) {
+		constant_buffer_index = constant_buffer_index_in;
+		name = material_name;
+
+		material_info_array.assign(material_info_array_in.begin(), material_info_array_in.end());
+	}
+
+	void Udt_Material_Factors() {
+		for (size_t i = 0; i < material_info_array.size(); ++i) {
+			material_factor_array[i] = material_info_array[i]->material_factor;
+		}
+	}
+
+	std::array<Material_Factor, MAX_MATERIAL_COUNT>& Get_Material_Factors() {
+		return material_factor_array;
+	}
+};
+
 struct Vertex_Info {
 	DirectX::XMFLOAT3 position;
 	DirectX::XMFLOAT3 normal;
 	DirectX::XMFLOAT3 tangent;
 	DirectX::XMFLOAT2 uv;
-	//UINT material_index;
 	UINT bone_count = 0;
 	UINT bone_indices[MAX_WEIGHT_BONE_COUNT] = { (UINT)-1, (UINT)-1, (UINT)-1, (UINT)-1 };
 	float bone_weights[MAX_WEIGHT_BONE_COUNT];
+	UINT material_index = 0;
 };
 
 struct Mesh_Info {
@@ -1591,6 +1649,9 @@ struct Mesh_Info {
 	UINT index_buffer_size = 0;
 
 	D3D12_PRIMITIVE_TOPOLOGY primitive_topology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+
+	//
+	Material* material = nullptr;
 
 	//
 	Mesh_Info() {}

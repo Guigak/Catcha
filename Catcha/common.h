@@ -59,7 +59,7 @@ constexpr int FRAME_RESOURCES_NUMBER = 3;
 constexpr int MAX_BONE_COUNT = 64;
 constexpr int MAX_WEIGHT_BONE_COUNT = 4;
 
-constexpr int MAX_MATERIAL_COUNT = 16;
+constexpr int MAX_MATERIAL_COUNT = 32;
 
 // virtual key
 #define VK_NUM0 0x30

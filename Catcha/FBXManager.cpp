@@ -682,11 +682,15 @@ void FBXManager::Prcs_Mesh_Node(
 
         if (info_flag & MATERIAL_INFO) {
             if (material_element->GetMappingMode() == FbxGeometryElement::eByPolygon) {
-                vertex_info.material_index = material_element->GetIndexArray().GetAt(i / 3);
+                vertex_info.material_index = (UINT)material_element->GetIndexArray().GetAt(i / 3);                
             }
             //else if (material_element->GetMappingMode() == FbxGeometryElement::eByPolygonVertex) {
             //    OutputDebugStringW(L"ByPolygonVertex\n");
             //}
+
+            if (merge_mesh) {
+                vertex_info.material_index += (UINT)material_info_array.size();
+            }
         }
 
         if (merge_mesh) {

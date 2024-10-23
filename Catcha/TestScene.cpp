@@ -6,6 +6,8 @@ void TestScene::Enter(D3DManager* d3d_manager) {
 	m_object_manager = std::make_unique<ObjectManager>();
 	m_input_manager = std::make_unique<InputManager>(this, m_object_manager.get());
 
+	m_object_manager->Get_Material_Manager().Crt_Default_Material();
+
 	ID3D12Device* device = d3d_manager->Get_Device();
 	ID3D12GraphicsCommandList* command_list = d3d_manager->Get_Cmd_List();
 
@@ -83,21 +85,19 @@ void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
 		}
 	}
 
-	auto current_material_constant_buffer = m_current_frameresource->material_constant_buffer.get();
+	if (m_object_manager->Get_Material_Manager().Get_Dirty_Count()) {
+		auto current_material_constant_buffer = m_current_frameresource->material_constant_buffer.get();
 
-	for (auto& m : m_material_map) {
-		MaterialInfo* material = m.second.get();
+		for (auto& m : m_object_manager->Get_Material_Manager().Get_Material_Map()) {
+			Material* material = m.second.get();
 
-		if (material->dirty_frame_count > 0) {
 			MaterialConstants material_constants;
-			material_constants.diffuse_albedo = material->diffuse_albedo;
-			material_constants.fresnel = material->fresnel;
-			material_constants.roughness = material->roughness;
+			material_constants.material_array = material->Get_Material_Factors();
 
 			current_material_constant_buffer->Copy_Data(material->constant_buffer_index, material_constants);
-
-			material->dirty_frame_count--;
 		}
+
+		m_object_manager->Get_Material_Manager().Sub_Dirty_Count();
 	}
 
 	if (m_main_camera) {
@@ -220,24 +220,9 @@ void TestScene::Draw(D3DManager* d3d_manager, ID3D12CommandList** command_lists)
 			continue;
 		}
 
-		//command_list->IASetVertexBuffers(0, 1, &object->Get_Mesh_Info()->Get_VBV());
-		//command_list->IASetIndexBuffer(&object->Get_Mesh_Info()->Get_IBV());
-		//command_list->IASetPrimitiveTopology(object->Get_PT());
-
 		UINT object_CBV_index = m_current_frameresource_index * (UINT)m_object_manager->Get_Opaque_Obj_Count() + object->Get_CB_Index();
 		auto object_CBV_gpu_descriptor_handle = D3D12_GPU_DESCRIPTOR_HANDLE_EX(m_CBV_heap->GetGPUDescriptorHandleForHeapStart());
 		object_CBV_gpu_descriptor_handle.Get_By_Offset(object_CBV_index, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size());
-
-		//
-		UINT material_CBV_index;
-		if (object->Get_Material_Info()) {
-			material_CBV_index = m_material_CBV_offset + m_current_frameresource_index * (UINT)m_material_map.size() + object->Get_Material_Info()->constant_buffer_index;
-		}
-		else {
-			material_CBV_index = m_material_CBV_offset + m_current_frameresource_index * (UINT)m_material_map.size() + m_material_map[L"default"]->constant_buffer_index;
-		}
-		auto material_CBV_gpu_descriptor_handle = D3D12_GPU_DESCRIPTOR_HANDLE_EX(m_CBV_heap->GetGPUDescriptorHandleForHeapStart());
-		material_CBV_gpu_descriptor_handle.Get_By_Offset(material_CBV_index, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size());
 
 		//
 		UINT animation_CBV_index = m_animation_CBV_offset + m_current_frameresource_index * (UINT)m_object_manager->Get_Opaque_Obj_Count() + object->Get_CB_Index();
@@ -246,13 +231,27 @@ void TestScene::Draw(D3DManager* d3d_manager, ID3D12CommandList** command_lists)
 
 		//
 		command_list->SetGraphicsRootDescriptorTable(0, object_CBV_gpu_descriptor_handle);
-		command_list->SetGraphicsRootDescriptorTable(1, material_CBV_gpu_descriptor_handle);
 		command_list->SetGraphicsRootDescriptorTable(3, animation_CBV_gpu_descriptor_handle);
 
-		object->Draw(command_list);
-		//for (UINT i = 0; i < object->Get_Index(); ++++++i) {
-		//	command_list->DrawIndexedInstanced(3, 1, object->Get_Start_Index() + i, object->Get_Base_Vertex(), 0);
-		//}
+		UINT material_CBV_index;
+		for (auto& m : object->Get_Mesh_Array()) {
+			if (m.mesh_info->material == nullptr) {
+				material_CBV_index = m_material_CBV_offset +
+					m_current_frameresource_index * (UINT)m_object_manager->Get_Material_Manager().Get_Material_Count() + 0;
+			}
+			else {
+				material_CBV_index = m_material_CBV_offset +
+					m_current_frameresource_index * (UINT)m_object_manager->Get_Material_Manager().Get_Material_Count() +
+					m.mesh_info->material->constant_buffer_index;
+			}
+
+			auto material_CBV_gpu_descriptor_handle = D3D12_GPU_DESCRIPTOR_HANDLE_EX(m_CBV_heap->GetGPUDescriptorHandleForHeapStart());
+			material_CBV_gpu_descriptor_handle.Get_By_Offset(material_CBV_index, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size());
+
+			command_list->SetGraphicsRootDescriptorTable(1, material_CBV_gpu_descriptor_handle);
+
+			m.mesh_info->Draw(command_list);
+		}
 	}
 
 	// draw transparent objects
@@ -320,7 +319,7 @@ void TestScene::Build_S_N_L() {
 		{ "BONECOUNT", 0, DXGI_FORMAT_R32_UINT, 0, 44, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "BONEINDICES", 0, DXGI_FORMAT_R32G32B32A32_UINT, 0, 48, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "BONEWEIGHTS", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 64, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		//{ "MATERIAL", 0, DXGI_FORMAT_R32_UINT, 0, 80, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+		{ "MATERIAL", 0, DXGI_FORMAT_R32_UINT, 0, 80, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 	};
 }
 
@@ -348,15 +347,7 @@ void TestScene::Build_Mesh(ID3D12Device* device, ID3D12GraphicsCommandList* comm
 }
 
 void TestScene::Build_Material() {
-	auto default_material = std::make_unique<MaterialInfo>();
-	default_material->name = L"default";
-	default_material->constant_buffer_index = 0;
-	default_material->diffuse_heap_index = 0;
-	default_material->diffuse_albedo = DirectX::XMFLOAT4(DirectX::Colors::LightBlue);
-	default_material->fresnel = DirectX::XMFLOAT3(0.01f, 0.01f, 0.01f);
-	default_material->roughness = 0.001f;
-
-	m_material_map[L"default"] = std::move(default_material);                                                      
+	//
 }
 
 void TestScene::Build_O() {
@@ -387,13 +378,14 @@ void TestScene::Build_C(D3DManager* d3d_manager) {
 
 void TestScene::Build_FR(ID3D12Device* device) {
 	for (int i = 0; i < FRAME_RESOURCES_NUMBER; ++i) {
-		m_frameresources.emplace_back(std::make_unique<FrameResorce>(device, 1, (UINT)m_object_manager->Get_Obj_Count(), (UINT)m_material_map.size()));
+		m_frameresources.emplace_back(std::make_unique<FrameResorce>(device, 1,
+			(UINT)m_object_manager->Get_Obj_Count(), (UINT)m_object_manager->Get_Material_Manager().Get_Material_Count()));
 	}
 }
 
 void TestScene::Build_DH(ID3D12Device* device) {
 	UINT object_count = (UINT)m_object_manager->Get_Obj_Count();
-	UINT material_count = (UINT)m_material_map.size();
+	UINT material_count = (UINT)m_object_manager->Get_Material_Manager().Get_Material_Count();
 
 	UINT descriptors_number = (object_count * 2 + material_count + 1) * FRAME_RESOURCES_NUMBER;	// object also has animation
 
@@ -414,7 +406,6 @@ void TestScene::Build_CBV(D3DManager* d3d_manager) {
 	ID3D12Device* device = d3d_manager->Get_Device();
 
 	UINT object_constant_buffer_size = Calc_CB_Size(sizeof(ObjectConstants));
-
 	UINT object_count = (UINT)m_object_manager->Get_Obj_Count();
 
 	for (int frameresource_index = 0; frameresource_index < FRAME_RESOURCES_NUMBER; ++frameresource_index) {
@@ -438,20 +429,26 @@ void TestScene::Build_CBV(D3DManager* d3d_manager) {
 	}
 
 	UINT material_constant_buffer_size = Calc_CB_Size(sizeof(MaterialConstants));
+	UINT material_count = (UINT)m_object_manager->Get_Material_Manager().Get_Material_Count();
 
 	for (int frameresource_index = 0; frameresource_index < FRAME_RESOURCES_NUMBER; ++frameresource_index) {
 		auto material_constant_buffer = m_frameresources[frameresource_index]->material_constant_buffer->Get_Resource();
-		D3D12_GPU_VIRTUAL_ADDRESS constant_buffer_address = material_constant_buffer->GetGPUVirtualAddress();
 
-		int descriptor_heap_index = m_material_CBV_offset + frameresource_index;
-		auto cpu_descriptor_handle = D3D12_CPU_DESCRIPTOR_HANDLE_EX(m_CBV_heap->GetCPUDescriptorHandleForHeapStart());
-		cpu_descriptor_handle.Get_By_Offset(descriptor_heap_index, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size());
+		for (UINT i = 0; i < material_count; ++i) {
+			D3D12_GPU_VIRTUAL_ADDRESS constant_buffer_address = material_constant_buffer->GetGPUVirtualAddress();
 
-		D3D12_CONSTANT_BUFFER_VIEW_DESC constant_buffer_view_desc;
-		constant_buffer_view_desc.BufferLocation = constant_buffer_address;
-		constant_buffer_view_desc.SizeInBytes = material_constant_buffer_size;
+			constant_buffer_address += i * material_constant_buffer_size;
 
-		device->CreateConstantBufferView(&constant_buffer_view_desc, cpu_descriptor_handle);
+			int descriptor_heap_index = m_material_CBV_offset + frameresource_index * material_count + i;
+			auto cpu_descriptor_handle = D3D12_CPU_DESCRIPTOR_HANDLE_EX(m_CBV_heap->GetCPUDescriptorHandleForHeapStart());
+			cpu_descriptor_handle.Get_By_Offset(descriptor_heap_index, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size());
+
+			D3D12_CONSTANT_BUFFER_VIEW_DESC constant_buffer_view_desc;
+			constant_buffer_view_desc.BufferLocation = constant_buffer_address;
+			constant_buffer_view_desc.SizeInBytes = material_constant_buffer_size;
+
+			device->CreateConstantBufferView(&constant_buffer_view_desc, cpu_descriptor_handle);
+		}
 	}
 
 	UINT pass_constant_buffer_size = Calc_CB_Size(sizeof(PassConstants));
@@ -472,7 +469,6 @@ void TestScene::Build_CBV(D3DManager* d3d_manager) {
 	}
 
 	UINT animation_constant_buffer_size = Calc_CB_Size(sizeof(AnimationConstants));
-
 	object_count = (UINT)m_object_manager->Get_Obj_Count();
 
 	for (int frameresource_index = 0; frameresource_index < FRAME_RESOURCES_NUMBER; ++frameresource_index) {

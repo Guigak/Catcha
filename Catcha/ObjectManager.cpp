@@ -94,6 +94,8 @@ void ObjectManager::Rotate(std::wstring object_name, Action action, POINTF degre
 }
 
 void ObjectManager::Update(float elapsed_time) {
+    m_material_manager.Update();
+
     for (auto& o : m_objects) {
         o->Calc_Delta(elapsed_time);
     }

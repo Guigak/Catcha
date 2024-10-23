@@ -13,6 +13,8 @@
 #define MAX_WEIGHT_BONE_COUNT 4
 #define MAX_BONE_COUNT 64
 
+#define MAX_MATERIAL_COUNT 32
+
 #include "lighting.hlsl"
 
 cbuffer CB_Object : register(b0) {
@@ -21,9 +23,7 @@ cbuffer CB_Object : register(b0) {
 };
 
 cbuffer CB_Material : register(b1) {
-    float4 g_diffuse_albedo;
-    float3 g_fresnel;
-    float g_roughness;
+    Material g_material_array[MAX_MATERIAL_COUNT];
 }
 
 cbuffer CB_Pass : register(b2) {
@@ -56,12 +56,14 @@ struct Vertex_In {
     uint bone_count : BONECOUNT;
     uint4 bone_indices : BONEINDICES;
     float4 bone_weights : BONEWEIGHTS;
+    uint material_index : MATERIAL;
 };
 
 struct Vertex_Out {
 	float4 position_screen  : SV_POSITION;
     float3 position_world : POSITION;
     float3 normal_world : NORMAL;
+    uint material_index : MATERIAL;
 };
 
 Vertex_Out VS(Vertex_In vertex_in) {
@@ -99,6 +101,8 @@ Vertex_Out VS(Vertex_In vertex_in) {
         vertex_out.position_screen = mul(position_world, g_view_projection);
     }
 
+    vertex_out.material_index = vertex_in.material_index;
+
     return vertex_out;
 }
 
@@ -107,10 +111,10 @@ float4 PS(Vertex_Out pixel_in) : SV_Target {
 
     float3 to_eye_world = normalize(g_camera_position - pixel_in.position_world);
 
-    float4 ambient = g_ambient_light * g_diffuse_albedo;
+    Material material = g_material_array[pixel_in.material_index];
 
-    float shininess = 1.0f - g_roughness;
-    Material material = { g_diffuse_albedo, g_fresnel, shininess };
+    float4 ambient = g_ambient_light * material.diffuse_albedo;
+
     float shadow_factor = 1.0f;
     
     float4 direct_light;
@@ -119,12 +123,12 @@ float4 PS(Vertex_Out pixel_in) : SV_Target {
 
     float4 result = ambient + direct_light;
 
-    result.a = g_diffuse_albedo.a;
+    result.a = material.diffuse_albedo.a;
 
-    float luminance = dot(result.rgb, float3(0.299, 0.587, 0.114));
-    result = float4(luminance, luminance, luminance, result.a);
+    //float luminance = dot(result.rgb, float3(0.299, 0.587, 0.114));
+    //result = float4(luminance, luminance, luminance, result.a);
 
-    result = lerp(0.2, 1.0, result);
+    //result = lerp(0.2, 1.0, result);
 
     return result;
 }

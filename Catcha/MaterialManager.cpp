@@ -17,3 +17,31 @@ Material* MaterialManager::Add_Material(std::wstring material_name, std::vector<
 bool MaterialManager::Contains_Material_Info(std::wstring material_info_name) {
 	return m_material_info_map.contains(material_info_name);
 }
+
+void MaterialManager::Update() {
+	bool dirty = false;
+
+	for (auto& m : m_material_info_map) {
+		Material_Info* material_info = m.second.get();
+
+		if (material_info->dirty_count) {
+			dirty = true;
+			material_info->dirty_count--;
+		}
+	}
+
+	if (dirty) {
+		for (auto& m : m_material_map) {
+			m.second.get()->Udt_Material_Factors();
+		}
+
+		Rst_Dirty_Count();
+	}
+}
+
+void MaterialManager::Crt_Default_Material() {
+	std::vector<Material_Info*> material_info;
+	material_info.emplace_back(Add_Material_Info(L"default", Material_Factor()));
+
+	Add_Material(L"default", material_info);
+}

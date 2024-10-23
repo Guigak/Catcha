@@ -185,6 +185,8 @@ public:
 	void Add_Mesh(Mesh_Info* mesh_info, DirectX::XMFLOAT4X4 local_transform_matrix);
 	void Add_Mesh(std::vector<Mesh>& mesh_array);
 
+	std::vector<Mesh>& Get_Mesh_Array() { return m_meshes; }
+
 	void Set_WM(DirectX::XMMATRIX world_matrix);
 	void Draw(ID3D12GraphicsCommandList* command_list);
 

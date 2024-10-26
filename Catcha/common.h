@@ -138,6 +138,22 @@ struct D3D12_ROOT_CONSTANTS_EX;
 struct D3D12_ROOT_DESCRIPTOR_EX;
 struct D3D12_ROOT_PARAMETER_EX;
 
+// Character Number
+enum CHARACTER_NUMBER
+{
+	NUM_MOUSE0 = 0,
+	NUM_MOUSE1,
+	NUM_MOUSE2,
+	NUM_MOUSE3,
+	NUM_AI1,
+	NUM_AI2,
+	NUM_AI3,
+	NUM_AI4,
+	NUM_CAT
+};
+
+
+
 // math
 struct MathHelper {
 	static float Infinity() { return FLT_MAX; }

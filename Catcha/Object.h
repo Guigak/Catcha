@@ -46,7 +46,7 @@ protected:
 	DirectX::XMFLOAT3 m_velocity = DirectX::XMFLOAT3();
 
 	float m_acceleration = 100.0f;
-	float m_deceleration = 200.0f;
+	float m_deceleration = 1000.0f;
 
 	float m_speed = 0.0f;
 	float m_max_speed = 200.0f;
@@ -143,6 +143,8 @@ public:
 	MeshInfo* Get_Mesh_Info() { return m_mesh_info; }
 	MaterialInfo* Get_Material_Info() { return m_material_info; }
 
+	std::wstring Get_Mesh_Name() { return m_submesh_name; }
+
 	D3D12_PRIMITIVE_TOPOLOGY Get_PT() { return m_primitive_topology; }
 
 	UINT Get_Index() { return m_index_count; }
@@ -223,5 +225,8 @@ public:
 	void Draw(ID3D12GraphicsCommandList* command_list);
 
 	void Set_Look(DirectX::XMFLOAT3 look);
+
+	// [SC] 캐릭터 변경을 위한 함수
+	void Change_Character(uint8_t prev_num, uint8_t new_num);
 };
 

@@ -125,6 +125,15 @@ void NetworkManager::SendRotate(float& pitch)
 	DoSend(&p);
 }
 
+void NetworkManager::ChooseCharacter(bool IsCat)
+{
+	CS_CHOOSE_CHARACTER_PACKET p;
+	p.size = sizeof(p);
+	p.type = CS_CHOOSE_CHARACTER;
+	p.is_cat = IsCat;
+	DoSend(&p);
+}
+
 void NetworkManager::DoSendUDP(void* packet)
 {
 	DWORD BytesSent = 0;
@@ -326,6 +335,54 @@ void NetworkManager::ProcessPacket(char* ptr)
 			DirectX::XMFLOAT3 coord = { static_cast<float>(p->x), static_cast<float>(p->y), static_cast<float>(p->z) };
 			characters[id].Location = coord;
 			m_characters[id]->Set_Look(DirectX::XMFLOAT3(p->look_x, p->look_y, p->look_z));
+		}
+		break;
+	}
+	case SC_CHANGE_CHARACTER:
+	{
+		SC_CHANGE_CHARACTER_PACKET* p = reinterpret_cast<SC_CHANGE_CHARACTER_PACKET*>(ptr);
+		int id = p->id;
+		int prev_character_num = static_cast<int>(p->prev_character_num);
+		int new_character_num = static_cast<int>(p->new_character_num);
+		if (id == m_myid)
+		{
+			// 자신의 캐릭터 변경
+			m_characters[m_myid]->Change_Character(p->prev_character_num, p->new_character_num);
+			for (auto& character : m_characters)
+			{
+				// 바뀐 캐릭터가 CAT일 경우
+				if (new_character_num == NUM_CAT)
+				{
+					if (L"cat" == character->Get_Name())
+					{
+						// 캐릭터 변경
+						m_characters[m_myid]->Set_Name(L"free_mode");
+						character->Set_Name(L"player");
+						Object* temp = m_characters[m_myid];
+						m_characters[m_myid] = character;
+						character = temp;
+
+						// 옵저버들에게 알림 전송
+						for (auto& observer : m_observers) 
+						{
+							observer->CharacterChange(true, L"player", L"cat");
+						}
+					}
+				}
+				// 바뀐 캐릭터가 Mouse일 경우
+				else
+				{
+					m_characters[m_myid] = character;
+					m_characters[m_myid]->Set_Name(L"player");
+					m_characters[m_myid]->Set_Visiable(false);
+				}
+
+			}
+		}
+		else
+		{
+			// 다른 캐릭터의 캐릭터 변경
+
 		}
 		break;
 	}

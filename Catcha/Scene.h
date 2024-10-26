@@ -4,13 +4,14 @@
 #include "Camera.h"
 #include "ObjectManager.h"
 #include "InputManager.h"
+#include "NetworkObserver.h"
 
 class Camera;
 
 class SceneManager;
 class D3DManager;
 
-class Scene {
+class Scene : public NetworkObserver {
 protected:
 	std::wstring m_name = L"name";
 	bool m_paused = false;
@@ -59,7 +60,14 @@ protected:
 	float m_radius = 15.0f;
 
 public:
-	Scene(std::wstring name, Scene* back_scene = nullptr) : m_name(name), m_back_scene(back_scene) {}
+	Scene(std::wstring name, Scene* back_scene = nullptr) : m_name(name), m_back_scene(back_scene) {
+		// NetworkManager에 현재 TestScene을 옵저버로 등록
+		NetworkManager::GetInstance().RegisterObserver(this);
+	}
+	~Scene() {
+		// 소멸 시 NetworkManager에서 옵저버 해제
+		NetworkManager::GetInstance().UnregisterObserver(this);
+	}
 
 	virtual void Enter(D3DManager* d3d_manager) {}
 	virtual void Pause() { m_paused = true; }
@@ -90,5 +98,7 @@ public:
 
 	virtual void Set_BS(Scene* back_scene) { m_back_scene = back_scene; }	// Set Back Scene
 	virtual void Set_SM(SceneManager* scene_manager) { m_scene_manager = scene_manager; }	// Set Scene Manager
+
+	virtual void CharacterChange(bool is_cat, const std::wstring& key1, const std::wstring& key2) = 0;		// 옵저버를 이용한 캐릭터 변경
 };
 

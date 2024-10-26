@@ -108,6 +108,16 @@ void InputManager::Prcs_Binding_Info(BindingInfo binding_info) {
 			network_manager.SendInput(input_key_);
 
 			break;
+
+		// [CS] 서버로 정한 캐릭터 전송
+		case Action::CHANGE_CAT:
+			network_manager.ChooseCharacter(true);
+			break;
+		case Action::CHANGE_MOUSE:
+			network_manager.ChooseCharacter(false);
+			break;
+
+
 		case Action::TELEPORT_FORWARD:
 		case Action::TELEPORT_BACK:
 		case Action::TELEPORT_LEFT:

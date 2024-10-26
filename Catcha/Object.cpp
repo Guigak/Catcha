@@ -256,7 +256,7 @@ void Object::Move_Forward() {
 		m_velocity = MathHelper::Add(Get_Vel(), m_camera->Get_Look(), m_acceleration);
 	}
 	else*/ {
-		m_velocity = MathHelper::Add(Get_Vel(), Get_Look(), m_acceleration);
+		//m_velocity = MathHelper::Add(Get_Vel(), Get_Look(), m_acceleration);
 	}
 
 	m_moving = true;
@@ -267,7 +267,7 @@ void Object::Move_Back() {
 		m_velocity = MathHelper::Add(Get_Vel(), m_camera->Get_Look(), -m_acceleration);
 	}
 	else*/ {
-		m_velocity = MathHelper::Add(Get_Vel(), Get_Look(), -m_acceleration);
+		//m_velocity = MathHelper::Add(Get_Vel(), Get_Look(), -m_acceleration);
 	}
 
 	m_moving = true;
@@ -278,7 +278,7 @@ void Object::Move_Left() {
 		m_velocity = MathHelper::Add(Get_Vel(), m_camera->Get_Right(), -m_acceleration);
 	}
 	else*/ {
-		m_velocity = MathHelper::Add(Get_Vel(), Get_Right(), -m_acceleration);
+		//m_velocity = MathHelper::Add(Get_Vel(), Get_Right(), -m_acceleration);
 	}
 
 	m_moving = true;
@@ -289,7 +289,7 @@ void Object::Move_Right() {
 		m_velocity = MathHelper::Add(Get_Vel(), m_camera->Get_Right(), m_acceleration);
 	}
 	else*/ {
-		m_velocity = MathHelper::Add(Get_Vel(), Get_Right(), m_acceleration);
+		//m_velocity = MathHelper::Add(Get_Vel(), Get_Right(), m_acceleration);
 	}
 
 	m_moving = true;
@@ -403,7 +403,6 @@ void Object::Rotate(float degree_roll, float degree_pitch, float degree_yaw) {
 	if (delta_time >= m_pitch_send_delay) 
 	{
 		// [CS] 시야각 보냄
-		
 		float pitch = (total_pitch);
 	
 		NetworkManager& network_manager = NetworkManager::GetInstance();
@@ -460,7 +459,8 @@ void Object::LerpRotate(float deltaTime)
 		DirectX::XMVECTOR start_quat = DirectX::XMLoadFloat4(&m_start_quat);
 		DirectX::XMVECTOR target_quat = DirectX::XMLoadFloat4(&m_target_quat);
 
-		DirectX::XMVECTOR interpolated_quat = DirectX::XMVectorLerp(start_quat, target_quat, m_lerp_pitch_progress);
+		// 진행도에 따라 쿼터니언 선형 보간
+		DirectX::XMVECTOR interpolated_quat = DirectX::XMQuaternionSlerp(start_quat, target_quat, m_lerp_pitch_progress);
 		interpolated_quat = DirectX::XMQuaternionNormalize(interpolated_quat);
 
 		// 보간된 쿼터니언을 XMFLOAT4로 저장 후 적용
@@ -530,4 +530,21 @@ void Object::Set_Look(DirectX::XMFLOAT3 look)
 {
 	m_look = look;
 	m_dirty = true;
+}
+
+void Object::Change_Character(uint8_t prev_num, uint8_t new_num)
+{
+	//switch (new_num)
+	//{
+	//case NUM_MOUSE0:
+	//case NUM_MOUSE1:
+	//case NUM_MOUSE2:
+	//case NUM_MOUSE3:
+	//	break;
+	//case NUM_CAT:
+	//	{
+	//		Set_Name()
+	//		break;
+	//	}
+	//}
 }

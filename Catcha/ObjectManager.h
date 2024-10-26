@@ -91,5 +91,8 @@ public:
 
 	//
 	void Build_BV(ID3D12Device* device, ID3D12GraphicsCommandList* command_list);
+
+	// player 전환을 위한 object swap
+	void Swap_Object(const std::wstring& key1, const std::wstring& key2);
 };
 

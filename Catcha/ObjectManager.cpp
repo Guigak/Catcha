@@ -143,6 +143,34 @@ void ObjectManager::Rotate(std::wstring object_name, Action action, POINTF degre
     }
 }
 
+//void ObjectManager::ChangeCat(std::wstring object_name, Action action)
+//{
+//	Object* object = Get_Obj(object_name);
+//
+//	switch (action)
+//	{
+//	case Action::CHANGE_CAT:
+//		object->ChangeCat();
+//		break;
+//	default:
+//		break;
+//	}
+//}
+//
+//void ObjectManager::ChangeMouse(std::wstring object_name, Action action)
+//{
+//	Object* object = Get_Obj(object_name);
+//
+//	switch (action)
+//	{
+//	case Action::CHANGE_MOUSE:
+//		object->ChangeMouse();
+//		break;
+//	default:
+//		break;
+//	}
+//}
+
 void ObjectManager::Update(float elapsed_time) {
     for (auto& o : m_objects) {
         o->Calc_Delta(elapsed_time);
@@ -260,4 +288,19 @@ Object* ObjectManager::Add_Obj(std::wstring object_name, std::vector<Mesh>& mesh
 
 void ObjectManager::Build_BV(ID3D12Device* device, ID3D12GraphicsCommandList* command_list) {
     m_mesh_manager.Crt_BV(device, command_list);
+}
+
+void ObjectManager::Swap_Object(const std::wstring& key1, const std::wstring& key2)
+{
+    auto it1 = m_object_map.find(key1);
+    auto it2 = m_object_map.find(key2);
+
+    if (it1 != m_object_map.end() && it2 != m_object_map.end()) 
+    {
+        std::swap(it1->second, it2->second);  // 소유권 이동
+    }
+    else
+    {
+        OutputDebugString(L"ObjectManager::Swap_Object() m_object_map Error\n");
+    }
 }

@@ -28,5 +28,7 @@ public:
 
 	virtual void Binding_Key();
 	virtual void Pairing_Collision_Set();
+
+	void CharacterChange(bool is_cat, const std::wstring& key1, const std::wstring& key2) override;		// 옵저버를 이용한 캐릭터 변경
 };
 

@@ -325,8 +325,15 @@ void TestScene::Build_Material() {
 
 void TestScene::Build_O() {
 	m_object_manager->Add_Obj(L"player", L"mouse_mesh.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
-	m_object_manager->Add_Obj(L"cat_test", L"cat_mesh.fbx");
-	m_object_manager->Add_Obj(L"mouse_test", L"mouse_mesh.fbx");
+	m_object_manager->Add_Obj(L"mouse0", L"mouse_mesh.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
+	m_object_manager->Add_Obj(L"mouse1", L"mouse_mesh.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
+	m_object_manager->Add_Obj(L"mouse2", L"mouse_mesh.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
+	m_object_manager->Add_Obj(L"mouse3", L"mouse_mesh.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
+	m_object_manager->Add_Obj(L"mouse4", L"mouse_mesh.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
+	m_object_manager->Add_Obj(L"mouse5", L"mouse_mesh.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
+	m_object_manager->Add_Obj(L"mouse6", L"mouse_mesh.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
+	m_object_manager->Add_Obj(L"mouse7", L"mouse_mesh.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
+	m_object_manager->Add_Obj(L"cat", L"cat_mesh.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
 
 	//m_object_manager->Get_Obj(L"player")->Set_Visiable(false);
 }
@@ -482,24 +489,8 @@ void TestScene::Binding_Key() {
 	m_input_manager->Bind_Key_Up(VK_A, BindingInfo(L"player", Action::MOVE_LEFT));
 	m_input_manager->Bind_Key_Up(VK_D, BindingInfo(L"player", Action::MOVE_RIGHT));
 
-	//m_input_manager->Bind_Key_Down(VK_W, BindingInfo(L"test", Action::TELEPORT_FORWARD, 1.0f));
-	//m_input_manager->Bind_Key_Down(VK_S, BindingInfo(L"test", Action::TELEPORT_BACK, 1.0f));
-	//m_input_manager->Bind_Key_Down(VK_A, BindingInfo(L"test", Action::TELEPORT_LEFT, 1.0f));
-	//m_input_manager->Bind_Key_Down(VK_D, BindingInfo(L"test", Action::TELEPORT_RIGHT, 1.0f));
-	//m_input_manager->Bind_Key_Down(VK_SPACE, BindingInfo(L"test", Action::TELEPORT_UP, 1.0f));
-	//m_input_manager->Bind_Key_Down(VK_SHIFT, BindingInfo(L"test", Action::TELEPORT_DOWN, 1.0f));
-
-	//m_input_manager->Bind_Key_Down(VK_W, BindingInfo(L"player", Action::TELEPORT_FORWARD, 1.0f));
-	//m_input_manager->Bind_Key_Down(VK_S, BindingInfo(L"player", Action::TELEPORT_BACK, 1.0f));
-	//m_input_manager->Bind_Key_Down(VK_A, BindingInfo(L"player", Action::TELEPORT_LEFT, 1.0f));
-	//m_input_manager->Bind_Key_Down(VK_D, BindingInfo(L"player", Action::TELEPORT_RIGHT, 1.0f));
-	//m_input_manager->Bind_Key_Down(VK_SPACE, BindingInfo(L"player", Action::TELEPORT_UP, 1.0f));
-	//m_input_manager->Bind_Key_Down(VK_SHIFT, BindingInfo(L"player", Action::TELEPORT_DOWN, 1.0f));
-
-
-
-	//m_input_manager->Bind_Key_Down(VK_SPACE, BindingInfo(L"test", Action::MOVE_UP, 1.0f));
-	//m_input_manager->Bind_Key_Down(VK_SHIFT, BindingInfo(L"test", Action::MOVE_DOWN, 1.0f));
+	m_input_manager->Bind_Key_First_Down(VK_NUM1, BindingInfo(L"player", Action::CHANGE_MOUSE));
+	m_input_manager->Bind_Key_First_Down(VK_NUM2, BindingInfo(L"player", Action::CHANGE_CAT));
 
 	m_input_manager->Bind_Key_Down(VK_Q, BindingInfo(L"maincamera", Action::ROTATE_PITCH, POINTF(-1.0f)));
 	m_input_manager->Bind_Key_Down(VK_E, BindingInfo(L"maincamera", Action::ROTATE_PITCH, POINTF(1.0f)));
@@ -509,4 +500,17 @@ void TestScene::Binding_Key() {
 
 void TestScene::Pairing_Collision_Set() {
 	//m_object_manager->Add_Collision_Pair(L"")
+}
+
+void TestScene::CharacterChange(bool is_cat, const std::wstring& key1, const std::wstring& key2)
+{
+	if (true == is_cat)
+	{
+		m_object_manager->Swap_Object(key1, key2);
+		m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"player", 100.1f);
+	}
+	else
+	{
+		m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"cat", 0.1f);
+	}
 }

@@ -161,6 +161,7 @@
     <ClInclude Include="InputManager.h" />
     <ClInclude Include="MeshManager.h" />
     <ClInclude Include="NetworkManager.h" />
+    <ClInclude Include="NetworkObserver.h" />
     <ClInclude Include="Object.h" />
     <ClInclude Include="ObjectInfo.h" />
     <ClInclude Include="ObjectManager.h" />

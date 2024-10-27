@@ -324,22 +324,22 @@ void TestScene::Build_S_N_L() {
 }
 
 void TestScene::Build_Mesh(ID3D12Device* device, ID3D12GraphicsCommandList* command_list) {
-	m_object_manager->Ipt_From_FBX(L"cat_mesh.fbx", true, false, true, MESH_INFO | SKELETON_INFO);
-	m_object_manager->Ipt_From_FBX(L"cat_walk.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh.fbx");
-	m_object_manager->Ipt_From_FBX(L"cat_run.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh.fbx");
-	m_object_manager->Ipt_From_FBX(L"cat_idle.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh.fbx");
-	m_object_manager->Ipt_From_FBX(L"cat_jump.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh.fbx");
-	m_object_manager->Ipt_From_FBX(L"cat_bite.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh.fbx");
-	m_object_manager->Ipt_From_FBX(L"cat_paw.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh.fbx");
-	//m_object_manager->Ipt_From_FBX(L"cat_stretch.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh.fbx");
+	m_object_manager->Ipt_From_FBX(L"cat_mesh_edit.fbx", true, false, true, MESH_INFO | SKELETON_INFO | MATERIAL_INFO);
+	m_object_manager->Ipt_From_FBX(L"cat_walk.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
+	m_object_manager->Ipt_From_FBX(L"cat_run.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
+	m_object_manager->Ipt_From_FBX(L"cat_idle.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
+	m_object_manager->Ipt_From_FBX(L"cat_jump.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
+	m_object_manager->Ipt_From_FBX(L"cat_bite.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
+	m_object_manager->Ipt_From_FBX(L"cat_paw.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
+	//m_object_manager->Ipt_From_FBX(L"cat_stretch.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
 
-	m_object_manager->Ipt_From_FBX(L"mouse_mesh.fbx", true, false, true, MESH_INFO | SKELETON_INFO);
-	m_object_manager->Ipt_From_FBX(L"mouse_death.fbx", true, false, true, ANIMATION_INFO, L"mouse_mesh.fbx");
-	m_object_manager->Ipt_From_FBX(L"mouse_hit.fbx", true, false, true, ANIMATION_INFO, L"mouse_mesh.fbx");
-	m_object_manager->Ipt_From_FBX(L"mouse_jump.fbx", true, false, true, ANIMATION_INFO, L"mouse_mesh.fbx");
-	m_object_manager->Ipt_From_FBX(L"mouse_run.fbx", true, false, true, ANIMATION_INFO, L"mouse_mesh.fbx");
-	m_object_manager->Ipt_From_FBX(L"mouse_walk.fbx", true, false, true, ANIMATION_INFO, L"mouse_mesh.fbx");
-	m_object_manager->Ipt_From_FBX(L"mouse_idle.fbx", true, false, true, ANIMATION_INFO, L"mouse_mesh.fbx");
+	m_object_manager->Ipt_From_FBX(L"mouse_mesh_edit.fbx", true, false, true, MESH_INFO | SKELETON_INFO | MATERIAL_INFO);
+	m_object_manager->Ipt_From_FBX(L"mouse_death.fbx", true, false, true, ANIMATION_INFO, L"mouse_mesh_edit.fbx");
+	m_object_manager->Ipt_From_FBX(L"mouse_hit.fbx", true, false, true, ANIMATION_INFO, L"mouse_mesh_edit.fbx");
+	m_object_manager->Ipt_From_FBX(L"mouse_jump.fbx", true, false, true, ANIMATION_INFO, L"mouse_mesh_edit.fbx");
+	m_object_manager->Ipt_From_FBX(L"mouse_run.fbx", true, false, true, ANIMATION_INFO, L"mouse_mesh_edit.fbx");
+	m_object_manager->Ipt_From_FBX(L"mouse_walk.fbx", true, false, true, ANIMATION_INFO, L"mouse_mesh_edit.fbx");
+	m_object_manager->Ipt_From_FBX(L"mouse_idle.fbx", true, false, true, ANIMATION_INFO, L"mouse_mesh_edit.fbx");
 
 	m_object_manager->Ipt_From_FBX(L"house.fbx", false, true, false, MESH_INFO | MATERIAL_INFO);
 
@@ -351,20 +351,20 @@ void TestScene::Build_Material() {
 }
 
 void TestScene::Build_O() {
-	m_object_manager->Add_Obj(L"player", L"cat_mesh.fbx");
+	m_object_manager->Add_Obj(L"player", L"cat_mesh_edit.fbx");
 
-	m_object_manager->Add_Obj(L"cat_test", L"cat_mesh.fbx");
-	m_object_manager->Set_Sklt_2_Obj(L"cat_test", L"cat_mesh.fbx");
+	m_object_manager->Add_Obj(L"cat_test", L"cat_mesh_edit.fbx");
+	m_object_manager->Set_Sklt_2_Obj(L"cat_test", L"cat_mesh_edit.fbx");
 
-	m_object_manager->Add_Obj(L"mouse_test", L"mouse_mesh.fbx");
-	m_object_manager->Set_Sklt_2_Obj(L"mouse_test", L"mouse_mesh.fbx");
+	m_object_manager->Add_Obj(L"mouse_test", L"mouse_mesh_edit.fbx");
+	m_object_manager->Set_Sklt_2_Obj(L"mouse_test", L"mouse_mesh_edit.fbx");
 
 	m_object_manager->Get_Obj(L"player")->Set_Visiable(false);
 	//m_object_manager->Get_Obj(L"cat_test")->Set_Visiable(false);
-	m_object_manager->Get_Obj(L"mouse_test")->Set_Visiable(false);
+	//m_object_manager->Get_Obj(L"mouse_test")->Set_Visiable(false);
 
 	m_object_manager->Get_Obj(L"mouse_test")->Set_Animation(L"mouse_idle.fbx");
-	//m_object_manager->Get_Obj(L"mouse_test")->Set_Animated(true);
+	m_object_manager->Get_Obj(L"mouse_test")->Set_Animated(true);
 	m_object_manager->Get_Obj(L"cat_test")->Set_Animation(L"cat_idle.fbx");
 	m_object_manager->Get_Obj(L"cat_test")->Set_Animated(true);
 }

@@ -1561,7 +1561,7 @@ inline Microsoft::WRL::ComPtr<ID3DBlob> Compile_Shader(
 // _Info
 struct Material_Factor {
 	DirectX::XMFLOAT4 diffuse_albedo = DirectX::XMFLOAT4(DirectX::Colors::LightBlue);
-	DirectX::XMFLOAT3 fresnel = { 0.01f, 0.01f, 0.01f };
+	DirectX::XMFLOAT3 fresnel = { 0.1f, 0.1f, 0.1f };
 	float shininess = 0.25f;
 };
 

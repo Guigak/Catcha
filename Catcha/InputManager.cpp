@@ -40,6 +40,12 @@ void InputManager::Bind_Mouse_Move(BindingInfo binding_info) {
 }
 
 void InputManager::Prcs_Input() {
+	if (GetActiveWindow() != GetForegroundWindow()) {
+		m_previous_point.x = -1;
+		m_previous_point.y = -1;
+		return;
+	}
+
 	for (auto& k : m_key_set) {
 		if (m_state[k]) {
 			if (m_previous_state[k]) {

@@ -98,6 +98,8 @@ struct SC_ADD_PLAYER_PACKET {
 	char	type;
 	int 	id;
 	float 	x, y, z;
+	float	quat_x, quat_y, quat_z, quat_w;
+	uint8_t character_num;
 	char	nickname[NAME_SIZE];
 };
 

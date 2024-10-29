@@ -70,7 +70,7 @@ Object* ObjectManager::Get_Transparent_Obj(UINT object_number) {
 
 void ObjectManager::Move(std::wstring object_name, Action action) {
     Object* object = Get_Obj(object_name);
-
+    bool check_key_input = true;
     switch (action) {
     case Action::MOVE_FORWARD:
         object->Move_Forward();
@@ -91,8 +91,16 @@ void ObjectManager::Move(std::wstring object_name, Action action) {
         object->Move_Down();
         break;
     default:
+        check_key_input = false;
         break;
     }
+ //   // [CS] 키보드 입력이 시작되었음을 알림
+ //   if(check_key_input)
+	//{
+ //       uint8_t input_key_ = (static_cast<uint8_t>(action) << 1) | true;
+ //       NetworkManager& network_manager = NetworkManager::GetInstance();
+ //       network_manager.SendInput(input_key_);
+	//}
 }
 
 void ObjectManager::Teleport(std::wstring object_name, Action action, float distance) {
@@ -179,7 +187,10 @@ void ObjectManager::Update(float elapsed_time) {
     for (auto& o : m_characters)
     {
         o->Calc_Delta_Characters(elapsed_time);
-        o->Rotate_Character(elapsed_time);
+        if (o->Get_Name() != L"player")
+        {
+            o->Rotate_Character(elapsed_time);
+        }
         
     }
 
@@ -251,10 +262,17 @@ Object* ObjectManager::Add_Obj(std::wstring object_name, std::wstring mesh_name,
     switch (object_type)
     {
     case ObjectType::CHARACTER_OBJECT:
+        object_pointer->Set_Character_Number(static_cast<int>(m_characters.size()));
         m_characters.emplace_back(object_pointer);
         // [CS] 서버 캐릭터 등록
         NetworkManager::GetInstance().AddCharacter(*object_pointer);
         break;
+    case ObjectType::GHOST_OBJECT:
+        object_pointer->Set_Character_Number(static_cast<int>(m_characters.size()));
+		m_characters.emplace_back(object_pointer);
+        // [CS] 서버 캐릭터 등록
+        NetworkManager::GetInstance().AddCharacter(*object_pointer);
+		break;
     }
 
     m_objects.emplace_back(object_pointer);
@@ -303,4 +321,10 @@ void ObjectManager::Swap_Object(const std::wstring& key1, const std::wstring& ke
     {
         OutputDebugString(L"ObjectManager::Swap_Object() m_object_map Error\n");
     }
+}
+
+void ObjectManager::Set_Camera_4_Server(std::wstring camera_name, bool NeedSend)
+{
+    Camera* camera = (Camera*)Get_Obj(camera_name);
+    camera->Set_Camera_Need_Send(NeedSend);
 }

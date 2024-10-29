@@ -40,6 +40,12 @@ void InputManager::Bind_Mouse_Move(BindingInfo binding_info) {
 }
 
 void InputManager::Prcs_Input() {
+	if (GetActiveWindow() != GetForegroundWindow()) {
+		m_previous_point.x = -1;
+		m_previous_point.y = -1;
+		return;
+	}
+
 	// NetworkManager 싱글톤 인스턴스 사용
 	NetworkManager& network_manager = NetworkManager::GetInstance();
 
@@ -57,6 +63,18 @@ void InputManager::Prcs_Input() {
 					BindingInfo binding_info = m_key_first_down_map[k];
 
 					Prcs_Binding_Info(binding_info);
+
+					// [CS] 키보드 입력이 시작되었음을 알림
+					switch (binding_info.action) {
+					case Action::MOVE_FORWARD:
+					case Action::MOVE_BACK:
+					case Action::MOVE_LEFT:
+					case Action::MOVE_RIGHT:
+						input_key_ = (static_cast<uint8_t>(binding_info.action) << 1) | true;
+						network_manager.SendInput(input_key_);
+						break;
+					}
+
 				}
 			}
 		}
@@ -103,18 +121,22 @@ void InputManager::Prcs_Binding_Info(BindingInfo binding_info) {
 		case Action::MOVE_DOWN:
 			m_object_manager->Move(binding_info.object_name, binding_info.action);
 
-			// [CS] 키보드 입력이 시작되었음을 알림
-			input_key_ = (static_cast<uint8_t>(binding_info.action) << 1) | true;
-			network_manager.SendInput(input_key_);
-
 			break;
 
 		// [CS] 서버로 정한 캐릭터 전송
 		case Action::CHANGE_CAT:
-			network_manager.ChooseCharacter(true);
+			if (false == network_manager.Choose)
+			{
+				network_manager.ChooseCharacter(true);
+				network_manager.Choose = true;
+			}
 			break;
 		case Action::CHANGE_MOUSE:
-			network_manager.ChooseCharacter(false);
+			if (false == network_manager.Choose)
+			{
+				network_manager.ChooseCharacter(false);
+				network_manager.Choose = true;
+			}
 			break;
 
 

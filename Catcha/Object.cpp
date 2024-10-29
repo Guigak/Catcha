@@ -396,21 +396,25 @@ void Object::Rotate(float degree_roll, float degree_pitch, float degree_yaw) {
 	Rotate_Yaw(degree_yaw / 100.0f);
 
 	// [CS] 시간이 지날때만 시야각 보냄
-	auto current_time = std::chrono::high_resolution_clock::now();
-	float delta_time = std::chrono::duration<float>(current_time - m_last_sent_time).count();
-	total_pitch += degree_pitch;
-	
-	if (delta_time >= m_pitch_send_delay) 
+	if (true == m_is_need_send)
 	{
-		// [CS] 시야각 보냄
-		float pitch = (total_pitch);
-	
-		NetworkManager& network_manager = NetworkManager::GetInstance();
-		network_manager.SendRotate(pitch);
-		total_pitch = 0.0f;
-		//OutputDebugStringA("Send Rotate\n");
-		
-		m_last_sent_time = current_time;
+		auto current_time = std::chrono::high_resolution_clock::now();
+		float delta_time = std::chrono::duration<float>(current_time - m_last_sent_time).count();
+		total_pitch += degree_pitch;
+
+
+		if (delta_time >= m_pitch_send_delay)
+		{
+			// [CS] 시야각 보냄
+			float pitch = (total_pitch);
+
+			NetworkManager& network_manager = NetworkManager::GetInstance();
+			network_manager.SendRotate(pitch);
+			total_pitch = 0.0f;
+			//OutputDebugStringA("Send Rotate\n");
+
+			m_last_sent_time = current_time;
+		}
 	}
 }
 
@@ -526,25 +530,9 @@ void Object::Draw(ID3D12GraphicsCommandList* command_list) {
 	}
 }
 
-void Object::Set_Look(DirectX::XMFLOAT3 look)
+void Object::Set_Look(DirectX::XMFLOAT4 quat)
 {
-	m_look = look;
+	m_rotate_quat = quat;
+	Update();
 	m_dirty = true;
-}
-
-void Object::Change_Character(uint8_t prev_num, uint8_t new_num)
-{
-	//switch (new_num)
-	//{
-	//case NUM_MOUSE0:
-	//case NUM_MOUSE1:
-	//case NUM_MOUSE2:
-	//case NUM_MOUSE3:
-	//	break;
-	//case NUM_CAT:
-	//	{
-	//		Set_Name()
-	//		break;
-	//	}
-	//}
 }

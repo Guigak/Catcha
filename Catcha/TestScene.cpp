@@ -324,7 +324,6 @@ void TestScene::Build_Material() {
 }
 
 void TestScene::Build_O() {
-	m_object_manager->Add_Obj(L"player", L"mouse_mesh.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
 	m_object_manager->Add_Obj(L"mouse0", L"mouse_mesh.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
 	m_object_manager->Add_Obj(L"mouse1", L"mouse_mesh.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
 	m_object_manager->Add_Obj(L"mouse2", L"mouse_mesh.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
@@ -335,7 +334,8 @@ void TestScene::Build_O() {
 	m_object_manager->Add_Obj(L"mouse7", L"mouse_mesh.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
 	m_object_manager->Add_Obj(L"cat", L"cat_mesh.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
 
-	//m_object_manager->Get_Obj(L"player")->Set_Visiable(false);
+	m_object_manager->Add_Obj(L"player", L"mouse_mesh.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
+	m_object_manager->Get_Obj(L"player")->Set_Visiable(false);
 }
 
 void TestScene::Build_C(D3DManager* d3d_manager) {
@@ -354,7 +354,7 @@ void TestScene::Build_C(D3DManager* d3d_manager) {
 	auto main_camera = reinterpret_cast<Camera*>(m_object_manager->Get_Obj(L"maincamera"));
 	main_camera->Set_Frustum(0.25f * MathHelper::Pi(), d3d_manager->Get_Aspect_Ratio(), 1.0f, 2000.0f);
 
-	m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"player", 50.1f);
+	m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"player", 0.1f);
 
 	m_main_camera = main_camera;
 }
@@ -479,6 +479,11 @@ void TestScene::Build_PSO(D3DManager* d3d_manager) {
 }
 
 void TestScene::Binding_Key() {
+	m_input_manager->Bind_Key_First_Down(VK_W, BindingInfo(L"player", Action::MOVE_FORWARD));
+	m_input_manager->Bind_Key_First_Down(VK_S, BindingInfo(L"player", Action::MOVE_BACK));
+	m_input_manager->Bind_Key_First_Down(VK_A, BindingInfo(L"player", Action::MOVE_LEFT));
+	m_input_manager->Bind_Key_First_Down(VK_D, BindingInfo(L"player", Action::MOVE_RIGHT));
+
 	m_input_manager->Bind_Key_Down(VK_W, BindingInfo(L"player", Action::MOVE_FORWARD));
 	m_input_manager->Bind_Key_Down(VK_S, BindingInfo(L"player", Action::MOVE_BACK));
 	m_input_manager->Bind_Key_Down(VK_A, BindingInfo(L"player", Action::MOVE_LEFT));
@@ -508,9 +513,12 @@ void TestScene::CharacterChange(bool is_cat, const std::wstring& key1, const std
 	{
 		m_object_manager->Swap_Object(key1, key2);
 		m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"player", 100.1f);
+		m_object_manager->Set_Camera_4_Server(L"maincamera", true);
 	}
 	else
 	{
-		m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"cat", 0.1f);
+		m_object_manager->Swap_Object(key1, key2);
+		m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"player", 0.1f);
+		m_object_manager->Set_Camera_4_Server(L"maincamera", true);
 	}
 }

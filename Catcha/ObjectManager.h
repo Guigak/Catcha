@@ -10,7 +10,8 @@ enum class ObjectType {
 	OPAQUE_OBJECT,
 	TRANSPARENT_OBJECT,
 	CAMERA_OBJECT,
-	CHARACTER_OBJECT
+	CHARACTER_OBJECT,
+	GHOST_OBJECT
 };
 
 class ObjectManager {
@@ -94,5 +95,7 @@ public:
 
 	// player 전환을 위한 object swap
 	void Swap_Object(const std::wstring& key1, const std::wstring& key2);
+	// player 선정 전까지의 패킷 보내기 제한을 위한 카메라 설정
+	void Set_Camera_4_Server(std::wstring camera_name, bool NeedSend);
 };
 

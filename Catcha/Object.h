@@ -95,6 +95,9 @@ protected:
 	bool m_change_pitch = false;										// Rotation 바꿔야하는지 여부
 	float total_pitch = 0.0f;											// 각도 변화량의 합	
 
+	// [SC] 캐릭터 번호
+	int m_character_number = -1;
+	bool m_is_need_send = false;
 	//////////////////////////////////////////////////////////////////
 
 public:
@@ -199,8 +202,6 @@ public:
 	void TP_Up(float distance);
 	void TP_Down(float distance);
 
-	void Rotate_Network(float degree_roll, float degree_pitch, float degree_yaw);
-
 	void Rotate_Character(float elapsed_time);
 
 	// rotate
@@ -224,9 +225,15 @@ public:
 	void Set_WM(DirectX::XMMATRIX world_matrix);
 	void Draw(ID3D12GraphicsCommandList* command_list);
 
-	void Set_Look(DirectX::XMFLOAT3 look);
+	void Set_Look(DirectX::XMFLOAT4 quat);
 
-	// [SC] 캐릭터 변경을 위한 함수
-	void Change_Character(uint8_t prev_num, uint8_t new_num);
+	// 캐릭터 번호 설정
+	void Set_Character_Number(int number) { m_character_number = number; }
+	int Get_Character_Number() { return m_character_number; }
+
+	// 카메라 설정
+	void Set_Camera_Need_Send(bool is_need_send) { m_is_need_send = is_need_send; }
+	bool Get_Camera_Need_Send() { return m_is_need_send; }
+
 };
 

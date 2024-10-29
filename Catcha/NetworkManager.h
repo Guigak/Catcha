@@ -9,6 +9,7 @@ enum class ANIM_TYPE { IDLE };
 struct Client
 {
 	ANIM_TYPE Type;
+	int character_id = NUM_GHOST;		// 캐릭터 번호
 	DirectX::XMFLOAT3 Location;
 	float pitch;
 };
@@ -29,7 +30,9 @@ private:
 
 	std::string m_name;
 
-	std::vector<Object*> m_characters;
+	std::vector<Object*> m_objects;
+
+
 	// 카메라 바인딩을 위한 오브젝트 매니져
 	std::vector<NetworkObserver*> m_observers;
 
@@ -38,8 +41,10 @@ private:
 	NetworkManager& operator=(const NetworkManager&) = delete;
 
 public:
-	int m_myid;
-	std::unordered_map<int, Client> characters;
+	int m_myid;											// 자신의 아이디 번호
+	std::unordered_map<int, Client> characters;			// [key]아이디 번호 / [value]캐릭터 정보
+
+	bool Choose = false;								// 캐릭터 선택 여부 확인
 
 	static NetworkManager& GetInstance() 
 	{
@@ -59,8 +64,10 @@ public:
 	void ProcessData(char* net_buf, size_t io_byte);
 	void ProcessPacket(char* packet);
 
+	void ChangeOwnCharacter(int character_id, int new_number);
+
 	void AddCharacter(Object& object) {
-		m_characters.emplace_back(&object);
+		m_objects.emplace_back(&object);
 	}
 
 	// 옵저버 등록 함수

@@ -351,34 +351,48 @@ void TestScene::Build_Material() {
 }
 
 void TestScene::Build_O() {
-	m_object_manager->Add_Obj(L"player", L"cat_mesh_edit.fbx");
 
-	m_object_manager->Add_Obj(L"cat_test", L"cat_mesh_edit.fbx");
-	m_object_manager->Set_Sklt_2_Obj(L"cat_test", L"cat_mesh_edit.fbx");
-
-	m_object_manager->Add_Obj(L"mouse_test", L"mouse_mesh_edit.fbx");
-	m_object_manager->Set_Sklt_2_Obj(L"mouse_test", L"mouse_mesh_edit.fbx");
-
-	m_object_manager->Get_Obj(L"player")->Set_Visiable(false);
-	//m_object_manager->Get_Obj(L"cat_test")->Set_Visiable(false);
-	//m_object_manager->Get_Obj(L"mouse_test")->Set_Visiable(false);
-
-	m_object_manager->Get_Obj(L"mouse_test")->Set_Animation(L"mouse_idle.fbx");
-	m_object_manager->Get_Obj(L"mouse_test")->Set_Animated(true);
-	m_object_manager->Get_Obj(L"cat_test")->Set_Animation(L"cat_idle.fbx");
-	m_object_manager->Get_Obj(L"cat_test")->Set_Animated(true);
+	m_object_manager->Add_Obj(L"mouse0", L"mouse_mesh_edit.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
+	m_object_manager->Add_Obj(L"mouse1", L"mouse_mesh_edit.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
+	m_object_manager->Add_Obj(L"mouse2", L"mouse_mesh_edit.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
+	m_object_manager->Add_Obj(L"mouse3", L"mouse_mesh_edit.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
+	m_object_manager->Add_Obj(L"mouse4", L"mouse_mesh_edit.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
+	m_object_manager->Add_Obj(L"mouse5", L"mouse_mesh_edit.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
+	m_object_manager->Add_Obj(L"mouse6", L"mouse_mesh_edit.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
+	m_object_manager->Add_Obj(L"mouse7", L"mouse_mesh_edit.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
+	m_object_manager->Add_Obj(L"cat", L"cat_mesh_edit.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
 
 
-	// TODO : 보고 고치기
-	m_object_manager->Add_Obj(L"mouse0", L"mouse_mesh.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
-	m_object_manager->Add_Obj(L"mouse1", L"mouse_mesh.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
-	m_object_manager->Add_Obj(L"mouse2", L"mouse_mesh.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
-	m_object_manager->Add_Obj(L"mouse3", L"mouse_mesh.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
-	m_object_manager->Add_Obj(L"mouse4", L"mouse_mesh.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
-	m_object_manager->Add_Obj(L"mouse5", L"mouse_mesh.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
-	m_object_manager->Add_Obj(L"mouse6", L"mouse_mesh.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
-	m_object_manager->Add_Obj(L"mouse7", L"mouse_mesh.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
-	m_object_manager->Add_Obj(L"cat", L"cat_mesh.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
+	m_object_manager->Set_Sklt_2_Obj(L"mouse0", L"mouse_mesh_edit.fbx");
+	m_object_manager->Set_Sklt_2_Obj(L"mouse1", L"mouse_mesh_edit.fbx");
+	m_object_manager->Set_Sklt_2_Obj(L"mouse2", L"mouse_mesh_edit.fbx");
+	m_object_manager->Set_Sklt_2_Obj(L"mouse3", L"mouse_mesh_edit.fbx");
+	m_object_manager->Set_Sklt_2_Obj(L"mouse4", L"mouse_mesh_edit.fbx");
+	m_object_manager->Set_Sklt_2_Obj(L"mouse5", L"mouse_mesh_edit.fbx");
+	m_object_manager->Set_Sklt_2_Obj(L"mouse6", L"mouse_mesh_edit.fbx");
+	m_object_manager->Set_Sklt_2_Obj(L"mouse7", L"mouse_mesh_edit.fbx");
+	m_object_manager->Set_Sklt_2_Obj(L"cat", L"cat_mesh_edit.fbx");
+
+	m_object_manager->Get_Obj(L"mouse0")->Set_Animation(L"mouse_idle.fbx");
+	m_object_manager->Get_Obj(L"mouse1")->Set_Animation(L"mouse_idle.fbx");
+	m_object_manager->Get_Obj(L"mouse2")->Set_Animation(L"mouse_idle.fbx");
+	m_object_manager->Get_Obj(L"mouse3")->Set_Animation(L"mouse_idle.fbx");
+	m_object_manager->Get_Obj(L"mouse4")->Set_Animation(L"mouse_idle.fbx");
+	m_object_manager->Get_Obj(L"mouse5")->Set_Animation(L"mouse_idle.fbx");
+	m_object_manager->Get_Obj(L"mouse6")->Set_Animation(L"mouse_idle.fbx");
+	m_object_manager->Get_Obj(L"mouse7")->Set_Animation(L"mouse_idle.fbx");
+	m_object_manager->Get_Obj(L"cat")->Set_Animation(L"cat_idle.fbx");
+
+	m_object_manager->Get_Obj(L"mouse0")->Set_Animated(true);
+	m_object_manager->Get_Obj(L"mouse1")->Set_Animated(true);
+	m_object_manager->Get_Obj(L"mouse2")->Set_Animated(true);
+	m_object_manager->Get_Obj(L"mouse3")->Set_Animated(true);
+	m_object_manager->Get_Obj(L"mouse4")->Set_Animated(true);
+	m_object_manager->Get_Obj(L"mouse5")->Set_Animated(true);
+	m_object_manager->Get_Obj(L"mouse6")->Set_Animated(true);
+	m_object_manager->Get_Obj(L"mouse7")->Set_Animated(true);
+	m_object_manager->Get_Obj(L"cat")->Set_Animated(true);
+
 
 	m_object_manager->Add_Obj(L"player", L"mouse_mesh.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
 	m_object_manager->Get_Obj(L"player")->Set_Visiable(false);

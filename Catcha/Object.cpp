@@ -486,6 +486,6 @@ void Object::Draw(ID3D12GraphicsCommandList* command_list) {
 void Object::Set_Look(DirectX::XMFLOAT4 quat)
 {
 	m_rotate_quat = quat;
-	Update();
+	m_target_quat = quat;
 	m_dirty = true;
 }

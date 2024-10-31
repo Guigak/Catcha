@@ -366,7 +366,7 @@ void NetworkManager::ProcessPacket(char* ptr)
 		{
 			ChangeOwnCharacter(character_id, new_character_num);
 			characters[m_myid].character_id = new_character_num;
-			m_objects[characters[m_myid].character_id]->Set_Character_Number(new_character_num);
+			//m_objects[characters[m_myid].character_id]->Set_Character_Number(new_character_num);
 		}
 		else
 		{

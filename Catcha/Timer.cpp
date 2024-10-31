@@ -87,7 +87,7 @@ void Timer::Stop() {
 	}
 }
 
-void Timer::Tick() {
+void Timer::Tick(float fps_limit) {
     if (m_stopped) {
         m_elapsed_time = 0.0;
 
@@ -104,8 +104,21 @@ void Timer::Tick() {
     }
 
     m_current_time = current_time;
-
     m_elapsed_time = (m_current_time - m_previous_time) * m_seconds_per_count;
+
+    if (fps_limit > 0.0f) {
+        while (m_elapsed_time < (1.0f / fps_limit)) {
+            if (m_performance_counter) {
+                QueryPerformanceCounter((LARGE_INTEGER*)&current_time);
+            }
+            else {
+                current_time = timeGetTime();
+            }
+
+            m_current_time = current_time;
+            m_elapsed_time = float((m_current_time - m_previous_time) * m_seconds_per_count);
+        }
+    }
 
     m_previous_time = m_current_time;
 

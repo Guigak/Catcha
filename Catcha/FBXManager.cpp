@@ -4,20 +4,6 @@
 
 std::unique_ptr<FBXManager> FBXManager::fbx_manager = nullptr;
 
-//FBXManager::~FBXManager() {
-//    if (fbx_manager != nullptr) {
-//        delete[] fbx_manager;
-//    }
-//}
-//
-//FBXManager* FBXManager::Get_Inst() {
-//    if (fbx_manager == nullptr) {
-//        fbx_manager = new FBXManager;
-//    }
-//
-//    return fbx_manager;
-//}
-
 FBXManager* FBXManager::Get_Inst() {
     if (!fbx_manager) {
         fbx_manager = std::make_unique<FBXManager>();
@@ -45,7 +31,6 @@ MeshData FBXManager::Ipt_Mesh_From_File(std::wstring file_name) {
     importer->Import(scene);
     importer->Destroy();
 
-    //FbxAxisSystem axis_system(FbxAxisSystem::eYAxis, FbxAxisSystem::eParityOdd, FbxAxisSystem::eRightHanded);
     FbxAxisSystem axis_system = FbxAxisSystem::OpenGL;
     axis_system.ConvertScene(scene);
 
@@ -394,32 +379,80 @@ DirectX::XMFLOAT2 FBXManager::Get_UV(FbxMesh* mesh, UINT control_point_index, UI
     return DirectX::XMFLOAT2(0.0f, 0.0f);
 }
 
-void FBXManager::Ipt_From_File(ObjectManager* object_maanger, std::wstring file_name, bool merge_mesh, bool add_object, bool merge_object, BYTE info_flag) {
+void FBXManager::Ipt_From_File(ObjectManager* object_maanger, std::wstring file_name, bool merge_mesh, bool add_object, bool merge_object, BYTE info_flag, std::wstring skeleton_name) {
     FbxManager* manager = FbxManager::Create();
     FbxScene* scene = Ipt_Scene(manager, file_name);
 
     // Prcs Nodes
+    std::vector<FbxNode*> bone_node_array;
+    std::vector<Bone_Info> bone_array;
+    std::unordered_map<std::wstring, UINT> bone_index_map;
+
+    std::vector<Material_Info*> material_info_array;
+
     Mesh_Info mesh_info;
     std::vector<Mesh> mesh_array;
 
-    Prcs_Node(scene->GetRootNode(), object_maanger,
+    // process skeleton info first
+    if (info_flag & SKELETON_INFO || info_flag & ANIMATION_INFO) {
+        Prcs_Node(file_name, scene->GetRootNode(), object_maanger, bone_node_array,
+            bone_array, bone_index_map,
+            material_info_array,
+            mesh_info, mesh_array,
+            merge_mesh, add_object, merge_object, SKELETON_INFO);
+
+        if (info_flag & SKELETON_INFO) {
+            object_maanger->Get_Skeleton_Manager().Add_Skeleton(file_name, bone_array);
+        }
+    }
+
+    // process mesh info
+    Prcs_Node(file_name, scene->GetRootNode(), object_maanger, bone_node_array,
+        bone_array, bone_index_map,
+        material_info_array,
         mesh_info, mesh_array,
         merge_mesh, add_object, merge_object, info_flag);
 
     // Prcs Animation Data
+    std::map<float, Keyframe_Info> keyframe_map;
+
+    if (info_flag & ANIMATION_INFO) {
+        Skeleton_Info* skeleton_info;
+
+        if (info_flag & SKELETON_INFO) {
+            skeleton_info = object_maanger->Get_Skeleton_Manager().Get_Skeleton(file_name);
+        }
+        else {
+            skeleton_info = object_maanger->Get_Skeleton_Manager().Get_Skeleton(skeleton_name);
+        }
+
+        Prcs_Animation(file_name, scene, object_maanger, skeleton_info, bone_node_array, keyframe_map);
+    }
 
     // Add object
-    if (merge_mesh) {
-        object_maanger->Get_Mesh_Manager().Add_Mesh(file_name, mesh_info.vertices, mesh_info.indices_32);
+    if (info_flag & MESH_INFO &&  merge_mesh) {
+        Mesh_Info* mesh_info_pointer = object_maanger->Get_Mesh_Manager().Add_Mesh(file_name, mesh_info.vertices, mesh_info.indices_32);
+
+        if (info_flag & MATERIAL_INFO) {
+            mesh_info_pointer->material = object_maanger->Get_Material_Manager().Add_Material(file_name, material_info_array);
+        }
     }
 
     if (add_object) {
         if (merge_mesh) {
             object_maanger->Add_Obj(file_name, file_name);
+
+            if (info_flag & SKELETON_INFO) {
+                object_maanger->Set_Sklt_2_Obj(file_name, file_name);
+            }
         }
         else {
             if (merge_object) {
                 object_maanger->Add_Obj(file_name, mesh_array);
+
+                if (info_flag & SKELETON_INFO) {
+                    object_maanger->Set_Sklt_2_Obj(file_name, file_name);
+                }
             }
         }
     }
@@ -456,18 +489,34 @@ FbxScene* FBXManager::Ipt_Scene(FbxManager* manager, std::wstring file_name) {
 }
 
 void FBXManager::Prcs_Node(
-    FbxNode* node, ObjectManager* object_maanger,
-    Mesh_Info& mesh_info, std::vector<Mesh> mesh_array,
-    bool merge_mesh, bool add_object, bool merge_object, BYTE info_flag)
-{
+    std::wstring file_name, FbxNode* node, ObjectManager* object_maanger, std::vector<FbxNode*>& bone_node_array,
+    std::vector<Bone_Info>& bone_array, std::unordered_map<std::wstring, UINT>& bone_index_map,
+    std::vector<Material_Info*>& material_info_array,
+    Mesh_Info& mesh_info, std::vector<Mesh>& mesh_array,
+    bool merge_mesh, bool add_object, bool merge_object, BYTE info_flag
+) {
     FbxNodeAttribute* node_attribute = node->GetNodeAttribute();
 
     if (node_attribute) {
         switch (node_attribute->GetAttributeType()) {
         case FbxNodeAttribute::eMesh:
-            Prcs_Mesh_Node(node, object_maanger,
-                mesh_info, mesh_array,
-                merge_mesh, add_object, merge_object, info_flag);
+            if (info_flag & MESH_INFO) {
+                Prcs_Mesh_Node(file_name, node, object_maanger,
+                    bone_index_map,
+                    material_info_array,
+                    mesh_info, mesh_array,
+                    merge_mesh, add_object, merge_object, info_flag);
+            }
+            break;
+        case FbxNodeAttribute::eNull:   // dummy
+        case FbxNodeAttribute::eSkeleton:   // bone
+            if (info_flag == SKELETON_INFO) {
+                Prcs_Skeleton_Node(
+                    file_name, node, bone_node_array,
+                    bone_array, bone_index_map);
+            }
+            break;
+        default:
             break;
         }
     }
@@ -475,27 +524,131 @@ void FBXManager::Prcs_Node(
     UINT child_count = node->GetChildCount();
 
     for (UINT i = 0; i < child_count; ++i) {
-        Prcs_Node(node->GetChild(i), object_maanger,
+        Prcs_Node(file_name, node->GetChild(i), object_maanger, bone_node_array,
+            bone_array, bone_index_map,
+            material_info_array,
             mesh_info, mesh_array,
             merge_mesh, add_object, merge_object, info_flag);
     }
 }
 
 void FBXManager::Prcs_Mesh_Node(
-    FbxNode* node, ObjectManager* object_maanger,
-    Mesh_Info& mesh_info, std::vector<Mesh> mesh_array,
-    bool merge_mesh, bool add_object, bool merge_object, BYTE info_flag)
-{
+    std::wstring file_name, FbxNode* node, ObjectManager* object_maanger,
+    std::unordered_map<std::wstring, UINT>& bone_index_map,
+    std::vector<Material_Info*>& material_info_array,
+    Mesh_Info& mesh_info, std::vector<Mesh>& mesh_array,
+    bool merge_mesh, bool add_object, bool merge_object, BYTE info_flag
+) {
     if (!(info_flag & MESH_INFO)) {
         return;
     }
 
     std::wstring node_name = Str_2_WStr(node->GetName());
+    FbxMesh* mesh = node->GetMesh();
 
+    //
+    std::unordered_map<UINT, Weight_Info> vertex_weight_info_map;
+
+    if (info_flag & SKELETON_INFO) {
+        int deformer_count = mesh->GetDeformerCount(FbxDeformer::eSkin);
+
+        for (int i = 0; i < deformer_count; ++i) {
+            FbxSkin* skin = (FbxSkin*)mesh->GetDeformer(i, FbxDeformer::eSkin);
+
+            int cluster_count = skin->GetClusterCount();
+
+            for (int j = 0; j < cluster_count; ++j) {
+                FbxCluster* cluster = skin->GetCluster(j);
+                FbxNode* bone_node = cluster->GetLink();
+
+                if (bone_node) {
+                    int* indices = cluster->GetControlPointIndices();
+                    double* weights = cluster->GetControlPointWeights();
+                    int index_count = cluster->GetControlPointIndicesCount();
+
+                    for (int k = 0; k < index_count; ++k) {
+                        Weight_Info& weight_info = vertex_weight_info_map[indices[k]];
+                        weight_info.bone_indices[weight_info.bone_count] = bone_index_map[Str_2_WStr(bone_node->GetName())];
+                        weight_info.bone_weights[weight_info.bone_count] = (float)weights[k];
+                        weight_info.bone_count++;
+                    }
+                }
+            }
+        }
+
+        //// normalize
+        //for (auto& i : vertex_weight_info_map) {
+        //    Weight_Info& weight_info = i.second;
+
+        //    float sum = 0.0f;
+        //    for (UINT j = 0; j < weight_info.bone_count; ++j) {
+        //        sum += weight_info.bone_weights[j];
+        //    }
+
+        //    if (sum != 1.0f) {
+        //        for (UINT j = 0; j < weight_info.bone_count; ++j) {
+        //            weight_info.bone_weights[j] /= sum;
+        //        }
+        //    }
+        //}
+    }
+
+    //
+    std::vector<Material_Info*> material_info_temp_array;
+
+    if (info_flag & MATERIAL_INFO) {
+        int material_count = node->GetMaterialCount();
+        MaterialManager& material_manager = object_maanger->Get_Material_Manager();
+
+        for (int i = 0; i < material_count; ++i) {
+            FbxSurfaceMaterial* material = node->GetMaterial(i);
+
+            if (material) {
+                std::wstring material_name = Str_2_WStr(material->GetName());
+
+                FbxProperty diffuse_property = material->FindProperty(FbxSurfaceMaterial::sDiffuse);
+                FbxDouble3 diffuse;
+                if (diffuse_property.IsValid()) {
+                    diffuse = diffuse_property.Get<FbxDouble3>();
+                }
+
+                FbxProperty specular_property = material->FindProperty(FbxSurfaceMaterial::sSpecular);
+                FbxDouble3 specular;
+                if (specular_property.IsValid()) {
+                    specular = specular_property.Get<FbxDouble3>();
+                }
+
+                FbxProperty shininess_property = material->FindProperty(FbxSurfaceMaterial::sShininess);
+                double shininess = 0.0;
+                if (shininess_property.IsValid()) {
+                    shininess = shininess_property.Get<FbxDouble>();
+                }
+
+                //
+                Material_Factor material_factor;
+                material_factor.diffuse_albedo = DirectX::XMFLOAT4((float)diffuse[0], (float)diffuse[1], (float)diffuse[2], (float)1.0f);
+                material_factor.fresnel = DirectX::XMFLOAT3((float)specular[0], (float)specular[1], (float)specular[2]);
+                material_factor.shininess = (float)shininess;
+
+                if (material_manager.Contains_Material_Info(material_name)) {
+                    material_info_temp_array.emplace_back(material_manager.Add_Material_Info(node_name + L"_" + material_name, material_factor));
+                }
+                else {
+                    material_info_temp_array.emplace_back(material_manager.Add_Material_Info(material_name, material_factor));
+                }
+            }
+        }
+    }
+
+    //
     std::vector<Vertex_Info> vertex_array;
     std::vector<std::uint32_t> index_array;
 
-    FbxAMatrix global_transform_matrix = node->EvaluateGlobalTransform();
+    FbxAMatrix geometric_transform_matrix;
+    geometric_transform_matrix.SetT(node->GetGeometricTranslation(FbxNode::eSourcePivot));
+    geometric_transform_matrix.SetR(node->GetGeometricRotation(FbxNode::eSourcePivot));
+    geometric_transform_matrix.SetS(node->GetGeometricScaling(FbxNode::eSourcePivot));
+    FbxAMatrix global_transform_matrix = node->EvaluateGlobalTransform() * geometric_transform_matrix;
     FbxAMatrix rotate_matrix;
     rotate_matrix.SetR(global_transform_matrix.GetR());
 
@@ -503,10 +656,9 @@ void FBXManager::Prcs_Mesh_Node(
     DirectX::XMMATRIX rotate_xmmatrix = FbxAMatrix_2_XMMATRIX(rotate_matrix);
 
     //
-    FbxMesh* mesh = node->GetMesh();
-
     UINT triangle_count = mesh->GetPolygonCount();
     UINT vertex_count = triangle_count * 3;
+    FbxGeometryElementMaterial* material_element = mesh->GetElementMaterial();
 
     for (UINT i = 0; i < vertex_count; ++i) {
         std::uint32_t control_point_index = mesh->GetPolygonVertex(i / 3, i % 3);
@@ -519,6 +671,28 @@ void FBXManager::Prcs_Mesh_Node(
         vertex_info.tangent = Get_Tan(mesh, control_point_index, i);
         vertex_info.uv = Get_UV(mesh, control_point_index, i);
 
+        if (info_flag & SKELETON_INFO) {
+            vertex_info.bone_count = vertex_weight_info_map[control_point_index].bone_count;
+
+            for (UINT j = 0; j < vertex_info.bone_count; ++j) {
+                vertex_info.bone_indices[j] = vertex_weight_info_map[control_point_index].bone_indices[j];
+                vertex_info.bone_weights[j] = vertex_weight_info_map[control_point_index].bone_weights[j];
+            }
+        }
+
+        if (info_flag & MATERIAL_INFO) {
+            if (material_element->GetMappingMode() == FbxGeometryElement::eByPolygon) {
+                vertex_info.material_index = (UINT)material_element->GetIndexArray().GetAt(i / 3);                
+            }
+            //else if (material_element->GetMappingMode() == FbxGeometryElement::eByPolygonVertex) {
+            //    OutputDebugStringW(L"ByPolygonVertex\n");
+            //}
+
+            if (merge_mesh) {
+                vertex_info.material_index += (UINT)material_info_array.size();
+            }
+        }
+
         if (merge_mesh) {
             vertex_info.position = MathHelper::Multiply(vertex_info.position, global_transform_xmmatrix);
             vertex_info.normal = MathHelper::Multiply(vertex_info.normal, rotate_xmmatrix);
@@ -530,9 +704,17 @@ void FBXManager::Prcs_Mesh_Node(
 
     if (merge_mesh) {
         mesh_info.Add_Info(vertex_array, index_array);
+
+        if (info_flag & MATERIAL_INFO) {
+            material_info_array.insert(material_info_array.end(), material_info_temp_array.begin(), material_info_temp_array.end());
+        }
     }
     else {
         Mesh_Info* added_mesh_info = object_maanger->Get_Mesh_Manager().Add_Mesh(node_name, vertex_array, index_array);
+
+        if (info_flag & MATERIAL_INFO) {
+            added_mesh_info->material = object_maanger->Get_Material_Manager().Add_Material(node_name, material_info_temp_array);
+        }
 
         if (add_object) {
             if (merge_object) {
@@ -540,7 +722,171 @@ void FBXManager::Prcs_Mesh_Node(
             }
             else {
                 object_maanger->Add_Obj(node_name, node_name, L"Object", global_transform_xmmatrix);
+
+                if (info_flag & SKELETON_INFO) {
+                    object_maanger->Set_Sklt_2_Obj(node_name, file_name);
+                }
             }
         }
+    }
+}
+
+void FBXManager::Prcs_Skeleton_Node(
+    std::wstring file_name, FbxNode* node, std::vector<FbxNode*>& bone_node_array,
+    std::vector<Bone_Info>& bone_array, std::unordered_map<std::wstring, UINT>& bone_index_map
+) {
+    Bone_Info bone_info;
+    bone_info.name = Str_2_WStr(node->GetName());
+
+    FbxNode* parent_node = node->GetParent();
+    if (parent_node->GetNodeAttribute() != NULL) {
+        //DirectX::XMStoreFloat4x4(&bone_info.offset_matrix, FbxAMatrix_2_XMMATRIX(parent_node->EvaluateGlobalTransform().Inverse()));
+        DirectX::XMStoreFloat4x4(&bone_info.offset_matrix, FbxAMatrix_2_XMMATRIX(node->EvaluateGlobalTransform().Inverse()));
+        bone_info.parent_bone_index = bone_index_map[Str_2_WStr(parent_node->GetName())];
+        bone_info.bone_index = (UINT)bone_array.size();
+    }
+    else {
+        //bone_info.offset_matrix = MathHelper::Identity_4x4();
+        DirectX::XMStoreFloat4x4(&bone_info.offset_matrix, FbxAMatrix_2_XMMATRIX(node->EvaluateGlobalTransform().Inverse()));
+        bone_info.parent_bone_index = -1;
+        bone_info.bone_index = 0;
+    }
+
+    bone_array.emplace_back(bone_info);
+    bone_index_map[bone_info.name] = bone_info.bone_index;
+
+    bone_node_array.emplace_back(node);
+}
+
+void FBXManager::Prcs_Animation(std::wstring file_name, FbxScene* scene, ObjectManager* object_maanger,
+    Skeleton_Info* skeleton_info, std::vector<FbxNode*>& bone_node_array, std::map<float, Keyframe_Info>& keyframe_map
+) {
+    int animstack_count = scene->GetSrcObjectCount<FbxAnimStack>();
+
+    if (animstack_count) {
+        if (bone_node_array.size() == 0) {
+            Get_Null_Bone(scene->GetRootNode(), bone_node_array);
+        }
+
+        UINT bone_count = 0;
+        for (auto& bn : bone_node_array) {
+            if (Str_2_WStr(bn->GetName()) != skeleton_info->bone_array[bone_count++].name) {
+                OutputDebugStringW(L"Bone is wrong!!\n");
+            }
+        }
+
+        FbxAnimStack* animstack = scene->GetSrcObject<FbxAnimStack>(0);
+        FbxAnimLayer* animlayer = animstack->GetMember<FbxAnimLayer>();
+
+        std::set<FbxTime> keyframe_times;
+        for (auto& bn : bone_node_array) {
+            Calc_Keyframe_Times(keyframe_times, bn, animlayer);
+        }
+
+        for (auto& t : keyframe_times) {
+            Add_Keyframe(t, skeleton_info, bone_node_array, keyframe_map);
+        }
+
+        float total_time = keyframe_map.rbegin()->second.time;
+        object_maanger->Get_Animation_Manager().Add_Animation(file_name, (UINT)bone_node_array.size(), total_time, keyframe_map);
+    }
+}
+
+void FBXManager::Calc_Keyframe_Times(std::set<FbxTime>& keyframe_times, FbxNode* node, FbxAnimLayer* animlayer) {
+    FbxAnimCurve* translationXCurve = node->LclTranslation.GetCurve(animlayer, FBXSDK_CURVENODE_COMPONENT_X);
+    FbxAnimCurve* translationYCurve = node->LclTranslation.GetCurve(animlayer, FBXSDK_CURVENODE_COMPONENT_Y);
+    FbxAnimCurve* translationZCurve = node->LclTranslation.GetCurve(animlayer, FBXSDK_CURVENODE_COMPONENT_Z);
+
+    FbxAnimCurve* rotationXCurve = node->LclRotation.GetCurve(animlayer, FBXSDK_CURVENODE_COMPONENT_X);
+    FbxAnimCurve* rotationYCurve = node->LclRotation.GetCurve(animlayer, FBXSDK_CURVENODE_COMPONENT_Y);
+    FbxAnimCurve* rotationZCurve = node->LclRotation.GetCurve(animlayer, FBXSDK_CURVENODE_COMPONENT_Z);
+
+    FbxAnimCurve* scaleXCurve = node->LclScaling.GetCurve(animlayer, FBXSDK_CURVENODE_COMPONENT_X);
+    FbxAnimCurve* scaleYCurve = node->LclScaling.GetCurve(animlayer, FBXSDK_CURVENODE_COMPONENT_Y);
+    FbxAnimCurve* scaleZCurve = node->LclScaling.GetCurve(animlayer, FBXSDK_CURVENODE_COMPONENT_Z);
+
+    Get_Keyframe_Times_From_Curve(keyframe_times, translationXCurve);
+    Get_Keyframe_Times_From_Curve(keyframe_times, translationYCurve);
+    Get_Keyframe_Times_From_Curve(keyframe_times, translationZCurve);
+    Get_Keyframe_Times_From_Curve(keyframe_times, rotationXCurve);
+    Get_Keyframe_Times_From_Curve(keyframe_times, rotationYCurve);
+    Get_Keyframe_Times_From_Curve(keyframe_times, rotationZCurve);
+    Get_Keyframe_Times_From_Curve(keyframe_times, scaleXCurve);
+    Get_Keyframe_Times_From_Curve(keyframe_times, scaleYCurve);
+    Get_Keyframe_Times_From_Curve(keyframe_times, scaleZCurve);
+}
+
+void FBXManager::Get_Keyframe_Times_From_Curve(std::set<FbxTime>& keyframe_times, FbxAnimCurve* curve) {
+    if (curve) {
+        int keyframe_count = curve->KeyGetCount();
+
+        for (int i = 0; i < keyframe_count; ++i) {
+            keyframe_times.insert(curve->KeyGetTime(i));
+        }
+    }
+}
+
+void FBXManager::Add_Keyframe(FbxTime time, Skeleton_Info* skeleton_info, std::vector<FbxNode*>& bone_node_array, std::map<float, Keyframe_Info>& keyframe_map) {
+    Keyframe_Info keyframe_info;
+    keyframe_info.time = (float)time.GetSecondDouble();
+
+    //std::array<DirectX::XMMATRIX, MAX_BONE_COUNT> global_transform_matrix_array;
+
+    //global_transform_matrix_array[0] = FbxAMatrix_2_XMMATRIX(bone_node_array[0]->EvaluateLocalTransform(time));
+    ////global_transform_matrix_array[0] = FbxAMatrix_2_XMMATRIX(Normalization_FbxMatrix(bone_node_array[0]->EvaluateLocalTransform(time)));
+
+    //for (UINT i = 1; i < (UINT)bone_node_array.size(); ++ i) {
+    //    auto& bone_node = bone_node_array[i];
+
+    //    global_transform_matrix_array[i] = FbxAMatrix_2_XMMATRIX(bone_node->EvaluateLocalTransform(time))
+    //        * global_transform_matrix_array[skeleton_info->bone_array[i].parent_bone_index];
+    //}
+
+    //for (UINT i = 0; i < bone_node_array.size(); ++i) {
+    //    DirectX::XMMATRIX animation_fransform_matrix = DirectX::XMLoadFloat4x4(&skeleton_info->bone_offset_matrix_array[i])
+    //        * global_transform_matrix_array[i];
+
+    //    DirectX::XMVECTOR translate, rotate, scale;
+
+    //    DirectX::XMMatrixDecompose(&scale, &rotate, &translate, animation_fransform_matrix);
+
+    //    DirectX::XMStoreFloat3(&keyframe_info.animation_transform_array[i].trenslate, translate);
+    //    DirectX::XMStoreFloat4(&keyframe_info.animation_transform_array[i].rotate, rotate);
+    //    DirectX::XMStoreFloat3(&keyframe_info.animation_transform_array[i].scale, scale);
+    //}
+
+    UINT bone_count = 0;
+    DirectX::XMMATRIX global_transform_matrix;
+
+    for (auto& bn : bone_node_array) {
+        global_transform_matrix = FbxAMatrix_2_XMMATRIX(bn->EvaluateGlobalTransform(time));
+        DirectX::XMMATRIX animation_fransform_matrix = DirectX::XMLoadFloat4x4(&skeleton_info->bone_offset_matrix_array[bone_count]) * global_transform_matrix;
+
+        DirectX::XMVECTOR translate, rotate, scale;
+
+        DirectX::XMMatrixDecompose(&scale, &rotate, &translate, animation_fransform_matrix);
+
+        DirectX::XMStoreFloat3(&keyframe_info.animation_transform_array[bone_count].trenslate, translate);
+        DirectX::XMStoreFloat4(&keyframe_info.animation_transform_array[bone_count].rotate, rotate);
+        DirectX::XMStoreFloat3(&keyframe_info.animation_transform_array[bone_count].scale, scale);
+
+        //keyframe_info.animation_transform_array[bone_count].trenslate = FbxVector4_2_XMFLOAT3(global_transform_matrix.GetT());
+        //keyframe_info.animation_transform_array[bone_count].rotate = FbxQuaternion_2_XMFLOAT4(global_transform_matrix.GetQ());
+        //keyframe_info.animation_transform_array[bone_count].scale = FbxVector4_2_XMFLOAT3(global_transform_matrix.GetS());
+        bone_count++;
+    }
+
+    keyframe_map[keyframe_info.time] = keyframe_info;
+}
+
+void FBXManager::Get_Null_Bone(FbxNode* node, std::vector<FbxNode*>& bone_node_array) {
+    if (strcmp(node->GetName(), "RootNode") && !node->GetNodeAttribute()) {
+        bone_node_array.emplace_back(node);
+    }
+
+    UINT child_count = node->GetChildCount();
+
+    for (UINT i = 0; i < child_count; ++i) {
+        Get_Null_Bone(node->GetChild(i), bone_node_array);
     }
 }

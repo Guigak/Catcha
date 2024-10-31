@@ -57,10 +57,16 @@
     <ClCompile Include="Object.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="ObjectInfo.cpp">
+    <ClCompile Include="MeshManager.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="MeshManager.cpp">
+    <ClCompile Include="SkeletonManager.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="AnimationManager.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="MaterialManager.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="NetworkManager.cpp">
@@ -116,10 +122,16 @@
     <ClInclude Include="Object.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="ObjectInfo.h">
+    <ClInclude Include="MeshManager.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="MeshManager.h">
+    <ClInclude Include="SkeletonManager.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="AnimationManager.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="MaterialManager.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="NetworkManager.h">

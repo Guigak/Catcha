@@ -2,50 +2,6 @@
 #include "InputManager.h"
 #include "Camera.h"
 
-Object* ObjectManager::Add_Obj(std::wstring object_name, MeshInfo* mesh_info, std::wstring mesh_name, MaterialInfo* material_info,
-    D3D12_PRIMITIVE_TOPOLOGY primitive_topology, ObjectType object_type, bool physics, bool visiable, std::wstring set_name)
-{
-    //auto object = std::make_unique<Object>(object_name, mesh_info, mesh_name, material_info, m_object_count++, primitive_topology, physics);
-
-    std::unique_ptr<Object> object;
-
-    switch (object_type) {
-    case ObjectType::OPAQUE_OBJECT:
-    case ObjectType::TRANSPARENT_OBJECT:
-        object = std::make_unique<Object>(object_name, mesh_info, mesh_name, material_info, m_object_count++, primitive_topology, physics, visiable);
-        break;
-    case ObjectType::CAMERA_OBJECT:
-        object = std::make_unique<Camera>();
-        break;
-    default:
-        break;
-    }
-
-    m_object_map[object_name] = std::move(object);
-
-    Object* object_pointer = m_object_map[object_name].get();
-    
-    m_objects.emplace_back(object_pointer);
-
-    switch (object_type) {
-    case ObjectType::OPAQUE_OBJECT:
-        m_opaque_objects.emplace_back(object_pointer);
-        break;
-    case ObjectType::TRANSPARENT_OBJECT:
-        m_transparent_objects.emplace_back(object_pointer);
-        break;
-    case ObjectType::CAMERA_OBJECT:
-        m_camera_objects.emplace_back(object_pointer);
-        break;
-    default:
-        break;
-    }
-
-    m_object_set_map[set_name].emplace_back(object_pointer);
-
-    return m_object_map[object_name].get();
-}
-
 Object* ObjectManager::Get_Obj(std::wstring object_name) {
     return m_object_map[object_name].get();
 }
@@ -70,7 +26,7 @@ Object* ObjectManager::Get_Transparent_Obj(UINT object_number) {
 
 void ObjectManager::Move(std::wstring object_name, Action action) {
     Object* object = Get_Obj(object_name);
-    bool check_key_input = true;
+
     switch (action) {
     case Action::MOVE_FORWARD:
         object->Move_Forward();
@@ -91,16 +47,8 @@ void ObjectManager::Move(std::wstring object_name, Action action) {
         object->Move_Down();
         break;
     default:
-        check_key_input = false;
         break;
     }
- //   // [CS] 키보드 입력이 시작되었음을 알림
- //   if(check_key_input)
-	//{
- //       uint8_t input_key_ = (static_cast<uint8_t>(action) << 1) | true;
- //       NetworkManager& network_manager = NetworkManager::GetInstance();
- //       network_manager.SendInput(input_key_);
-	//}
 }
 
 void ObjectManager::Teleport(std::wstring object_name, Action action, float distance) {
@@ -151,35 +99,9 @@ void ObjectManager::Rotate(std::wstring object_name, Action action, POINTF degre
     }
 }
 
-//void ObjectManager::ChangeCat(std::wstring object_name, Action action)
-//{
-//	Object* object = Get_Obj(object_name);
-//
-//	switch (action)
-//	{
-//	case Action::CHANGE_CAT:
-//		object->ChangeCat();
-//		break;
-//	default:
-//		break;
-//	}
-//}
-//
-//void ObjectManager::ChangeMouse(std::wstring object_name, Action action)
-//{
-//	Object* object = Get_Obj(object_name);
-//
-//	switch (action)
-//	{
-//	case Action::CHANGE_MOUSE:
-//		object->ChangeMouse();
-//		break;
-//	default:
-//		break;
-//	}
-//}
-
 void ObjectManager::Update(float elapsed_time) {
+    m_material_manager.Update();
+
     for (auto& o : m_objects) {
         o->Calc_Delta(elapsed_time);
     }
@@ -197,7 +119,7 @@ void ObjectManager::Update(float elapsed_time) {
     Solve_Collision();
 
     for (auto& o : m_objects) {
-        o->Update();
+        o->Update(elapsed_time);
     }
 
     for (auto& o : m_characters)
@@ -240,10 +162,10 @@ void ObjectManager::Bind_Cam_2_Obj(std::wstring camera_name, std::wstring object
     camera->Bind_Obj(object, distance);
 }
 
-void ObjectManager::Ipt_From_FBX(std::wstring file_name, bool merge_mesh, bool add_object, bool merge_object, BYTE info_flag) {
+void ObjectManager::Ipt_From_FBX(std::wstring file_name, bool merge_mesh, bool add_object, bool merge_object, BYTE info_flag, std::wstring skeleton_name) {
     FBXManager* fbx_manager = FBXManager::Get_Inst();
 
-    fbx_manager->Ipt_From_File(this, file_name, merge_mesh, add_object, merge_mesh, info_flag);
+    fbx_manager->Ipt_From_File(this, file_name, merge_mesh, add_object, merge_mesh, info_flag, skeleton_name);
 }
 
 Object* ObjectManager::Add_Obj(std::wstring object_name, std::wstring mesh_name, std::wstring set_name,
@@ -252,7 +174,7 @@ Object* ObjectManager::Add_Obj(std::wstring object_name, std::wstring mesh_name,
     bool physics, bool visiable)
 {
     std::unique_ptr<Object> object;
-    object = std::make_unique<Object>(object_name, m_mesh_manager.Get_Mesh(mesh_name), world_matrix, m_object_count++, primitive_topology, physics, visiable);
+    object = std::make_unique<Object>(this, object_name, m_mesh_manager.Get_Mesh(mesh_name), world_matrix, m_object_count++, primitive_topology, physics, visiable);
 
     m_object_map[object_name] = std::move(object);
 
@@ -290,7 +212,7 @@ Object* ObjectManager::Add_Obj(std::wstring object_name, std::vector<Mesh>& mesh
     bool physics, bool visiable)
 {
     std::unique_ptr<Object> object;
-    object = std::make_unique<Object>(object_name, mesh_array, m_object_count++, primitive_topology, physics, visiable);
+    object = std::make_unique<Object>(this, object_name, mesh_array, m_object_count++, primitive_topology, physics, visiable);
 
     m_object_map[object_name] = std::move(object);
 
@@ -307,6 +229,30 @@ Object* ObjectManager::Add_Obj(std::wstring object_name, std::vector<Mesh>& mesh
 void ObjectManager::Build_BV(ID3D12Device* device, ID3D12GraphicsCommandList* command_list) {
     m_mesh_manager.Crt_BV(device, command_list);
 }
+
+void ObjectManager::Set_Sklt_2_Obj(std::wstring object_name, std::wstring skeleton_name) {
+    Get_Obj(object_name)->Set_Skeleton(m_skeleton_manager.Get_Skeleton(skeleton_name));
+}
+
+Object* ObjectManager::Add_Cam(std::wstring camera_name, std::wstring set_name, std::wstring bind_object_name, float distance) {
+    std::unique_ptr<Object> object;
+    object = std::make_unique<Camera>();
+
+    m_object_map[camera_name] = std::move(object);
+
+    Object* object_pointer = m_object_map[camera_name].get();
+    m_objects.emplace_back(object_pointer);
+    m_camera_objects.emplace_back(object_pointer);
+
+    m_object_set_map[set_name].emplace_back(object_pointer);
+
+    if (bind_object_name != L"") {
+        Bind_Cam_2_Obj(camera_name, bind_object_name, distance);
+    }
+
+    return object_pointer;
+}
+
 
 void ObjectManager::Swap_Object(const std::wstring& key1, const std::wstring& key2)
 {

@@ -7,6 +7,7 @@ enum class Object_State {
 };
 
 class Camera;
+class ObjectManager;
 
 class Object {
 protected:
@@ -24,7 +25,6 @@ protected:
 
 	UINT m_constant_buffer_index = -1;
 
-	MeshInfo* m_mesh_info = nullptr;
 	std::wstring m_submesh_name = L"";
 	MaterialInfo* m_material_info = nullptr;
 
@@ -72,8 +72,18 @@ protected:
 
 	//
 	std::vector<Mesh> m_meshes;
+	Skeleton_Info* m_skeleton_info = nullptr;
 
 	DirectX::XMFLOAT4 m_rotate_quat = { 0.0f, 0.0f, 0.0f, 1.0f };
+
+	//
+	bool m_animated = false;
+	float m_animated_time = 0.0f;
+	std::array<DirectX::XMFLOAT4X4, MAX_BONE_COUNT> m_animation_matrix_array;
+	std::wstring m_playing_animation_name = L"";
+
+	//
+	ObjectManager* m_object_manager = nullptr;
 
 	//////////////////////////////////////////////////////////////////
 	// [SC] 위치 보간을 위한 변수
@@ -102,24 +112,19 @@ protected:
 
 public:
 	Object() {}
-	Object(std::wstring object_name, MeshInfo* mesh_info, std::wstring mesh_name,
-		MaterialInfo* material_info, UINT constant_buffer_index, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, bool physics, bool visiable);
-	Object(std::wstring object_name, Mesh_Info* mesh, DirectX::XMMATRIX world_matrix, UINT constant_buffer_index, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, bool physics, bool visiable);
-	Object(std::wstring object_name, std::vector<Mesh>& mesh_array, UINT constant_buffer_index, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, bool physics, bool visiable);
+	Object(ObjectManager* object_manager, std::wstring object_name, Mesh_Info* mesh, DirectX::XMMATRIX world_matrix, UINT constant_buffer_index, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, bool physics, bool visiable);
+	Object(ObjectManager* object_manager, std::wstring object_name, std::vector<Mesh>& mesh_array, UINT constant_buffer_index, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, bool physics, bool visiable);
 	~Object() {}
 
+	void Set_Object_Manager(ObjectManager* object_manager) { m_object_manager = object_manager; }
 	void Set_Name(std::wstring object_name) { m_name = object_name; }
-	void Set_Mesh_Info(MeshInfo* mesh_info, std::wstring mesh_name);
 	void Set_Material_Info(MaterialInfo* material_info) { m_material_info = material_info; }
 	void Set_CB_Index(UINT constant_buffer_index) { m_constant_buffer_index = constant_buffer_index; }
 	void Set_PT(D3D12_PRIMITIVE_TOPOLOGY primitive_topology) { m_primitive_topology = primitive_topology; }
 	void Set_Phys(bool physics) { m_physics = physics; }
 	void Set_Visiable(bool visiable) { m_visiable = visiable; }
 
-	void Chg_Mesh(std::wstring mesh_name);
-
 	//
-	void Crt_Simple_OBB();
 	DirectX::XMMATRIX Get_OBB_WM();
 	DirectX::BoundingOrientedBox Get_Calcd_OBB();
 
@@ -143,10 +148,7 @@ public:
 
 	UINT Get_CB_Index() { return m_constant_buffer_index; }
 
-	MeshInfo* Get_Mesh_Info() { return m_mesh_info; }
 	MaterialInfo* Get_Material_Info() { return m_material_info; }
-
-	std::wstring Get_Mesh_Name() { return m_submesh_name; }
 
 	D3D12_PRIMITIVE_TOPOLOGY Get_PT() { return m_primitive_topology; }
 
@@ -168,7 +170,7 @@ public:
 	void Calc_Delta(float elapsed_time);
 	void Calc_Delta_Characters(float elapsed_time);
 	//void Move_N_Solve_Collision();
-	virtual void Update();
+	virtual void Update(float elapsed_time);
 
 	void Udt_WM();	// Update World Matrix
 	void Udt_LUR();	// Update Look Up Right
@@ -222,8 +224,24 @@ public:
 	void Add_Mesh(Mesh_Info* mesh_info, DirectX::XMFLOAT4X4 local_transform_matrix);
 	void Add_Mesh(std::vector<Mesh>& mesh_array);
 
+	std::vector<Mesh>& Get_Mesh_Array() { return m_meshes; }
+
 	void Set_WM(DirectX::XMMATRIX world_matrix);
 	void Draw(ID3D12GraphicsCommandList* command_list);
+
+	//
+	void Set_Skeleton(Skeleton_Info* skeleton_info) { m_skeleton_info = skeleton_info; }
+
+	//
+	void Set_Animated(bool animated) { m_animated = animated; }
+	bool Get_Animated() { return m_animated; }
+
+	void Set_Animation(std::wstring animation_name) {
+		m_playing_animation_name = animation_name;
+		m_animated_time = 0.0f;
+	}
+
+	std::array<DirectX::XMFLOAT4X4, MAX_BONE_COUNT>& Get_Animation_Matrix() { return m_animation_matrix_array; }
 
 	void Set_Look(DirectX::XMFLOAT4 quat);
 

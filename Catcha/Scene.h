@@ -28,7 +28,6 @@ protected:
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_CBV_heap = nullptr;
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_SRV_heap = nullptr;
 
-	std::unordered_map<std::wstring, std::unique_ptr<MeshInfo>> m_mesh_map;
 	std::unordered_map<std::wstring, std::unique_ptr<MaterialInfo>> m_material_map;
 	std::unordered_map<std::wstring, Microsoft::WRL::ComPtr<ID3DBlob>> m_shader_map;
 	std::unordered_map<std::wstring, Microsoft::WRL::ComPtr<ID3D12PipelineState>> m_pipeline_state_map;
@@ -43,6 +42,8 @@ protected:
 
 	UINT m_material_CBV_offset = 0;
 	UINT m_pass_CBV_offset = 0;
+	//
+	UINT m_animation_CBV_offset = 0;
 
 	bool m_wireframe = false;
 

@@ -69,7 +69,7 @@ public:
 	void Look_At(DirectX::FXMVECTOR position, DirectX::FXMVECTOR target, DirectX::FXMVECTOR up_vector);
 	void Look_At(const DirectX::XMFLOAT3 position, const DirectX::XMFLOAT3 target, const DirectX::XMFLOAT3 up_vector);
 
-	virtual void Update();
+	virtual void Update(float elapsed_time);
 
 	void Udt_VM();	// Update View Matrix
 

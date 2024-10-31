@@ -55,6 +55,8 @@ extern void print_error(const char* msg, int err_no);
 #include <algorithm>
 #include <vector>
 #include <array>
+#include <set>
+#include <map>
 #include <stack>
 #include <unordered_set>
 #include <unordered_map>
@@ -74,7 +76,10 @@ constexpr int CLIENT_HEIGHT = 1024;
 
 constexpr int FRAME_RESOURCES_NUMBER = 3;
 
-constexpr int MAX_BONE_COUNT = 4;
+constexpr int MAX_BONE_COUNT = 64;
+constexpr int MAX_WEIGHT_BONE_COUNT = 4;
+
+constexpr int MAX_MATERIAL_COUNT = 32;
 
 // virtual key
 #define VK_NUM0 0x30
@@ -185,6 +190,10 @@ struct MathHelper {
 		return DirectX::XMMatrixTranspose(DirectX::XMMatrixInverse(&determinant, m));
 	}
 
+	static DirectX::XMMATRIX Inverse(DirectX::XMMATRIX m) {
+		return  DirectX::XMMatrixInverse(nullptr, m);
+	}
+
 	static DirectX::XMFLOAT4X4 Identity_4x4() {
 		static DirectX::XMFLOAT4X4 identity{
 			1.0f, 0.0f, 0.0f, 0.0f,
@@ -194,6 +203,18 @@ struct MathHelper {
 		};
 
 		return identity;
+	}
+
+	static DirectX::XMMATRIX XMMATRIX_Translation(const DirectX::XMFLOAT3& xmfloat3) {
+		return DirectX::XMMatrixTranslation(xmfloat3.x, xmfloat3.y, xmfloat3.z);
+	}
+
+	static DirectX::XMMATRIX XMMATRIX_Rotation(const DirectX::XMFLOAT4& xmfloat4) {
+		return DirectX::XMMatrixRotationQuaternion(DirectX::XMLoadFloat4(&xmfloat4));
+	}
+
+	static DirectX::XMMATRIX XMMATRIX_Scaling(const DirectX::XMFLOAT3& xmfloat3) {
+		return DirectX::XMMatrixScaling(xmfloat3.x, xmfloat3.y, xmfloat3.z);
 	}
 
 	static DirectX::XMFLOAT2 Multiply(const DirectX::XMFLOAT2& xmfloat2, const DirectX::XMMATRIX& matrix) {
@@ -375,6 +396,27 @@ inline DirectX::XMFLOAT4X4 XMMATRIX_2_XMFLOAT4X4(const DirectX::XMMATRIX& xmmatr
 	return xmfloat4x4;
 }
 
+inline DirectX::XMFLOAT4 FbxVector4_2_XMFLOAT4(const FbxVector4& fbxvector4) {
+	DirectX::XMFLOAT4 xmfloat4 = DirectX::XMFLOAT4(
+		(float)fbxvector4[0], (float)fbxvector4[1], (float)fbxvector4[2], (float)fbxvector4[3]);
+
+	return xmfloat4;
+}
+
+inline DirectX::XMFLOAT3 FbxVector4_2_XMFLOAT3(const FbxVector4& fbxvector4) {
+	DirectX::XMFLOAT3 xmfloat3 = DirectX::XMFLOAT3(
+		(float)fbxvector4[0], (float)fbxvector4[1], (float)fbxvector4[2]);
+
+	return xmfloat3;
+}
+
+inline DirectX::XMFLOAT4 FbxQuaternion_2_XMFLOAT4(const FbxQuaternion& fbxquaternion) {
+	DirectX::XMFLOAT4 xmfloat4 = DirectX::XMFLOAT4(
+		(float)fbxquaternion[0], (float)fbxquaternion[1], (float)fbxquaternion[2], (float)fbxquaternion[3]);
+
+	return xmfloat4;
+}
+
 inline DirectX::XMFLOAT3 Quat_2_Euler(const DirectX::XMVECTOR& quaternion) {
 	DirectX::XMFLOAT3 euler;
 	DirectX::XMVECTOR quat = DirectX::XMQuaternionNormalize(quaternion);
@@ -409,77 +451,6 @@ inline DirectX::XMFLOAT3 Quat_2_Euler(const DirectX::XMVECTOR& quaternion) {
 #define Release_Com(x) { if (x) { x->Release(); x = 0; } }
 
 // info
-struct VertexInfo {
-	DirectX::XMFLOAT3 position;
-	DirectX::XMFLOAT3 normal;
-	DirectX::XMFLOAT3 tangent;
-	DirectX::XMFLOAT2 uv;
-	UINT material_index;
-	UINT bone_count;
-	UINT bone_indicies[MAX_BONE_COUNT];
-	DirectX::XMFLOAT4 bone_weights;
-};
-
-struct SubmeshInfo {
-	UINT index_count = 0;
-	UINT start_index_location = 0;
-	UINT base_vertex_location = 0;
-
-	float minimum_x = FLT_MAX;
-	float minimum_y = FLT_MAX;
-	float minimum_z = FLT_MAX;
-
-	float maximum_x = FLT_MIN;
-	float maximum_y = FLT_MIN;
-	float maximum_z = FLT_MIN;
-
-	//DirectX::BoundingBox bounding_box;
-};
-
-struct MeshInfo {
-	std::wstring name;
-
-	Microsoft::WRL::ComPtr<ID3DBlob> vertex_buffer_cpu = nullptr;
-	Microsoft::WRL::ComPtr<ID3DBlob> index_buffer_cpu = nullptr;
-
-	Microsoft::WRL::ComPtr<ID3D12Resource> vertex_buffer_gpu = nullptr;
-	Microsoft::WRL::ComPtr<ID3D12Resource> index_buffer_gpu = nullptr;
-
-	Microsoft::WRL::ComPtr<ID3D12Resource> vertex_upload_buffer = nullptr;
-	Microsoft::WRL::ComPtr<ID3D12Resource> index_upload_buffer = nullptr;
-
-	UINT vertex_buffer_stride = 0;
-	UINT vertex_buffer_size = 0;
-
-	DXGI_FORMAT index_format = DXGI_FORMAT_R16_UINT;
-	UINT index_buffer_size = 0;
-
-	std::unordered_map<std::wstring, SubmeshInfo> submesh_map;
-
-	D3D12_VERTEX_BUFFER_VIEW Get_VBV() const {	// Get Vertex Buffer View
-		D3D12_VERTEX_BUFFER_VIEW vertex_buffer_view;
-		vertex_buffer_view.BufferLocation = vertex_buffer_gpu->GetGPUVirtualAddress();
-		vertex_buffer_view.StrideInBytes = vertex_buffer_stride;
-		vertex_buffer_view.SizeInBytes = vertex_buffer_size;
-
-		return vertex_buffer_view;
-	}
-
-	D3D12_INDEX_BUFFER_VIEW Get_IBV() const {	// Get Index Buffer View
-		D3D12_INDEX_BUFFER_VIEW index_buffer_view;
-		index_buffer_view.BufferLocation = index_buffer_gpu->GetGPUVirtualAddress();
-		index_buffer_view.Format = index_format;
-		index_buffer_view.SizeInBytes = index_buffer_size;
-
-		return index_buffer_view;
-	}
-
-	void Free_UB() {	// Free Upload Buffer
-		vertex_upload_buffer = nullptr;
-		index_upload_buffer = nullptr;
-	}
-};
-
 struct MaterialInfo {
 	std::wstring name;
 
@@ -493,22 +464,6 @@ struct MaterialInfo {
 	DirectX::XMFLOAT4 diffuse_albedo = { 1.0f, 1.0f, 1.0f, 1.0f };
 	DirectX::XMFLOAT3 fresnel = { 0.01f, 0.01f, 0.01f };
 	float roughness = 0.25f;
-};
-
-struct BoneInfo {
-	std::wstring name;
-};
-
-struct SkeletonInfo {
-	std::unique_ptr<BoneInfo> root_bone;
-};
-
-struct KeyframeInfo {
-	float time;
-};
-
-struct AnimationInfo {
-	std::wstring name;
 };
 
 struct LightInfo {
@@ -1663,15 +1618,71 @@ inline Microsoft::WRL::ComPtr<ID3DBlob> Compile_Shader(
 }
 
 // _Info
+struct Material_Factor {
+	DirectX::XMFLOAT4 diffuse_albedo = DirectX::XMFLOAT4(DirectX::Colors::LightBlue);
+	DirectX::XMFLOAT3 fresnel = { 0.1f, 0.1f, 0.1f };
+	float shininess = 0.25f;
+};
+
+struct Material_Info {
+	std::wstring name;
+
+	int dirty_count = FRAME_RESOURCES_NUMBER;
+
+	Material_Factor material_factor;
+
+	Material_Info() {}
+	Material_Info(std::wstring material_info_name, Material_Factor material_factor_in) {
+		name = material_info_name;
+		material_factor = material_factor_in;
+	}
+
+	void Rst_Dirty_Count() {
+		dirty_count = FRAME_RESOURCES_NUMBER;
+	}
+};
+
+struct Material {
+	std::wstring name;
+
+	UINT constant_buffer_index = -1;
+
+	UINT diffuse_heap_index = -1;
+	UINT normal_heap_index = -1;
+
+	std::vector<Material_Info*> material_info_array;
+
+	std::array<Material_Factor, MAX_MATERIAL_COUNT> material_factor_array;
+
+	//
+	Material() {}
+	Material(UINT constant_buffer_index_in, std::wstring material_name, std::vector<Material_Info*>& material_info_array_in) {
+		constant_buffer_index = constant_buffer_index_in;
+		name = material_name;
+
+		material_info_array.assign(material_info_array_in.begin(), material_info_array_in.end());
+	}
+
+	void Udt_Material_Factors() {
+		for (size_t i = 0; i < material_info_array.size(); ++i) {
+			material_factor_array[i] = material_info_array[i]->material_factor;
+		}
+	}
+
+	std::array<Material_Factor, MAX_MATERIAL_COUNT>& Get_Material_Factors() {
+		return material_factor_array;
+	}
+};
+
 struct Vertex_Info {
 	DirectX::XMFLOAT3 position;
 	DirectX::XMFLOAT3 normal;
 	DirectX::XMFLOAT3 tangent;
 	DirectX::XMFLOAT2 uv;
-	//UINT material_index;
-	//UINT bone_count;
-	//UINT bone_indicies[MAX_BONE_COUNT];
-	//DirectX::XMFLOAT4 bone_weights;
+	UINT bone_count = 0;
+	UINT bone_indices[MAX_WEIGHT_BONE_COUNT] = { (UINT)-1, (UINT)-1, (UINT)-1, (UINT)-1 };
+	float bone_weights[MAX_WEIGHT_BONE_COUNT];
+	UINT material_index = 0;
 };
 
 struct Mesh_Info {
@@ -1697,6 +1708,9 @@ struct Mesh_Info {
 	UINT index_buffer_size = 0;
 
 	D3D12_PRIMITIVE_TOPOLOGY primitive_topology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+
+	//
+	Material* material = nullptr;
 
 	//
 	Mesh_Info() {}
@@ -1803,4 +1817,63 @@ struct Mesh_Info {
 struct Mesh {
 	Mesh_Info* mesh_info = nullptr;
 	DirectX::XMFLOAT4X4 local_transform_matrix = MathHelper::Identity_4x4();
+};
+
+struct Bone_Info {
+	std::wstring name;
+	DirectX::XMFLOAT4X4 offset_matrix;
+	UINT parent_bone_index;
+	UINT bone_index;
+};
+
+struct Skeleton_Info {
+	std::wstring name;
+	UINT bone_count = 0;
+	std::vector<Bone_Info> bone_array;
+	DirectX::XMFLOAT4X4 bone_offset_matrix_array[MAX_BONE_COUNT];
+
+	Skeleton_Info() {}
+	Skeleton_Info(std::wstring skeleton_name, std::vector<Bone_Info>& bone_array_in) {
+		name = skeleton_name;
+
+		bone_array.assign(bone_array_in.begin(), bone_array_in.end());
+		bone_count = (UINT)bone_array.size();
+
+		for (UINT i = 0; i < bone_count; ++i) {
+			bone_offset_matrix_array[i] = bone_array[i].offset_matrix;
+		}
+	}
+};
+
+struct Transform_Info {
+	DirectX::XMFLOAT3 trenslate = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
+	DirectX::XMFLOAT4 rotate = DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
+	DirectX::XMFLOAT3 scale = DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f);
+};
+
+struct Keyframe_Info {
+	float time;
+	std::array<Transform_Info, MAX_BONE_COUNT> animation_transform_array;
+};
+
+struct Animation_Info {
+	std::wstring name;
+	UINT bone_count;
+	float animation_time;
+	std::map<float, Keyframe_Info> keyframe_map;
+
+	Animation_Info() {}
+	Animation_Info(std::wstring animation_name, UINT bone_count_in, float animation_time_in, std::map<float, Keyframe_Info>& keyframe_map_in) {
+		name = animation_name;
+		bone_count = bone_count_in;
+		animation_time = animation_time_in;
+
+		keyframe_map.insert(keyframe_map_in.begin(), keyframe_map_in.end());
+	}
+
+	float Get_Upper_Keyframe_Time(float time) {
+		float keyframe_time = std::fmod(time, animation_time);
+
+		return keyframe_map.lower_bound(keyframe_time)->first;
+	 }
 };

@@ -4,12 +4,11 @@
 
 struct ObjectConstants {
 	DirectX::XMFLOAT4X4 world_matrix = MathHelper::Identity_4x4();
+	UINT animated = 0;
 };
 
 struct MaterialConstants {
-	DirectX::XMFLOAT4 diffuse_albedo = { 1.0f, 1.0f, 1.0f, 1.0f };
-	DirectX::XMFLOAT3 fresnel = { 0.01f, 0.01f, 0.01f };
-	float roughness = 0.25f;
+	std::array<Material_Factor, MAX_MATERIAL_COUNT> material_array;
 };
 
 struct PassConstants {
@@ -37,6 +36,10 @@ struct PassConstants {
 	LightInfo lights[MAX_LIGHTS];
 };
 
+struct AnimationConstants {
+	std::array<DirectX::XMFLOAT4X4, MAX_BONE_COUNT> animation_transform_matrix;
+};
+
 struct Vertex {
 	DirectX::XMFLOAT3 position;
 	DirectX::XMFLOAT3 normal;
@@ -47,8 +50,9 @@ struct FrameResorce {
 	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> command_list;
 
 	std::unique_ptr<UploadBuffer<ObjectConstants>> object_constant_buffer = nullptr;
-	std::unique_ptr<UploadBuffer<PassConstants>> pass_constant_buffer = nullptr;
 	std::unique_ptr<UploadBuffer<MaterialConstants>> material_constant_buffer = nullptr;
+	std::unique_ptr<UploadBuffer<PassConstants>> pass_constant_buffer = nullptr;
+	std::unique_ptr<UploadBuffer<AnimationConstants>> animation_constant_buffer = nullptr;
 
 	UINT64 fence = 0;
 
@@ -60,7 +64,8 @@ struct FrameResorce {
 		command_list->Close();
 
 		object_constant_buffer = std::make_unique<UploadBuffer<ObjectConstants>>(device, object_count, true);
-		pass_constant_buffer = std::make_unique<UploadBuffer<PassConstants>>(device, pass_count, true);
 		material_constant_buffer = std::make_unique<UploadBuffer<MaterialConstants>>(device, material_count, true);
+		pass_constant_buffer = std::make_unique<UploadBuffer<PassConstants>>(device, pass_count, true);
+		animation_constant_buffer = std::make_unique<UploadBuffer<AnimationConstants>>(device, object_count, true);
 	}
 };

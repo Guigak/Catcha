@@ -139,13 +139,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AnimationManager.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="InputManager.cpp" />
+    <ClCompile Include="MaterialManager.cpp" />
     <ClCompile Include="MeshManager.cpp" />
     <ClCompile Include="NetworkManager.cpp" />
     <ClCompile Include="Object.cpp" />
-    <ClCompile Include="ObjectInfo.cpp" />
     <ClCompile Include="ObjectManager.cpp" />
+    <ClCompile Include="SkeletonManager.cpp" />
     <ClCompile Include="TestScene.cpp" />
     <ClCompile Include="D3DManager.cpp" />
     <ClCompile Include="DummyScene.cpp" />
@@ -157,14 +159,16 @@
     <ClCompile Include="WindowManager.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AnimationManager.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="InputManager.h" />
+    <ClInclude Include="MaterialManager.h" />
     <ClInclude Include="MeshManager.h" />
     <ClInclude Include="NetworkManager.h" />
     <ClInclude Include="NetworkObserver.h" />
     <ClInclude Include="Object.h" />
-    <ClInclude Include="ObjectInfo.h" />
     <ClInclude Include="ObjectManager.h" />
+    <ClInclude Include="SkeletonManager.h" />
     <ClInclude Include="protocol.h" />
     <ClInclude Include="TestScene.h" />
     <ClInclude Include="common.h" />

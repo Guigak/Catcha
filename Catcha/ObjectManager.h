@@ -3,6 +3,9 @@
 #include "Object.h"
 #include "MeshManager.h"
 #include "FBXManager.h"
+#include "SkeletonManager.h"
+#include "AnimationManager.h"
+#include "MaterialManager.h"
 
 enum class Action;
 
@@ -36,13 +39,13 @@ private:
 
 	//
 	MeshManager m_mesh_manager;
+	SkeletonManager m_skeleton_manager;
+	AnimationManager m_animation_manager;
+	MaterialManager m_material_manager;
 
 public:
 	ObjectManager() {}
 	~ObjectManager() {}
-
-	Object* Add_Obj(std::wstring object_name, MeshInfo* mesh_info, std::wstring mesh_name, MaterialInfo* material_info,
-		D3D12_PRIMITIVE_TOPOLOGY primitive_topology, ObjectType object_type, bool physics, bool visiable, std::wstring set_name);
 
 	Object* Get_Obj(std::wstring object_name);
 	Object* Get_Obj(UINT object_number);
@@ -79,8 +82,11 @@ public:
 
 	//
 	MeshManager& Get_Mesh_Manager() { return m_mesh_manager; }
+	SkeletonManager& Get_Skeleton_Manager() { return m_skeleton_manager; }
+	AnimationManager& Get_Animation_Manager() { return m_animation_manager; }
+	MaterialManager& Get_Material_Manager() { return m_material_manager; }
 
-	void Ipt_From_FBX(std::wstring file_name, bool merge_mesh, bool add_object, bool merge_object, BYTE info_flag);
+	void Ipt_From_FBX(std::wstring file_name, bool merge_mesh, bool add_object, bool merge_object, BYTE info_flag, std::wstring skeleton_name = L"");
 
 	Object* Add_Obj(std::wstring object_name, std::wstring mesh_name, std::wstring set_name = L"Object",
 		DirectX::XMMATRIX world_matrix = DirectX::XMMatrixIdentity(),
@@ -92,6 +98,12 @@ public:
 
 	//
 	void Build_BV(ID3D12Device* device, ID3D12GraphicsCommandList* command_list);
+
+	//
+	void Set_Sklt_2_Obj(std::wstring object_name, std::wstring skeleton_name);
+
+	//
+	Object* Add_Cam(std::wstring camera_name, std::wstring set_name = L"camera", std::wstring bind_object_name = L"", float distance = 0.0f);
 
 	// player 전환을 위한 object swap
 	void Swap_Object(const std::wstring& key1, const std::wstring& key2);

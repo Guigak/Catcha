@@ -26,6 +26,6 @@ public:
 	void Reset();
 	void Start();
 	void Stop();
-	void Tick();
+	void Tick(float fps_limit = 60.0f);
 };
 

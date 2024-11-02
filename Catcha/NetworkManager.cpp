@@ -272,23 +272,21 @@ void NetworkManager::ProcessPacket(char* ptr)
 		int character_id = static_cast<int>(p->character_num);
 		characters[id].character_id = character_id;
 
+		DirectX::XMFLOAT3 coord = { static_cast<float>(p->x), static_cast<float>(p->y), static_cast<float>(p->z) };
+		DirectX::XMFLOAT4 quat = { p->quat_x, p->quat_y, p->quat_z, p->quat_w };
+
+		characters[id].Location = coord;
+
+		m_objects[characters[id].character_id]->Set_Look(quat);
+
 		if (id == m_myid)
 		{
 			// 자기 자신
-			DirectX::XMFLOAT3 coord = { static_cast<float>(p->x), static_cast<float>(p->y), static_cast<float>(p->z) };
-			characters[id].Location = coord;
-			DirectX::XMFLOAT4 quat = { p->quat_x, p->quat_y, p->quat_z, p->quat_w };
-			m_objects[characters[id].character_id]->Set_Look(quat);
 		}
 		else
 		{
 			// 다른 유저 추가
-			DirectX::XMFLOAT3 coord = { static_cast<float>(p->x), static_cast<float>(p->y), static_cast<float>(p->z) };
-			DirectX::XMFLOAT4 quat = { p->quat_x, p->quat_y, p->quat_z, p->quat_w };
-			characters[id].Location = coord;
-
 			m_objects[characters[id].character_id]->Set_Position(coord.x, coord.y, coord.z);
-			m_objects[characters[id].character_id]->Set_Look(quat);
 			m_objects[characters[id].character_id]->Set_Visiable(true);
 		}
 		break;
@@ -297,23 +295,19 @@ void NetworkManager::ProcessPacket(char* ptr)
 	{
 		SC_MOVE_PLAYER_PACKET* p = reinterpret_cast<SC_MOVE_PLAYER_PACKET*>(ptr);
 		int id = p->id;
+		DirectX::XMFLOAT3 coord = { static_cast<float>(p->x), static_cast<float>(p->y), static_cast<float>(p->z) };
+		characters[id].Location = coord;
+		characters[id].pitch = p->player_pitch;
+
 		if (id == m_myid)
 		{
 			// 자신의 받은 움직임과 look
-			DirectX::XMFLOAT3 coord = { static_cast<float>(p->x), static_cast<float>(p->y), static_cast<float>(p->z) };
-			characters[m_myid].Location = coord;
-			characters[m_myid].pitch = p->player_pitch;
-
 			m_objects[characters[m_myid].character_id]->SetTargetPosition(coord);
 			m_objects[characters[m_myid].character_id]->SetTargetPitch(p->player_pitch);
 		}
 		else
 		{
 			// 다른 캐릭터의 받은 움직임
-			DirectX::XMFLOAT3 coord = { static_cast<float>(p->x), static_cast<float>(p->y), static_cast<float>(p->z) };
-			characters[id].Location = coord;
-			characters[id].pitch = p->player_pitch;
-
 			m_objects[characters[id].character_id]->SetTargetPosition(coord);
 			m_objects[characters[id].character_id]->SetTargetPitch(p->player_pitch);
 		}
@@ -323,32 +317,38 @@ void NetworkManager::ProcessPacket(char* ptr)
 	{
 		SC_SYNC_PLAYER_PACKET* p = reinterpret_cast<SC_SYNC_PLAYER_PACKET*>(ptr);
 		int id = p->id;
+		DirectX::XMFLOAT3 coord = { static_cast<float>(p->x), static_cast<float>(p->y), static_cast<float>(p->z) };
+		DirectX::XMFLOAT4 quat = { p->quat_x, p->quat_y, p->quat_z, p->quat_w };
+
 		if (id == m_myid)
 		{
-			//// 자신의 받은 움직임과 look
-			//DirectX::XMFLOAT3 coord = { static_cast<float>(p->x), static_cast<float>(p->y), static_cast<float>(p->z) };
-			//characters[m_myid].Location = coord;
-			//m_objects[characters[m_myid].character_id]->Set_Look(DirectX::XMFLOAT3(p->look_x, p->look_y, p->look_z));
+			// 자신의 받은 움직임과 look
+			
+			characters[m_myid].Location = coord;
+			m_objects[characters[m_myid].character_id]->SetTargetPosition(coord);
+			m_objects[characters[m_myid].character_id]->Set_Look(quat);
 
-			//// 다시 서버로 동기화 패킷 전송
-			//CS_SYNC_PLAYER_PACKET sync;
-			//sync.x = m_objects[characters[m_myid].character_id]->Get_Position_3f().x;
-			//sync.y = m_objects[characters[m_myid].character_id]->Get_Position_3f().y;
-			//sync.z = m_objects[characters[m_myid].character_id]->Get_Position_3f().z;
-			//sync.look_x = m_objects[characters[m_myid].character_id]->GetCameraLook().x;
-			//sync.look_y = m_objects[characters[m_myid].character_id]->GetCameraLook().y;
-			//sync.look_z = m_objects[characters[m_myid].character_id]->GetCameraLook().z;
-			//sync.size = sizeof(sync);
-			//sync.type = CS_SYNC_PLAYER;
-			//sync.id = m_myid;
-			//DoSend(&sync);
+			// 다시 서버로 동기화 패킷 전송
+			CS_SYNC_PLAYER_PACKET sync;
+			sync.x = m_objects[characters[m_myid].character_id]->Get_Position_3f().x;
+			sync.y = m_objects[characters[m_myid].character_id]->Get_Position_3f().y;
+			sync.z = m_objects[characters[m_myid].character_id]->Get_Position_3f().z;
+			sync.quat_x = m_objects[characters[m_myid].character_id]->Get_Rotate_Quat().x;
+			sync.quat_y = m_objects[characters[m_myid].character_id]->Get_Rotate_Quat().y;
+			sync.quat_z = m_objects[characters[m_myid].character_id]->Get_Rotate_Quat().z;
+			sync.quat_w = m_objects[characters[m_myid].character_id]->Get_Rotate_Quat().w;
+
+			sync.size = sizeof(sync);
+			sync.type = CS_SYNC_PLAYER;
+			sync.id = m_myid;
+			DoSend(&sync);
 		}
 		else
 		{
 			// 다른 캐릭터의 받은 움직임
-			/*DirectX::XMFLOAT3 coord = { static_cast<float>(p->x), static_cast<float>(p->y), static_cast<float>(p->z) };
 			characters[id].Location = coord;
-			m_objects[characters[id].character_id]->Set_Look(DirectX::XMFLOAT3(p->look_x, p->look_y, p->look_z));*/
+			m_objects[characters[id].character_id]->SetTargetPosition(coord);
+			m_objects[characters[id].character_id]->Set_Look(quat);
 		}
 		break;
 	}

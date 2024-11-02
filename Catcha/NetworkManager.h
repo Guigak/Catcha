@@ -41,8 +41,8 @@ private:
 	NetworkManager& operator=(const NetworkManager&) = delete;
 
 public:
-	int m_myid;											// 자신의 아이디 번호
-	std::unordered_map<int, Client> characters;			// [key]아이디 번호 / [value]캐릭터 정보
+	int m_myid;											// 자신의 서버 아이디 번호
+	std::unordered_map<int, Client> characters;			// [key] 서버 아이디 번호 / [value]캐릭터 정보
 
 	bool Choose = false;								// 캐릭터 선택 여부 확인
 

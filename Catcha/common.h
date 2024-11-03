@@ -105,6 +105,11 @@ constexpr int MAX_MATERIAL_COUNT = 32;
 #define SKELETON_INFO 0b0100
 #define ANIMATION_INFO 0b1000
 
+// enum class
+enum class Object_State {
+	IDLE_STATE, MOVE_STATE, JUMP_STATE
+};
+
 // struct
 struct D3D12_DEFAULT;
 struct D3D12_RECT_EX;
@@ -246,10 +251,16 @@ struct MathHelper {
 		return DirectX::XMVectorGetX(DirectX::XMVector3Length(DirectX::XMLoadFloat3(&xmfloat3)));
 	}
 
-	static float Length_XZ(const DirectX::XMFLOAT3& xmfloat3) {
-		DirectX::XMFLOAT3 xmfloat3_xz(xmfloat3.x, 0.0f, xmfloat3.z);
+	static DirectX::XMFLOAT3 Get_XZ(const DirectX::XMFLOAT3& xmfloat3) {
+		DirectX::XMFLOAT3 result = DirectX::XMFLOAT3(xmfloat3.x, 0.0f, xmfloat3.z);
 
-		return DirectX::XMVectorGetX(DirectX::XMVector3Length(DirectX::XMLoadFloat3(&xmfloat3_xz)));
+		return result;
+	}
+
+	static float Length_XZ(const DirectX::XMFLOAT3& xmfloat3) {
+		DirectX::XMFLOAT3 result = Get_XZ(xmfloat3);
+
+		return DirectX::XMVectorGetX(DirectX::XMVector3Length(DirectX::XMLoadFloat3(&result)));
 	}
 
 	static DirectX::XMFLOAT3 Dot(const DirectX::XMFLOAT3& xmfloat3_a, const DirectX::XMFLOAT3 xmfloat3_b) {
@@ -356,30 +367,6 @@ inline DirectX::XMFLOAT4 FbxQuaternion_2_XMFLOAT4(const FbxQuaternion& fbxquater
 		(float)fbxquaternion[0], (float)fbxquaternion[1], (float)fbxquaternion[2], (float)fbxquaternion[3]);
 
 	return xmfloat4;
-}
-
-inline DirectX::XMFLOAT3 Quat_2_Euler(const DirectX::XMVECTOR& quaternion) {
-	DirectX::XMFLOAT3 euler;
-	DirectX::XMVECTOR quat = DirectX::XMQuaternionNormalize(quaternion);
-
-	float ysqr = DirectX::XMVectorGetY(quat) * DirectX::XMVectorGetY(quat);
-
-	// Roll
-	float t0 = 2.0f * (DirectX::XMVectorGetW(quat) * DirectX::XMVectorGetX(quat) + DirectX::XMVectorGetY(quat) * DirectX::XMVectorGetZ(quat));
-	float t1 = 1.0f - 2.0f * (DirectX::XMVectorGetX(quat) * DirectX::XMVectorGetX(quat) + ysqr);
-	euler.x = std::atan2(t0, t1);
-
-	// Pitch
-	float t2 = 2.0f * (DirectX::XMVectorGetW(quat) * DirectX::XMVectorGetY(quat) - DirectX::XMVectorGetZ(quat) * DirectX::XMVectorGetX(quat));
-	t2 = std::clamp(t2, -1.0f, 1.0f);
-	euler.y = std::asin(t2);
-
-	// Yaw
-	float t3 = 2.0f * (DirectX::XMVectorGetW(quat) * DirectX::XMVectorGetZ(quat) + DirectX::XMVectorGetX(quat) * DirectX::XMVectorGetY(quat));
-	float t4 = 1.0f - 2.0f * (ysqr + DirectX::XMVectorGetZ(quat) * DirectX::XMVectorGetZ(quat));
-	euler.z = std::atan2(t3, t4);
-
-	return euler;
 }
 
 #define Throw_If_Failed(x)															\

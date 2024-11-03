@@ -1,10 +1,6 @@
 #pragma once
 #include "common.h"
 
-enum class Object_State {
-	IDLE_STATE, MOVE_STATE, JUMP_STATE
-};
-
 class Camera;
 class ObjectManager;
 
@@ -45,7 +41,7 @@ protected:
 	DirectX::XMFLOAT3 m_velocity = DirectX::XMFLOAT3();
 
 	float m_acceleration = 100.0f;
-	float m_deceleration = 200.0f;
+	float m_deceleration = 1000.0f;
 
 	float m_speed = 0.0f;
 	float m_max_speed = 200.0f;
@@ -80,6 +76,9 @@ protected:
 	float m_animated_time = 0.0f;
 	std::array<DirectX::XMFLOAT4X4, MAX_BONE_COUNT> m_animation_matrix_array;
 	std::wstring m_playing_animation_name = L"";
+	std::wstring m_next_animation_name = L"";
+
+	std::unordered_map<Object_State, std::wstring> m_animation_map;
 
 	//
 	ObjectManager* m_object_manager = nullptr;
@@ -203,5 +202,8 @@ public:
 	}
 
 	std::array<DirectX::XMFLOAT4X4, MAX_BONE_COUNT>& Get_Animation_Matrix() { return m_animation_matrix_array; }
+
+	//
+	void Bind_Anim_2_State(Object_State object_state, std::wstring animation_name);
 };
 

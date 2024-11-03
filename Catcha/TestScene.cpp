@@ -341,7 +341,7 @@ void TestScene::Build_Mesh(ID3D12Device* device, ID3D12GraphicsCommandList* comm
 	m_object_manager->Ipt_From_FBX(L"mouse_walk.fbx", true, false, true, ANIMATION_INFO, L"mouse_mesh_edit.fbx");
 	m_object_manager->Ipt_From_FBX(L"mouse_idle.fbx", true, false, true, ANIMATION_INFO, L"mouse_mesh_edit.fbx");
 
-	m_object_manager->Ipt_From_FBX(L"house.fbx", false, true, false, MESH_INFO | MATERIAL_INFO);
+	m_object_manager->Ipt_From_FBX(L"house_mat.fbx", false, true, false, MESH_INFO | MATERIAL_INFO);
 
 	m_object_manager->Build_BV(device, command_list);
 }
@@ -351,7 +351,10 @@ void TestScene::Build_Material() {
 }
 
 void TestScene::Build_O() {
-	m_object_manager->Add_Obj(L"player", L"cat_mesh_edit.fbx");
+	m_object_manager->Add_Obj(L"player", L"mouse_mesh_edit.fbx");
+	m_object_manager->Set_Sklt_2_Obj(L"player", L"mouse_mesh_edit.fbx");
+	//m_object_manager->Add_Obj(L"player", L"cat_mesh_edit.fbx");
+	//m_object_manager->Set_Sklt_2_Obj(L"player", L"cat_mesh_edit.fbx");
 
 	m_object_manager->Add_Obj(L"cat_test", L"cat_mesh_edit.fbx");
 	m_object_manager->Set_Sklt_2_Obj(L"cat_test", L"cat_mesh_edit.fbx");
@@ -359,18 +362,33 @@ void TestScene::Build_O() {
 	m_object_manager->Add_Obj(L"mouse_test", L"mouse_mesh_edit.fbx");
 	m_object_manager->Set_Sklt_2_Obj(L"mouse_test", L"mouse_mesh_edit.fbx");
 
-	m_object_manager->Get_Obj(L"player")->Set_Visiable(false);
+	//m_object_manager->Get_Obj(L"player")->Set_Visiable(false);
 	//m_object_manager->Get_Obj(L"cat_test")->Set_Visiable(false);
 	//m_object_manager->Get_Obj(L"mouse_test")->Set_Visiable(false);
 
-	m_object_manager->Get_Obj(L"mouse_test")->Set_Animation(L"mouse_idle.fbx");
-	m_object_manager->Get_Obj(L"mouse_test")->Set_Animated(true);
-	m_object_manager->Get_Obj(L"cat_test")->Set_Animation(L"cat_idle.fbx");
-	m_object_manager->Get_Obj(L"cat_test")->Set_Animated(true);
+	Object* object = m_object_manager->Get_Obj(L"player");
+	object->Bind_Anim_2_State(Object_State::IDLE_STATE, L"mouse_idle.fbx");
+	object->Bind_Anim_2_State(Object_State::MOVE_STATE, L"mouse_walk.fbx");
+	//Object* object = m_object_manager->Get_Obj(L"player");
+	//object->Bind_Anim_2_State(Object_State::IDLE_STATE, L"cat_idle.fbx");
+	//object->Bind_Anim_2_State(Object_State::MOVE_STATE, L"cat_walk.fbx");
+	object->Set_Animated(true);
+	object->Set_Phys(true);
+
+	object = m_object_manager->Get_Obj(L"mouse_test");
+	object->Bind_Anim_2_State(Object_State::IDLE_STATE, L"mouse_idle.fbx");
+	object->Bind_Anim_2_State(Object_State::MOVE_STATE, L"mouse_walk.fbx");
+	object->Set_Animated(true);
+
+	object = m_object_manager->Get_Obj(L"cat_test");
+	object->Bind_Anim_2_State(Object_State::IDLE_STATE, L"cat_idle.fbx");
+	object->Bind_Anim_2_State(Object_State::MOVE_STATE, L"cat_walk.fbx");
+	object->Set_Animated(true);
 }
 
 void TestScene::Build_C(D3DManager* d3d_manager) {
-	auto main_camera = reinterpret_cast<Camera*>(m_object_manager->Add_Cam(L"maincamera", L"camera", L"player", 0.1f));
+	auto main_camera = reinterpret_cast<Camera*>(m_object_manager->Add_Cam(L"maincamera", L"camera", L"player", 50.0f));
+	//auto main_camera = reinterpret_cast<Camera*>(m_object_manager->Add_Cam(L"maincamera", L"camera", L"player", 200.0f));
 	main_camera->Set_Frustum(0.25f * MathHelper::Pi(), d3d_manager->Get_Aspect_Ratio(), 1.0f, 2000.0f);
 
 	m_main_camera = main_camera;
@@ -523,30 +541,16 @@ void TestScene::Build_PSO(D3DManager* d3d_manager) {
 }
 
 void TestScene::Binding_Key() {
-	//m_input_manager->Bind_Key_Down(VK_W, BindingInfo(L"test", Action::MOVE_FORWARD));
-	//m_input_manager->Bind_Key_Down(VK_S, BindingInfo(L"test", Action::MOVE_BACK));
-	//m_input_manager->Bind_Key_Down(VK_A, BindingInfo(L"test", Action::MOVE_LEFT));
-	//m_input_manager->Bind_Key_Down(VK_D, BindingInfo(L"test", Action::MOVE_RIGHT));
 
-	//m_input_manager->Bind_Key_Down(VK_W, BindingInfo(L"test", Action::TELEPORT_FORWARD, 1.0f));
-	//m_input_manager->Bind_Key_Down(VK_S, BindingInfo(L"test", Action::TELEPORT_BACK, 1.0f));
-	//m_input_manager->Bind_Key_Down(VK_A, BindingInfo(L"test", Action::TELEPORT_LEFT, 1.0f));
-	//m_input_manager->Bind_Key_Down(VK_D, BindingInfo(L"test", Action::TELEPORT_RIGHT, 1.0f));
-	//m_input_manager->Bind_Key_Down(VK_SPACE, BindingInfo(L"test", Action::TELEPORT_UP, 1.0f));
-	//m_input_manager->Bind_Key_Down(VK_SHIFT, BindingInfo(L"test", Action::TELEPORT_DOWN, 1.0f));
-
-	m_input_manager->Bind_Key_Down(VK_W, BindingInfo(L"player", Action::TELEPORT_FORWARD, 1.0f));
-	m_input_manager->Bind_Key_Down(VK_S, BindingInfo(L"player", Action::TELEPORT_BACK, 1.0f));
-	m_input_manager->Bind_Key_Down(VK_A, BindingInfo(L"player", Action::TELEPORT_LEFT, 1.0f));
-	m_input_manager->Bind_Key_Down(VK_D, BindingInfo(L"player", Action::TELEPORT_RIGHT, 1.0f));
+	m_input_manager->Bind_Key_Down(VK_W, BindingInfo(L"player", Action::MOVE_FORWARD, 1.0f));
+	m_input_manager->Bind_Key_Down(VK_S, BindingInfo(L"player", Action::MOVE_BACK, 1.0f));
+	m_input_manager->Bind_Key_Down(VK_A, BindingInfo(L"player", Action::MOVE_LEFT, 1.0f));
+	m_input_manager->Bind_Key_Down(VK_D, BindingInfo(L"player", Action::MOVE_RIGHT, 1.0f));
 	m_input_manager->Bind_Key_Down(VK_SPACE, BindingInfo(L"player", Action::TELEPORT_UP, 1.0f));
 	m_input_manager->Bind_Key_Down(VK_SHIFT, BindingInfo(L"player", Action::TELEPORT_DOWN, 1.0f));
 
-	//m_input_manager->Bind_Key_Down(VK_SPACE, BindingInfo(L"test", Action::MOVE_UP, 1.0f));
-	//m_input_manager->Bind_Key_Down(VK_SHIFT, BindingInfo(L"test", Action::MOVE_DOWN, 1.0f));
-
-	m_input_manager->Bind_Key_Down(VK_Q, BindingInfo(L"maincamera", Action::ROTATE_PITCH, POINTF(-1.0f)));
-	m_input_manager->Bind_Key_Down(VK_E, BindingInfo(L"maincamera", Action::ROTATE_PITCH, POINTF(1.0f)));
+	m_input_manager->Bind_Key_Down(VK_Q, BindingInfo(L"maincamera", Action::ROTATE_PITCH, POINTF(-0.001f)));
+	m_input_manager->Bind_Key_Down(VK_E, BindingInfo(L"maincamera", Action::ROTATE_PITCH, POINTF(0.001f)));
 
 	m_input_manager->Bind_Mouse_Move(BindingInfo(L"maincamera", Action::ROTATE));
 }

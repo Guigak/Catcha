@@ -57,7 +57,7 @@ void Object::Calc_Delta(float elapsed_time) {
 		m_delta_position = MathHelper::Add(m_delta_position, delta);
 
 		// Calc deceleration
-		if (m_moving == false && m_state == Object_State::IDLE_STATE) {
+		if (m_moving == false && (m_state == Object_State::IDLE_STATE || m_state == Object_State::MOVE_STATE)) {
 			if (m_speed > 0.0f) {
 				float deceleration = m_deceleration * elapsed_time;
 				float new_speed = MathHelper::Max(m_speed - deceleration, 0.0f);
@@ -104,10 +104,23 @@ void Object::Calc_Delta(float elapsed_time) {
 
 void Object::Update(float elapsed_time) {
 	if (m_animated) {
-		m_animated_time += elapsed_time;
+		if (Get_Spd() > 0.05f) {
+			m_state = Object_State::MOVE_STATE;
+		}
+		else {
+			m_state = Object_State::IDLE_STATE;
+		}
+
+		m_next_animation_name = m_animation_map[m_state];
+
+		if (m_playing_animation_name != m_next_animation_name) {
+			m_playing_animation_name = m_next_animation_name;
+			m_animated_time = 0.0f;
+		}
 
 		m_object_manager->Get_Animation_Manager().Get_Animated_Matrix(m_playing_animation_name, m_animated_time, m_animation_matrix_array);
 
+		m_animated_time += elapsed_time;
 		Rst_Dirty_Count();
 	}
 
@@ -127,8 +140,6 @@ void Object::Update(float elapsed_time) {
 
 void Object::Udt_WM() {
 	DirectX::XMMATRIX translate_matrix = DirectX::XMMatrixTranslation(m_position.x, m_position.y, m_position.z);
-	//DirectX::XMMATRIX rotate_matrix = DirectX::XMMatrixRotationRollPitchYaw(
-	//	DirectX::XMConvertToRadians(m_rotate.x), DirectX::XMConvertToRadians(m_rotate.y), DirectX::XMConvertToRadians(m_rotate.z));
 	DirectX::XMMATRIX rotate_matrix = DirectX::XMMatrixRotationQuaternion(DirectX::XMLoadFloat4(&m_rotate_quat));
 	DirectX::XMMATRIX scale_matrix = DirectX::XMMatrixScaling(m_scale.x, m_scale.y, m_scale.z);
 
@@ -136,8 +147,6 @@ void Object::Udt_WM() {
 }
 
 void Object::Udt_LUR() {
-	//DirectX::XMMATRIX rotate_matrix = DirectX::XMMatrixRotationRollPitchYaw(
-	//	DirectX::XMConvertToRadians(m_rotate.x), DirectX::XMConvertToRadians(m_rotate.y), DirectX::XMConvertToRadians(m_rotate.z));
 	DirectX::XMMATRIX rotate_matrix = DirectX::XMMatrixRotationQuaternion(DirectX::XMLoadFloat4(&m_rotate_quat));
 
 	m_look = MathHelper::Normalize(MathHelper::Multiply(DirectX::XMFLOAT3(0.0f, 0.0f, 1.0f), rotate_matrix));
@@ -161,7 +170,8 @@ void Object::Move(DirectX::XMFLOAT3 direction) {
 
 void Object::Move_Forward() {
 	if (m_camera) {
-		m_velocity = MathHelper::Add(Get_Vel(), m_camera->Get_Look(), m_acceleration);
+		//m_velocity = MathHelper::Add(Get_Vel(), m_camera->Get_Look(), m_acceleration);
+		m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ(m_camera->Get_Look()), m_acceleration);
 	}
 	else {
 		m_velocity = MathHelper::Add(Get_Vel(), Get_Look(), m_acceleration);
@@ -172,7 +182,8 @@ void Object::Move_Forward() {
 
 void Object::Move_Back() {
 	if (m_camera) {
-		m_velocity = MathHelper::Add(Get_Vel(), m_camera->Get_Look(), -m_acceleration);
+		m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ(m_camera->Get_Look()), -m_acceleration);
+		//m_velocity = MathHelper::Add(Get_Vel(), m_camera->Get_Look(), -m_acceleration);
 	}
 	else {
 		m_velocity = MathHelper::Add(Get_Vel(), Get_Look(), -m_acceleration);
@@ -183,7 +194,8 @@ void Object::Move_Back() {
 
 void Object::Move_Left() {
 	if (m_camera) {
-		m_velocity = MathHelper::Add(Get_Vel(), m_camera->Get_Right(), -m_acceleration);
+		m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ(m_camera->Get_Right()), -m_acceleration);
+		//m_velocity = MathHelper::Add(Get_Vel(), m_camera->Get_Right(), -m_acceleration);
 	}
 	else {
 		m_velocity = MathHelper::Add(Get_Vel(), Get_Right(), -m_acceleration);
@@ -194,7 +206,8 @@ void Object::Move_Left() {
 
 void Object::Move_Right() {
 	if (m_camera) {
-		m_velocity = MathHelper::Add(Get_Vel(), m_camera->Get_Right(), m_acceleration);
+		m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ(m_camera->Get_Right()), m_acceleration);
+		//m_velocity = MathHelper::Add(Get_Vel(), m_camera->Get_Right(), m_acceleration);
 	}
 	else {
 		m_velocity = MathHelper::Add(Get_Vel(), Get_Right(), m_acceleration);
@@ -322,7 +335,7 @@ void Object::Rotate_Pitch(float degree) {
 void Object::Rotate_Yaw(float degree) {
 	DirectX::XMStoreFloat4(&m_rotate_quat,
 		DirectX::XMQuaternionMultiply(DirectX::XMLoadFloat4(&m_rotate_quat),
-			DirectX::XMQuaternionRotationAxis(DirectX::XMLoadFloat3(&Get_Look()), degree)));
+			DirectX::XMQuaternionRotationAxis(DirectX::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f), degree)));
 
 	m_dirty = true;
 }
@@ -359,4 +372,8 @@ void Object::Draw(ID3D12GraphicsCommandList* command_list) {
 	for (auto& m : m_meshes) {
 		m.mesh_info->Draw(command_list);
 	}
+}
+
+void Object::Bind_Anim_2_State(Object_State object_state, std::wstring animation_name) {
+	m_animation_map[object_state] = animation_name;
 }

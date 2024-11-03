@@ -129,6 +129,7 @@ void Object::Update(float elapsed_time) {
 			//m_rotate = m_camera->Get_Rotate_3f();
 		}
 
+		Calc_Rotate();
 		Udt_WM();
 		Udt_LUR();
 
@@ -140,14 +141,14 @@ void Object::Update(float elapsed_time) {
 
 void Object::Udt_WM() {
 	DirectX::XMMATRIX translate_matrix = DirectX::XMMatrixTranslation(m_position.x, m_position.y, m_position.z);
-	DirectX::XMMATRIX rotate_matrix = DirectX::XMMatrixRotationQuaternion(DirectX::XMLoadFloat4(&m_rotate_quat));
+	DirectX::XMMATRIX rotate_matrix = DirectX::XMMatrixRotationQuaternion(DirectX::XMLoadFloat4(&m_rotate));
 	DirectX::XMMATRIX scale_matrix = DirectX::XMMatrixScaling(m_scale.x, m_scale.y, m_scale.z);
 
 	DirectX::XMStoreFloat4x4(&m_world_matrix, scale_matrix * rotate_matrix * translate_matrix);
 }
 
 void Object::Udt_LUR() {
-	DirectX::XMMATRIX rotate_matrix = DirectX::XMMatrixRotationQuaternion(DirectX::XMLoadFloat4(&m_rotate_quat));
+	DirectX::XMMATRIX rotate_matrix = DirectX::XMMatrixRotationQuaternion(DirectX::XMLoadFloat4(&m_rotate));
 
 	m_look = MathHelper::Normalize(MathHelper::Multiply(DirectX::XMFLOAT3(0.0f, 0.0f, 1.0f), rotate_matrix));
 	m_up = MathHelper::Normalize(MathHelper::Multiply(DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f), rotate_matrix));
@@ -317,25 +318,39 @@ void Object::Rotate(float degree_roll, float degree_pitch, float degree_yaw) {
 }
 
 void Object::Rotate_Roll(float degree) {
-	DirectX::XMStoreFloat4(&m_rotate_quat,
-		DirectX::XMQuaternionMultiply(DirectX::XMLoadFloat4(&m_rotate_quat),
-			DirectX::XMQuaternionRotationAxis(DirectX::XMLoadFloat3(&Get_Right()), degree)));
+	DirectX::XMStoreFloat4(&m_rotate_roll_pitch_yaw,
+		DirectX::XMQuaternionMultiply(DirectX::XMLoadFloat4(&m_rotate_roll_pitch_yaw),
+			DirectX::XMQuaternionRotationAxis(DirectX::XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f), degree)));
 
 	m_dirty = true;
 }
 
 void Object::Rotate_Pitch(float degree) {
-	DirectX::XMStoreFloat4(&m_rotate_quat,
-		DirectX::XMQuaternionMultiply(DirectX::XMLoadFloat4(&m_rotate_quat),
+	DirectX::XMStoreFloat4(&m_rotate_roll_pitch_yaw,
+		DirectX::XMQuaternionMultiply(DirectX::XMLoadFloat4(&m_rotate_roll_pitch_yaw),
 			DirectX::XMQuaternionRotationAxis(DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f), degree)));
 
 	m_dirty = true;
 }
 
 void Object::Rotate_Yaw(float degree) {
-	DirectX::XMStoreFloat4(&m_rotate_quat,
-		DirectX::XMQuaternionMultiply(DirectX::XMLoadFloat4(&m_rotate_quat),
+	DirectX::XMStoreFloat4(&m_rotate_roll_pitch_yaw,
+		DirectX::XMQuaternionMultiply(DirectX::XMLoadFloat4(&m_rotate_roll_pitch_yaw),
 			DirectX::XMQuaternionRotationAxis(DirectX::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f), degree)));
+
+	m_dirty = true;
+}
+
+void Object::Rotate_Right(float degree) {
+	m_rotate_right += degree;
+
+	//m_rotate_right = MathHelper::Min(RIGHT_ANGLE_RADIAN, MathHelper::Max(m_rotate_right, -RIGHT_ANGLE_RADIAN));
+
+	m_dirty = true;
+}
+
+void Object::Rotate_Look(float degree) {
+	m_rotate_look += degree;
 
 	m_dirty = true;
 }
@@ -353,16 +368,15 @@ void Object::Add_Mesh(std::vector<Mesh>& mesh_array) {
 }
 
 void Object::Set_WM(DirectX::XMMATRIX world_matrix) {
-	//world_matrix = DirectX::XMMatrixMultiply(world_matrix, DirectX::XMMatrixRotationRollPitchYaw(0.0f, 0.0f, DirectX::XMConvertToRadians(180.0f)));
-
 	DirectX::XMVECTOR translate, rotate, scale;
 
 	DirectX::XMMatrixDecompose(&scale, &rotate, &translate, world_matrix);
 
 	DirectX::XMStoreFloat3(&m_position, translate);
-	DirectX::XMStoreFloat4(&m_rotate_quat, rotate);
+	DirectX::XMStoreFloat4(&m_rotate_roll_pitch_yaw, rotate);
 	DirectX::XMStoreFloat3(&m_scale, scale);
 
+	Calc_Rotate();
 	Udt_WM();
 
 	//m_world_matrix = XMMATRIX_2_XMFLOAT4X4(world_matrix);
@@ -376,4 +390,18 @@ void Object::Draw(ID3D12GraphicsCommandList* command_list) {
 
 void Object::Bind_Anim_2_State(Object_State object_state, std::wstring animation_name) {
 	m_animation_map[object_state] = animation_name;
+}
+
+void Object::Calc_Rotate() {
+	DirectX::XMStoreFloat4(&m_rotate, DirectX::XMLoadFloat4(&m_rotate_roll_pitch_yaw));
+	Udt_LUR();
+
+	DirectX::XMStoreFloat4(&m_rotate, DirectX::XMQuaternionMultiply(
+		DirectX::XMLoadFloat4(&m_rotate),
+		DirectX::XMQuaternionRotationAxis(DirectX::XMLoadFloat3(&Get_Right()), m_rotate_right)));
+	Udt_LUR();
+
+	DirectX::XMStoreFloat4(&m_rotate, DirectX::XMQuaternionMultiply(
+		DirectX::XMLoadFloat4(&m_rotate),
+		DirectX::XMQuaternionRotationAxis(DirectX::XMLoadFloat3(&Get_Look()), m_rotate_look)));
 }

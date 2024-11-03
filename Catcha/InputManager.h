@@ -6,15 +6,16 @@ class Object;
 class ObjectManager;
 
 enum class Action {
+	ACTION_NONE,
 	MOVE_FORWARD, MOVE_BACK, MOVE_LEFT, MOVE_RIGHT, MOVE_UP, MOVE_DOWN,
 	TELEPORT_FORWARD, TELEPORT_BACK, TELEPORT_LEFT, TELEPORT_RIGHT, TELEPORT_UP, TELEPORT_DOWN,
-	ROTATE, ROTATE_ROLL, ROTATE_PITCH, ROTATE_YAW
+	ROTATE, ROTATE_ROLL, ROTATE_PITCH, ROTATE_YAW, ROTATE_RIGHT, ROTATE_LOOK
 };
 
 struct BindingInfo {
 	std::wstring object_name = L"";
-	Action action;
-	std::variant<int, float, POINTF, std::wstring> value;
+	Action action = Action::ACTION_NONE;
+	std::variant<int, float, POINTF, std::wstring> value = 1.0f;
 };
 
 class InputManager {
@@ -29,7 +30,7 @@ private:
 	std::unordered_map<int, BindingInfo> m_key_up_map;
 
 	POINT m_previous_point = { -1, -1 };
-	BindingInfo m_mouse_move_info;
+	BindingInfo m_mouse_move_info[2];	// 0 : x, 1 : y
 
 	Scene* m_scene = nullptr;
 	ObjectManager* m_object_manager = nullptr;
@@ -43,7 +44,7 @@ public:
 	void Bind_Key_First_Down(int key_id, BindingInfo binding_info);
 	void Bind_Key_Up(int key_id, BindingInfo binding_info);
 
-	void Bind_Mouse_Move(BindingInfo binding_info);
+	void Bind_Mouse_Move(BindingInfo binding_info_x, BindingInfo binding_info_y);
 
 	void Prcs_Input_Msg(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam);
 

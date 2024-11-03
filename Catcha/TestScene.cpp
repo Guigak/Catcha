@@ -388,8 +388,8 @@ void TestScene::Build_O() {
 
 void TestScene::Build_C(D3DManager* d3d_manager) {
 	auto main_camera = reinterpret_cast<Camera*>(m_object_manager->Add_Cam(L"maincamera", L"camera", L"player", 50.0f));
-	//auto main_camera = reinterpret_cast<Camera*>(m_object_manager->Add_Cam(L"maincamera", L"camera", L"player", 200.0f));
 	main_camera->Set_Frustum(0.25f * MathHelper::Pi(), d3d_manager->Get_Aspect_Ratio(), 1.0f, 2000.0f);
+	main_camera->Set_Limit_Rotate_Right(true);
 
 	m_main_camera = main_camera;
 }
@@ -549,10 +549,8 @@ void TestScene::Binding_Key() {
 	m_input_manager->Bind_Key_Down(VK_SPACE, BindingInfo(L"player", Action::TELEPORT_UP, 1.0f));
 	m_input_manager->Bind_Key_Down(VK_SHIFT, BindingInfo(L"player", Action::TELEPORT_DOWN, 1.0f));
 
-	m_input_manager->Bind_Key_Down(VK_Q, BindingInfo(L"maincamera", Action::ROTATE_PITCH, POINTF(-0.001f)));
-	m_input_manager->Bind_Key_Down(VK_E, BindingInfo(L"maincamera", Action::ROTATE_PITCH, POINTF(0.001f)));
-
-	m_input_manager->Bind_Mouse_Move(BindingInfo(L"maincamera", Action::ROTATE));
+	m_input_manager->Bind_Mouse_Move(BindingInfo(L"maincamera", Action::ROTATE_PITCH, 0.01f),
+		BindingInfo(L"maincamera", Action::ROTATE_RIGHT, 0.01f));
 }
 
 void TestScene::Pairing_Collision_Set() {

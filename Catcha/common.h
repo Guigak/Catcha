@@ -61,6 +61,8 @@ constexpr int MAX_WEIGHT_BONE_COUNT = 4;
 
 constexpr int MAX_MATERIAL_COUNT = 32;
 
+constexpr float RIGHT_ANGLE_RADIAN = DirectX::XMConvertToRadians(90.0f);
+
 // virtual key
 #define VK_NUM0 0x30
 #define VK_NUM1 0x31

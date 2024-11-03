@@ -72,21 +72,26 @@ void ObjectManager::Teleport(std::wstring object_name, Action action, float dist
     }
 }
 
-void ObjectManager::Rotate(std::wstring object_name, Action action, POINTF degree) {
+void ObjectManager::Rotate(std::wstring object_name, Action action, float degree) {
     Object* object = Get_Obj(object_name);
 
     switch (action) {
     case Action::ROTATE:
-        object->Rotate(degree.y, degree.x, 0.0f);
         break;
     case Action::ROTATE_ROLL:
-        object->Rotate_Roll(degree.x);
+        object->Rotate_Roll(degree);
         break;
     case Action::ROTATE_PITCH:
-        object->Rotate_Pitch(degree.x);
+        object->Rotate_Pitch(degree);
         break;
     case Action::ROTATE_YAW:
-        object->Rotate_Yaw(degree.x);
+        object->Rotate_Yaw(degree);
+        break;
+    case Action::ROTATE_RIGHT:
+        object->Rotate_Right(degree);
+        break;
+    case Action::ROTATE_LOOK:
+        object->Rotate_Look(degree);
         break;
     default:
         break;

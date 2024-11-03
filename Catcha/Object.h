@@ -9,7 +9,6 @@ protected:
 	std::wstring m_name = L"";
 
 	DirectX::XMFLOAT3 m_position = { 0.0f, 0.0f, 0.0f };
-	DirectX::XMFLOAT3 m_rotate = { 0.0f, 0.0f, 0.0f };
 	DirectX::XMFLOAT3 m_scale = { 0.0f, 0.0f, 0.0f };
 
 	DirectX::XMFLOAT3 m_look = { 0.0f, 0.0f, 1.0f };
@@ -69,7 +68,10 @@ protected:
 	std::vector<Mesh> m_meshes;
 	Skeleton_Info* m_skeleton_info = nullptr;
 
-	DirectX::XMFLOAT4 m_rotate_quat = { 0.0f, 0.0f, 0.0f, 1.0f };
+	float m_rotate_right = 0.0f;
+	float m_rotate_look = 0.0f;
+	DirectX::XMFLOAT4 m_rotate_roll_pitch_yaw = { 0.0f, 0.0f, 0.0f, 1.0f };
+	DirectX::XMFLOAT4 m_rotate = { 0.0f, 0.0f, 0.0f, 1.0f };
 
 	//
 	bool m_animated = false;
@@ -107,8 +109,8 @@ public:
 	DirectX::XMVECTOR Get_Position_V() { return DirectX::XMLoadFloat3(&m_position); }	// Get Position Vector
 	DirectX::XMFLOAT3 Get_Position_3f() { return m_position; }	// Get Position float3
 
-	DirectX::XMVECTOR Get_Rotate_V() { return DirectX::XMLoadFloat3(&m_rotate); }	// Get Rotate Vector
-	DirectX::XMFLOAT3 Get_Rotate_3f() { return m_rotate; }	// Get Rotate float3
+	DirectX::XMVECTOR Get_Rotate_V() { return DirectX::XMLoadFloat4(&m_rotate); }	// Get Rotate Vector
+	DirectX::XMFLOAT4 Get_Rotate_4f() { return m_rotate; }	// Get Rotate float3
 
 	DirectX::XMVECTOR Get_Scale_V() { return DirectX::XMLoadFloat3(&m_scale); }	// Get Scale Vector
 	DirectX::XMFLOAT3 Get_Scale_3f() { return m_scale; }	// Get Scale float3
@@ -177,6 +179,9 @@ public:
 	void Rotate_Pitch(float degree);
 	void Rotate_Yaw(float degree);
 
+	void Rotate_Right(float degree);
+	void Rotate_Look(float degree);
+
 	//
 	void Bind_Camera(Camera* camera);
 
@@ -205,5 +210,8 @@ public:
 
 	//
 	void Bind_Anim_2_State(Object_State object_state, std::wstring animation_name);
+
+	//
+	void Calc_Rotate();
 };
 

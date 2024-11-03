@@ -53,7 +53,7 @@ public:
 	//
 	void Move(std::wstring object_name, Action action);
 	void Teleport(std::wstring object_name, Action action, float distance);
-	void Rotate(std::wstring object_name, Action action, POINTF degree);
+	void Rotate(std::wstring object_name, Action action, float degree);
 
 	void Update(float elapsed_time);
 	

@@ -4,12 +4,6 @@
 
 class Camera : public Object {
 private:
-	//DirectX::XMFLOAT3 m_position = { 0.0f, 0.0f, 0.0f };
-
-	//DirectX::XMFLOAT3 m_look = { 0.0f, 0.0f, 1.0f };
-	//DirectX::XMFLOAT3 m_up = { 0.0f, 1.0f, 0.0f };
-	//DirectX::XMFLOAT3 m_right = { 1.0f, 0.0f, 0.0f };
-
 	float m_near_z = 0.0f;
 	float m_far_z = 0.0f;
 
@@ -19,32 +13,24 @@ private:
 	float m_near_window_height = 0.0f;
 	float m_far_window_height = 0.0f;
 
-	//float m_dirty = true;
-
 	DirectX::XMFLOAT4X4 m_view_matrix = MathHelper::Identity_4x4();
 	DirectX::XMFLOAT4X4 m_projection_matrix = MathHelper::Identity_4x4();
 
 	Object* m_object = nullptr;
 	float m_distance = 0.0f;
 
+	//
+	bool m_limit_rotate_right = false;
+	float m_limit_min_right = 0.0f;
+	float m_limit_max_right = 0.0f;
+
+	bool m_limit_rotate_look = false;
+	float m_limit_min_look = 0.0f;
+	float m_limit_max_look = 0.0f;
+
 public:
 	Camera();
 	~Camera() {}
-
-	//void Set_Position(float position_x, float position_y, float position_z);
-	//void Set_Position(DirectX::XMFLOAT3 position_vector);
-
-	//DirectX::XMVECTOR Get_Position_V() { return DirectX::XMLoadFloat3(&m_position); }	// Get Position Vector
-	//DirectX::XMFLOAT3 Get_Position_3f() { return m_position; }	// Get Position float3
-
-	//DirectX::XMVECTOR Get_Look_V() { return DirectX::XMLoadFloat3(&m_look); }
-	//DirectX::XMFLOAT3 Get_Look_3f() { return m_look; }
-
-	//DirectX::XMVECTOR Get_Up_V() { return DirectX::XMLoadFloat3(&m_up); }
-	//DirectX::XMFLOAT3 Get_Up_3f() { return m_up; }
-
-	//DirectX::XMVECTOR Get_Right_V() { return DirectX::XMLoadFloat3(&m_right); }
-	//DirectX::XMFLOAT3 Get_Right_3f() { return m_right; }
 
 	float Get_Near_Z() { return m_near_z; }
 	float Get_Far_Z() { return m_far_z; }
@@ -75,4 +61,8 @@ public:
 
 	//
 	void Bind_Obj(Object* object, float distance);
+
+	//
+	void Set_Limit_Rotate_Right(bool limit_rotate, float degree_min = -RIGHT_ANGLE_RADIAN, float degree_max = RIGHT_ANGLE_RADIAN);
+	void Set_Limit_Rotate_Look(bool limit_rotate, float degree_min = -RIGHT_ANGLE_RADIAN, float degree_max = RIGHT_ANGLE_RADIAN);
 };

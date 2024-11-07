@@ -51,7 +51,7 @@ public:
 	UINT Get_Obj_Count() { return m_object_count; }
 
 	//
-	void Move(std::wstring object_name, Action action, bool only_XZ);
+	void Move(std::wstring object_name, Action action, BYTE flag);
 	void Teleport(std::wstring object_name, Action action, float distance);
 	void Rotate(std::wstring object_name, Action action, float degree);
 
@@ -68,7 +68,7 @@ public:
 	bool Overlaped(DirectX::XMVECTOR corners_a[], DirectX::XMVECTOR corners_b[], const DirectX::XMVECTOR& axis, float& overlap);
 
 	//
-	void Bind_Cam_2_Obj(std::wstring camera_name, std::wstring object_name, float distance);	// Bind Camera to Object
+	void Bind_Cam_2_Obj(std::wstring camera_name, std::wstring object_name, float distance, BYTE flag = ROTATE_SYNC_NONE);	// Bind Camera to Object
 
 	//
 	MeshManager& Get_Mesh_Manager() { return m_mesh_manager; }
@@ -93,6 +93,6 @@ public:
 	void Set_Sklt_2_Obj(std::wstring object_name, std::wstring skeleton_name);
 
 	//
-	Object* Add_Cam(std::wstring camera_name, std::wstring set_name = L"camera", std::wstring bind_object_name = L"", float distance = 0.0f);
+	Object* Add_Cam(std::wstring camera_name, std::wstring set_name = L"camera", std::wstring bind_object_name = L"", float distance = 0.0f, BYTE flag = ROTATE_SYNC_NONE);
 };
 

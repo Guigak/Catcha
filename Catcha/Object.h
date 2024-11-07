@@ -62,6 +62,9 @@ protected:
 	bool m_visiable = false;
 
 	//
+	BYTE m_camera_rotate_synchronization_flag = ROTATE_SYNC_NONE;
+
+	//
 	DirectX::BoundingOrientedBox m_OBB;
 
 	//
@@ -111,6 +114,11 @@ public:
 
 	DirectX::XMVECTOR Get_Rotate_V() { return DirectX::XMLoadFloat4(&m_rotate); }	// Get Rotate Vector
 	DirectX::XMFLOAT4 Get_Rotate_4f() { return m_rotate; }	// Get Rotate float3
+	DirectX::XMVECTOR Get_Rotate_RPY_V() { return DirectX::XMLoadFloat4(&m_rotate_roll_pitch_yaw); }
+	DirectX::XMFLOAT4 Get_Rotate_RPY_4f() { return m_rotate_roll_pitch_yaw; }
+
+	float Get_Rotate_Right() { return m_rotate_right; }
+	float Get_Rotate_Look() { return m_rotate_look; }
 
 	DirectX::XMVECTOR Get_Scale_V() { return DirectX::XMLoadFloat3(&m_scale); }	// Get Scale Vector
 	DirectX::XMFLOAT3 Get_Scale_3f() { return m_scale; }	// Get Scale float3
@@ -155,12 +163,12 @@ public:
 	// move
 	void Move(DirectX::XMFLOAT3 direction);
 
-	void Move_Forward(bool only_XZ);
-	void Move_Back(bool only_XZ);
-	void Move_Left(bool only_XZ);
-	void Move_Right(bool only_XZ);
-	void Move_Up(bool only_XZ);
-	void Move_Down(bool only_XZ);
+	void Move_Forward(BYTE flag);
+	void Move_Back(BYTE flag);
+	void Move_Left(BYTE flag);
+	void Move_Right(BYTE flag);
+	void Move_Up(BYTE flag);
+	void Move_Down(BYTE flag);
 
 	// teleport
 	void Teleport(DirectX::XMFLOAT3 direction, float distance);
@@ -213,5 +221,8 @@ public:
 
 	//
 	void Calc_Rotate();
+
+	//
+	void Set_Cam_Rotate_Flag(BYTE flag) { m_camera_rotate_synchronization_flag = flag; }
 };
 

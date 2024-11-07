@@ -15,7 +15,7 @@ enum class Action {
 struct BindingInfo {
 	std::wstring object_name = L"";
 	Action action = Action::ACTION_NONE;
-	std::variant<bool, int, float, std::wstring> value = 1.0f;
+	std::variant<BYTE, int, float, std::wstring> value = 1.0f;
 };
 
 class InputManager {

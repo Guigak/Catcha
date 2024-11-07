@@ -126,7 +126,20 @@ void Object::Update(float elapsed_time) {
 
 	if (m_dirty) {
 		if (m_camera) {
-			//m_rotate = m_camera->Get_Rotate_3f();
+			switch (m_camera_rotate_synchronization_flag) {
+			case ROTATE_SYNC_NONE:
+				break;
+			case ROTATE_SYNC_ALL:
+				m_rotate_roll_pitch_yaw = m_camera->Get_Rotate_RPY_4f();
+				m_rotate_right = m_camera->Get_Rotate_Right();
+				m_rotate_look = m_camera->Get_Rotate_Look();
+				break;
+			case ROTATE_SYNC_RPY:
+				m_rotate_roll_pitch_yaw = m_camera->Get_Rotate_RPY_4f();
+				break;
+			default:
+				break;
+			}
 		}
 
 		Calc_Rotate();
@@ -169,126 +182,174 @@ void Object::Move(DirectX::XMFLOAT3 direction) {
 	m_moving = true;
 }
 
-void Object::Move_Forward(bool only_XZ) {
+void Object::Move_Forward(BYTE flag) {
 	if (m_camera) {
-		if (only_XZ) {
-			m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ(m_camera->Get_Look()), m_acceleration);
-		}
-		else {
+		switch (flag) {
+		case MOVE_ALL_AXIS:
 			m_velocity = MathHelper::Add(Get_Vel(), m_camera->Get_Look(), m_acceleration);
+			break;
+		case MOVE_ONLY_XZ:
+			m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ_Norm(m_camera->Get_Look()), m_acceleration);
+			break;
+		default:
+			break;
 		}
 	}
 	else {
-		if (only_XZ) {
-			m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ(Get_Look()), m_acceleration);
-		}
-		else {
+		switch (flag) {
+		case MOVE_ALL_AXIS:
 			m_velocity = MathHelper::Add(Get_Vel(), Get_Look(), m_acceleration);
+			break;
+		case MOVE_ONLY_XZ:
+			m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ_Norm(Get_Look()), m_acceleration);
+			break;
+		default:
+			break;
 		}
 	}
 
 	m_moving = true;
 }
 
-void Object::Move_Back(bool only_XZ) {
+void Object::Move_Back(BYTE flag) {
 	if (m_camera) {
-		if (only_XZ) {
-			m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ(m_camera->Get_Look()), -m_acceleration);
-		}
-		else {
+		switch (flag) {
+		case MOVE_ALL_AXIS:
 			m_velocity = MathHelper::Add(Get_Vel(), m_camera->Get_Look(), -m_acceleration);
+			break;
+		case MOVE_ONLY_XZ:
+			m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ_Norm(m_camera->Get_Look()), -m_acceleration);
+			break;
+		default:
+			break;
 		}
 	}
 	else {
-		if (only_XZ) {
-			m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ(Get_Look()), -m_acceleration);
-		}
-		else {
+		switch (flag) {
+		case MOVE_ALL_AXIS:
 			m_velocity = MathHelper::Add(Get_Vel(), Get_Look(), -m_acceleration);
+			break;
+		case MOVE_ONLY_XZ:
+			m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ_Norm(Get_Look()), -m_acceleration);
+			break;
+		default:
+			break;
 		}
 	}
 
 	m_moving = true;
 }
 
-void Object::Move_Left(bool only_XZ) {
+void Object::Move_Left(BYTE flag) {
 	if (m_camera) {
-		if (only_XZ) {
-			m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ(m_camera->Get_Right()), -m_acceleration);
-		}
-		else {
+		switch (flag) {
+		case MOVE_ALL_AXIS:
 			m_velocity = MathHelper::Add(Get_Vel(), m_camera->Get_Right(), -m_acceleration);
+			break;
+		case MOVE_ONLY_XZ:
+			m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ_Norm(m_camera->Get_Right()), -m_acceleration);
+			break;
+		default:
+			break;
 		}
 	}
 	else {
-		if (only_XZ) {
-			m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ(Get_Right()), -m_acceleration);
-		}
-		else {
+		switch (flag) {
+		case MOVE_ALL_AXIS:
 			m_velocity = MathHelper::Add(Get_Vel(), Get_Right(), -m_acceleration);
+			break;
+		case MOVE_ONLY_XZ:
+			m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ_Norm(Get_Right()), -m_acceleration);
+			break;
+		default:
+			break;
 		}
 	}
 
 	m_moving = true;
 }
 
-void Object::Move_Right(bool only_XZ) {
+void Object::Move_Right(BYTE flag) {
 	if (m_camera) {
-		if (only_XZ) {
-			m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ(m_camera->Get_Right()), m_acceleration);
-		}
-		else {
+		switch (flag) {
+		case MOVE_ALL_AXIS:
 			m_velocity = MathHelper::Add(Get_Vel(), m_camera->Get_Right(), m_acceleration);
+			break;
+		case MOVE_ONLY_XZ:
+			m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ_Norm(m_camera->Get_Right()), m_acceleration);
+			break;
+		default:
+			break;
 		}
 	}
 	else {
-		if (only_XZ) {
-			m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ(Get_Right()), m_acceleration);
-		}
-		else {
+		switch (flag) {
+		case MOVE_ALL_AXIS:
 			m_velocity = MathHelper::Add(Get_Vel(), Get_Right(), m_acceleration);
+			break;
+		case MOVE_ONLY_XZ:
+			m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ_Norm(Get_Right()), m_acceleration);
+			break;
+		default:
+			break;
 		}
 	}
 
 	m_moving = true;
 }
 
-void Object::Move_Up(bool only_XZ) {
+void Object::Move_Up(BYTE flag) {
 	if (m_camera) {
-		if (only_XZ) {
-			m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ(m_camera->Get_Up()), m_acceleration);
-		}
-		else {
+		switch (flag) {
+		case MOVE_ALL_AXIS:
 			m_velocity = MathHelper::Add(Get_Vel(), m_camera->Get_Up(), m_acceleration);
+			break;
+		case MOVE_ONLY_XZ:
+			m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ_Norm(m_camera->Get_Up()), m_acceleration);
+			break;
+		default:
+			break;
 		}
 	}
 	else {
-		if (only_XZ) {
-			m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ(Get_Up()), m_acceleration);
-		}
-		else {
+		switch (flag) {
+		case MOVE_ALL_AXIS:
 			m_velocity = MathHelper::Add(Get_Vel(), Get_Up(), m_acceleration);
+			break;
+		case MOVE_ONLY_XZ:
+			m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ_Norm(Get_Up()), m_acceleration);
+			break;
+		default:
+			break;
 		}
 	}
 
 	m_moving = true;
 }
 
-void Object::Move_Down(bool only_XZ) {
+void Object::Move_Down(BYTE flag) {
 	if (m_camera) {
-		if (only_XZ) {
-			m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ(m_camera->Get_Up()), -m_acceleration);
-		}
-		else {
+		switch (flag) {
+		case MOVE_ALL_AXIS:
 			m_velocity = MathHelper::Add(Get_Vel(), m_camera->Get_Up(), -m_acceleration);
+			break;
+		case MOVE_ONLY_XZ:
+			m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ_Norm(m_camera->Get_Up()), -m_acceleration);
+			break;
+		default:
+			break;
 		}
 	}
 	else {
-		if (only_XZ) {
-			m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ(Get_Up()), -m_acceleration);
-		}
-		else {
+		switch (flag) {
+		case MOVE_ALL_AXIS:
 			m_velocity = MathHelper::Add(Get_Vel(), Get_Up(), -m_acceleration);
+			break;
+		case MOVE_ONLY_XZ:
+			m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ_Norm(Get_Up()), -m_acceleration);
+			break;
+		default:
+			break;
 		}
 	}
 

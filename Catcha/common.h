@@ -63,8 +63,12 @@ constexpr int MAX_MATERIAL_COUNT = 32;
 
 constexpr float RIGHT_ANGLE_RADIAN = DirectX::XMConvertToRadians(90.0f);
 
-constexpr bool MOVE_XYZ = false;
-constexpr bool MOVE_ONLY_XZ = true;
+constexpr BYTE MOVE_ALL_AXIS = 0b00;
+constexpr BYTE MOVE_ONLY_XZ = 0b01;
+
+constexpr BYTE ROTATE_SYNC_NONE = 0b00;
+constexpr BYTE ROTATE_SYNC_ALL = 0b01;
+constexpr BYTE ROTATE_SYNC_RPY = 0b10;	// ROTATE_ROLL_PITCH_YAW
 
 // virtual key
 #define VK_NUM0 0x30
@@ -258,6 +262,13 @@ struct MathHelper {
 
 	static DirectX::XMFLOAT3 Get_XZ(const DirectX::XMFLOAT3& xmfloat3) {
 		DirectX::XMFLOAT3 result = DirectX::XMFLOAT3(xmfloat3.x, 0.0f, xmfloat3.z);
+
+		return result;
+	}
+
+	static DirectX::XMFLOAT3 Get_XZ_Norm(const DirectX::XMFLOAT3& xmfloat3) {
+		DirectX::XMFLOAT3 result;
+		DirectX::XMStoreFloat3(&result, DirectX::XMVector3Normalize(DirectX::XMLoadFloat3(&Get_XZ(xmfloat3))));
 
 		return result;
 	}

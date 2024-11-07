@@ -18,27 +18,27 @@ Object* ObjectManager::Get_Transparent_Obj(UINT object_number) {
     return m_transparent_objects[object_number];
 }
 
-void ObjectManager::Move(std::wstring object_name, Action action, bool only_XZ) {
+void ObjectManager::Move(std::wstring object_name, Action action, BYTE flag) {
     Object* object = Get_Obj(object_name);
 
     switch (action) {
     case Action::MOVE_FORWARD:
-        object->Move_Forward(only_XZ);
+        object->Move_Forward(flag);
         break;
     case Action::MOVE_BACK:
-        object->Move_Back(only_XZ);
+        object->Move_Back(flag);
         break;
     case Action::MOVE_LEFT:
-        object->Move_Left(only_XZ);
+        object->Move_Left(flag);
         break;
     case Action::MOVE_RIGHT:
-        object->Move_Right(only_XZ);
+        object->Move_Right(flag);
         break;
     case Action::MOVE_UP:
-        object->Move_Up(only_XZ);
+        object->Move_Up(flag);
         break;
     case Action::MOVE_DOWN:
-        object->Move_Down(only_XZ);
+        object->Move_Down(flag);
         break;
     default:
         break;
@@ -137,12 +137,14 @@ bool ObjectManager::Overlaped(DirectX::XMVECTOR corners_a[], DirectX::XMVECTOR c
     return false;
 }
 
-void ObjectManager::Bind_Cam_2_Obj(std::wstring camera_name, std::wstring object_name, float distance) {
+void ObjectManager::Bind_Cam_2_Obj(std::wstring camera_name, std::wstring object_name, float distance, BYTE flag) {
     Camera* camera = (Camera*)Get_Obj(camera_name);
     Object* object = Get_Obj(object_name);
 
     object->Bind_Camera(camera);
     camera->Bind_Obj(object, distance);
+
+    object->Set_Cam_Rotate_Flag(flag);
 }
 
 void ObjectManager::Ipt_From_FBX(std::wstring file_name, bool merge_mesh, bool add_object, bool merge_object, BYTE info_flag, std::wstring skeleton_name) {
@@ -199,7 +201,7 @@ void ObjectManager::Set_Sklt_2_Obj(std::wstring object_name, std::wstring skelet
     Get_Obj(object_name)->Set_Skeleton(m_skeleton_manager.Get_Skeleton(skeleton_name));
 }
 
-Object* ObjectManager::Add_Cam(std::wstring camera_name, std::wstring set_name, std::wstring bind_object_name, float distance) {
+Object* ObjectManager::Add_Cam(std::wstring camera_name, std::wstring set_name, std::wstring bind_object_name, float distance, BYTE flag) {
     std::unique_ptr<Object> object;
     object = std::make_unique<Camera>();
 
@@ -212,7 +214,7 @@ Object* ObjectManager::Add_Cam(std::wstring camera_name, std::wstring set_name, 
     m_object_set_map[set_name].emplace_back(object_pointer);
 
     if (bind_object_name != L"") {
-        Bind_Cam_2_Obj(camera_name, bind_object_name, distance);
+        Bind_Cam_2_Obj(camera_name, bind_object_name, distance, flag);
     }
 
     return object_pointer;

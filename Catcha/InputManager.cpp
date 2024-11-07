@@ -109,7 +109,7 @@ void InputManager::Prcs_Binding_Info(BindingInfo binding_info) {
 		case Action::MOVE_RIGHT:
 		case Action::MOVE_UP:
 		case Action::MOVE_DOWN:
-			m_object_manager->Move(binding_info.object_name, binding_info.action);
+			m_object_manager->Move(binding_info.object_name, binding_info.action, std::get<bool>(binding_info.value));
 			break;
 		case Action::TELEPORT_FORWARD:
 		case Action::TELEPORT_BACK:

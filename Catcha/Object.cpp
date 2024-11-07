@@ -169,71 +169,127 @@ void Object::Move(DirectX::XMFLOAT3 direction) {
 	m_moving = true;
 }
 
-void Object::Move_Forward() {
+void Object::Move_Forward(bool only_XZ) {
 	if (m_camera) {
-		//m_velocity = MathHelper::Add(Get_Vel(), m_camera->Get_Look(), m_acceleration);
-		m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ(m_camera->Get_Look()), m_acceleration);
+		if (only_XZ) {
+			m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ(m_camera->Get_Look()), m_acceleration);
+		}
+		else {
+			m_velocity = MathHelper::Add(Get_Vel(), m_camera->Get_Look(), m_acceleration);
+		}
 	}
 	else {
-		m_velocity = MathHelper::Add(Get_Vel(), Get_Look(), m_acceleration);
+		if (only_XZ) {
+			m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ(Get_Look()), m_acceleration);
+		}
+		else {
+			m_velocity = MathHelper::Add(Get_Vel(), Get_Look(), m_acceleration);
+		}
 	}
 
 	m_moving = true;
 }
 
-void Object::Move_Back() {
+void Object::Move_Back(bool only_XZ) {
 	if (m_camera) {
-		m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ(m_camera->Get_Look()), -m_acceleration);
-		//m_velocity = MathHelper::Add(Get_Vel(), m_camera->Get_Look(), -m_acceleration);
+		if (only_XZ) {
+			m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ(m_camera->Get_Look()), -m_acceleration);
+		}
+		else {
+			m_velocity = MathHelper::Add(Get_Vel(), m_camera->Get_Look(), -m_acceleration);
+		}
 	}
 	else {
-		m_velocity = MathHelper::Add(Get_Vel(), Get_Look(), -m_acceleration);
+		if (only_XZ) {
+			m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ(Get_Look()), -m_acceleration);
+		}
+		else {
+			m_velocity = MathHelper::Add(Get_Vel(), Get_Look(), -m_acceleration);
+		}
 	}
 
 	m_moving = true;
 }
 
-void Object::Move_Left() {
+void Object::Move_Left(bool only_XZ) {
 	if (m_camera) {
-		m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ(m_camera->Get_Right()), -m_acceleration);
-		//m_velocity = MathHelper::Add(Get_Vel(), m_camera->Get_Right(), -m_acceleration);
+		if (only_XZ) {
+			m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ(m_camera->Get_Right()), -m_acceleration);
+		}
+		else {
+			m_velocity = MathHelper::Add(Get_Vel(), m_camera->Get_Right(), -m_acceleration);
+		}
 	}
 	else {
-		m_velocity = MathHelper::Add(Get_Vel(), Get_Right(), -m_acceleration);
+		if (only_XZ) {
+			m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ(Get_Right()), -m_acceleration);
+		}
+		else {
+			m_velocity = MathHelper::Add(Get_Vel(), Get_Right(), -m_acceleration);
+		}
 	}
 
 	m_moving = true;
 }
 
-void Object::Move_Right() {
+void Object::Move_Right(bool only_XZ) {
 	if (m_camera) {
-		m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ(m_camera->Get_Right()), m_acceleration);
-		//m_velocity = MathHelper::Add(Get_Vel(), m_camera->Get_Right(), m_acceleration);
+		if (only_XZ) {
+			m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ(m_camera->Get_Right()), m_acceleration);
+		}
+		else {
+			m_velocity = MathHelper::Add(Get_Vel(), m_camera->Get_Right(), m_acceleration);
+		}
 	}
 	else {
-		m_velocity = MathHelper::Add(Get_Vel(), Get_Right(), m_acceleration);
+		if (only_XZ) {
+			m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ(Get_Right()), m_acceleration);
+		}
+		else {
+			m_velocity = MathHelper::Add(Get_Vel(), Get_Right(), m_acceleration);
+		}
 	}
 
 	m_moving = true;
 }
 
-void Object::Move_Up() {
+void Object::Move_Up(bool only_XZ) {
 	if (m_camera) {
-		m_velocity = MathHelper::Add(Get_Vel(), m_camera->Get_Up(), m_acceleration);
+		if (only_XZ) {
+			m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ(m_camera->Get_Up()), m_acceleration);
+		}
+		else {
+			m_velocity = MathHelper::Add(Get_Vel(), m_camera->Get_Up(), m_acceleration);
+		}
 	}
 	else {
-		m_velocity = MathHelper::Add(Get_Vel(), Get_Up(), m_acceleration);
+		if (only_XZ) {
+			m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ(Get_Up()), m_acceleration);
+		}
+		else {
+			m_velocity = MathHelper::Add(Get_Vel(), Get_Up(), m_acceleration);
+		}
 	}
 
 	m_moving = true;
 }
 
-void Object::Move_Down() {
+void Object::Move_Down(bool only_XZ) {
 	if (m_camera) {
-		m_velocity = MathHelper::Add(Get_Vel(), m_camera->Get_Up(), -m_acceleration);
+		if (only_XZ) {
+			m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ(m_camera->Get_Up()), -m_acceleration);
+		}
+		else {
+			m_velocity = MathHelper::Add(Get_Vel(), m_camera->Get_Up(), -m_acceleration);
+		}
 	}
 	else {
-		m_velocity = MathHelper::Add(Get_Vel(), Get_Up(), -m_acceleration);
+		if (only_XZ) {
+			m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ(Get_Up()), -m_acceleration);
+		}
+		else {
+			m_velocity = MathHelper::Add(Get_Vel(), Get_Up(), -m_acceleration);
+		}
 	}
 
 	m_moving = true;

@@ -542,10 +542,10 @@ void TestScene::Build_PSO(D3DManager* d3d_manager) {
 
 void TestScene::Binding_Key() {
 
-	m_input_manager->Bind_Key_Down(VK_W, BindingInfo(L"player", Action::MOVE_FORWARD, 1.0f));
-	m_input_manager->Bind_Key_Down(VK_S, BindingInfo(L"player", Action::MOVE_BACK, 1.0f));
-	m_input_manager->Bind_Key_Down(VK_A, BindingInfo(L"player", Action::MOVE_LEFT, 1.0f));
-	m_input_manager->Bind_Key_Down(VK_D, BindingInfo(L"player", Action::MOVE_RIGHT, 1.0f));
+	m_input_manager->Bind_Key_Down(VK_W, BindingInfo(L"player", Action::MOVE_FORWARD, MOVE_ONLY_XZ));
+	m_input_manager->Bind_Key_Down(VK_S, BindingInfo(L"player", Action::MOVE_BACK, MOVE_ONLY_XZ));
+	m_input_manager->Bind_Key_Down(VK_A, BindingInfo(L"player", Action::MOVE_LEFT, MOVE_ONLY_XZ));
+	m_input_manager->Bind_Key_Down(VK_D, BindingInfo(L"player", Action::MOVE_RIGHT, MOVE_ONLY_XZ));
 	m_input_manager->Bind_Key_Down(VK_SPACE, BindingInfo(L"player", Action::TELEPORT_UP, 1.0f));
 	m_input_manager->Bind_Key_Down(VK_SHIFT, BindingInfo(L"player", Action::TELEPORT_DOWN, 1.0f));
 

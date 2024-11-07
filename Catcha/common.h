@@ -63,6 +63,9 @@ constexpr int MAX_MATERIAL_COUNT = 32;
 
 constexpr float RIGHT_ANGLE_RADIAN = DirectX::XMConvertToRadians(90.0f);
 
+constexpr bool MOVE_XYZ = false;
+constexpr bool MOVE_ONLY_XZ = true;
+
 // virtual key
 #define VK_NUM0 0x30
 #define VK_NUM1 0x31

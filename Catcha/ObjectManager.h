@@ -51,7 +51,7 @@ public:
 	UINT Get_Obj_Count() { return m_object_count; }
 
 	//
-	void Move(std::wstring object_name, Action action);
+	void Move(std::wstring object_name, Action action, bool only_XZ);
 	void Teleport(std::wstring object_name, Action action, float distance);
 	void Rotate(std::wstring object_name, Action action, float degree);
 

@@ -18,27 +18,27 @@ Object* ObjectManager::Get_Transparent_Obj(UINT object_number) {
     return m_transparent_objects[object_number];
 }
 
-void ObjectManager::Move(std::wstring object_name, Action action) {
+void ObjectManager::Move(std::wstring object_name, Action action, bool only_XZ) {
     Object* object = Get_Obj(object_name);
 
     switch (action) {
     case Action::MOVE_FORWARD:
-        object->Move_Forward();
+        object->Move_Forward(only_XZ);
         break;
     case Action::MOVE_BACK:
-        object->Move_Back();
+        object->Move_Back(only_XZ);
         break;
     case Action::MOVE_LEFT:
-        object->Move_Left();
+        object->Move_Left(only_XZ);
         break;
     case Action::MOVE_RIGHT:
-        object->Move_Right();
+        object->Move_Right(only_XZ);
         break;
     case Action::MOVE_UP:
-        object->Move_Up();
+        object->Move_Up(only_XZ);
         break;
     case Action::MOVE_DOWN:
-        object->Move_Down();
+        object->Move_Down(only_XZ);
         break;
     default:
         break;

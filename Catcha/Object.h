@@ -155,12 +155,12 @@ public:
 	// move
 	void Move(DirectX::XMFLOAT3 direction);
 
-	void Move_Forward();
-	void Move_Back();
-	void Move_Left();
-	void Move_Right();
-	void Move_Up();
-	void Move_Down();
+	void Move_Forward(bool only_XZ);
+	void Move_Back(bool only_XZ);
+	void Move_Left(bool only_XZ);
+	void Move_Right(bool only_XZ);
+	void Move_Up(bool only_XZ);
+	void Move_Down(bool only_XZ);
 
 	// teleport
 	void Teleport(DirectX::XMFLOAT3 direction, float distance);

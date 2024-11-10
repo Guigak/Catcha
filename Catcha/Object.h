@@ -54,7 +54,8 @@ protected:
 	//
 	bool m_moving = false;
 
-	Object_State m_state = Object_State::IDLE_STATE;
+	Object_State m_state = Object_State::STATE_IDLE;
+	Object_State m_next_state = Object_State::STATE_IDLE;
 
 	//
 	Camera* m_camera = nullptr;
@@ -79,11 +80,10 @@ protected:
 	//
 	bool m_animated = false;
 	float m_animated_time = 0.0f;
+	std::array<Transform_Info, MAX_BONE_COUNT> m_blending_source_transform_info_array;
 	std::array<DirectX::XMFLOAT4X4, MAX_BONE_COUNT> m_animation_matrix_array;
-	std::wstring m_playing_animation_name = L"";
-	std::wstring m_next_animation_name = L"";
 
-	std::unordered_map<Object_State, std::wstring> m_animation_map;
+	std::unordered_map<Object_State, Animation_Binding_Info> m_animation_binding_map;
 
 	//
 	ObjectManager* m_object_manager = nullptr;
@@ -209,15 +209,10 @@ public:
 	void Set_Animated(bool animated) { m_animated = animated; }
 	bool Get_Animated() { return m_animated; }
 
-	void Set_Animation(std::wstring animation_name) {
-		m_playing_animation_name = animation_name;
-		m_animated_time = 0.0f;
-	}
-
 	std::array<DirectX::XMFLOAT4X4, MAX_BONE_COUNT>& Get_Animation_Matrix() { return m_animation_matrix_array; }
 
 	//
-	void Bind_Anim_2_State(Object_State object_state, std::wstring animation_name);
+	void Bind_Anim_2_State(Object_State object_state, Animation_Binding_Info animation_binding_info);
 
 	//
 	void Calc_Rotate();

@@ -116,7 +116,9 @@ constexpr BYTE ROTATE_SYNC_RPY = 0b10;	// ROTATE_ROLL_PITCH_YAW
 
 // enum class
 enum class Object_State {
-	IDLE_STATE, MOVE_STATE, JUMP_STATE
+	STATE_IDLE, STATE_MOVE,
+	STATE_JUMP_START, STATE_JUMP_IDLE, STATE_JUMP_END,
+	STATE_ACTION_ONE, STATE_ACTION_TWO, STATE_ACTION_THREE
 };
 
 // struct
@@ -1790,10 +1792,27 @@ struct Skeleton_Info {
 };
 
 struct Transform_Info {
-	DirectX::XMFLOAT3 trenslate = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
+	DirectX::XMFLOAT3 translate = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
 	DirectX::XMFLOAT4 rotate = DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
 	DirectX::XMFLOAT3 scale = DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f);
 };
+
+inline Transform_Info Interp_Trans_Info(const Transform_Info& transform_info_a, const Transform_Info& transform_info_b, float interpolation_factor) {
+	DirectX::XMVECTOR translate_a = DirectX::XMLoadFloat3(&transform_info_a.translate);
+	DirectX::XMVECTOR rotate_a = DirectX::XMLoadFloat4(&transform_info_a.rotate);
+	DirectX::XMVECTOR scale_a = DirectX::XMLoadFloat3(&transform_info_a.scale);
+
+	DirectX::XMVECTOR translate_b = DirectX::XMLoadFloat3(&transform_info_b.translate);
+	DirectX::XMVECTOR rotate_b = DirectX::XMLoadFloat4(&transform_info_b.rotate);
+	DirectX::XMVECTOR scale_b = DirectX::XMLoadFloat3(&transform_info_b.scale);
+
+	Transform_Info result;
+	DirectX::XMStoreFloat3(&result.translate, DirectX::XMVectorLerp(translate_a, translate_b, interpolation_factor));
+	DirectX::XMStoreFloat4(&result.rotate, DirectX::XMQuaternionSlerp(rotate_a, rotate_b, interpolation_factor));
+	DirectX::XMStoreFloat3(&result.scale, DirectX::XMVectorLerp(scale_a, scale_b, interpolation_factor));
+
+	return result;
+}
 
 struct Keyframe_Info {
 	float time;
@@ -1816,8 +1835,20 @@ struct Animation_Info {
 	}
 
 	float Get_Upper_Keyframe_Time(float time) {
-		float keyframe_time = std::fmod(time, animation_time);
+		//float keyframe_time = std::fmod(time, animation_time);
+		auto keyframe = keyframe_map.lower_bound(time);
 
-		return keyframe_map.lower_bound(keyframe_time)->first;
+		if (keyframe == keyframe_map.end()) {
+			--keyframe;
+		}
+
+		return keyframe->first;
 	 }
+};
+
+struct Animation_Binding_Info {
+	std::wstring binded_animation_name = L"";
+	float blending_time = 0.0f;
+	bool loop = false;
+	Object_State next_object_state = Object_State::STATE_IDLE;
 };

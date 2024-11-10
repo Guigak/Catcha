@@ -57,7 +57,7 @@ void Object::Calc_Delta(float elapsed_time) {
 		m_delta_position = MathHelper::Add(m_delta_position, delta);
 
 		// Calc deceleration
-		if (m_moving == false && (m_state == Object_State::IDLE_STATE || m_state == Object_State::MOVE_STATE)) {
+		if (m_moving == false && (m_state == Object_State::STATE_IDLE || m_state == Object_State::STATE_MOVE)) {
 			if (m_speed > 0.0f) {
 				float deceleration = m_deceleration * elapsed_time;
 				float new_speed = MathHelper::Max(m_speed - deceleration, 0.0f);
@@ -104,21 +104,59 @@ void Object::Calc_Delta(float elapsed_time) {
 
 void Object::Update(float elapsed_time) {
 	if (m_animated) {
+		AnimationManager& animation_manager = m_object_manager->Get_Animation_Manager();
+
 		if (Get_Spd() > 0.05f) {
-			m_state = Object_State::MOVE_STATE;
+			m_next_state = Object_State::STATE_MOVE;
 		}
 		else {
-			m_state = Object_State::IDLE_STATE;
+			m_next_state = Object_State::STATE_IDLE;
 		}
 
-		m_next_animation_name = m_animation_map[m_state];
+		Animation_Binding_Info animation_binding_info = m_animation_binding_map[m_state];
 
-		if (m_playing_animation_name != m_next_animation_name) {
-			m_playing_animation_name = m_next_animation_name;
+		// checking animation end
+		if (animation_binding_info.loop == false) {
+			if (animation_manager.Get_Animation(animation_binding_info.binded_animation_name)->animation_time < m_animated_time) {
+				m_next_state = animation_binding_info.next_object_state;
+			}
+		}
+
+		// check next state
+		if (m_state != m_next_state) {
+			Animation_Binding_Info next_animation_binding_info = m_animation_binding_map[m_next_state];
+
+			if (next_animation_binding_info.blending_time > 0.0f) {
+				animation_manager.Get_Animated_Transform(
+					animation_binding_info.binded_animation_name, m_animated_time, animation_binding_info.loop, m_blending_source_transform_info_array);
+			}
+
+			m_state = m_next_state;
 			m_animated_time = 0.0f;
 		}
 
-		m_object_manager->Get_Animation_Manager().Get_Animated_Matrix(m_playing_animation_name, m_animated_time, m_animation_matrix_array);
+		// calculate animation
+		animation_binding_info = m_animation_binding_map[m_state];
+		std::array<Transform_Info, MAX_BONE_COUNT> transform_info_array;
+		animation_manager.Get_Animated_Transform(
+			animation_binding_info.binded_animation_name, m_animated_time, animation_binding_info.loop, transform_info_array);
+
+		// todo : blending
+		if (animation_binding_info.blending_time > m_animated_time) {
+			for (UINT i = 0; i < m_skeleton_info->bone_count; ++i) {
+				transform_info_array[i] = Interp_Trans_Info(m_blending_source_transform_info_array[i], transform_info_array[i],
+					m_animated_time / animation_binding_info.blending_time);
+			}
+		}
+
+		for (UINT i = 0; i < m_skeleton_info->bone_count; ++i) {
+			DirectX::XMMATRIX translate_matrix = MathHelper::XMMATRIX_Translation(transform_info_array[i].translate);
+			DirectX::XMMATRIX rotate_matrix = MathHelper::XMMATRIX_Rotation(transform_info_array[i].rotate);
+			DirectX::XMMATRIX scale_matrix = MathHelper::XMMATRIX_Scaling(transform_info_array[i].scale);
+
+			DirectX::XMMATRIX animation_matrix = scale_matrix * rotate_matrix * translate_matrix;
+			DirectX::XMStoreFloat4x4(&m_animation_matrix_array[i], DirectX::XMMatrixTranspose(animation_matrix));
+		}
 
 		m_animated_time += elapsed_time;
 		Rst_Dirty_Count();
@@ -505,8 +543,8 @@ void Object::Draw(ID3D12GraphicsCommandList* command_list) {
 	}
 }
 
-void Object::Bind_Anim_2_State(Object_State object_state, std::wstring animation_name) {
-	m_animation_map[object_state] = animation_name;
+void Object::Bind_Anim_2_State(Object_State object_state, Animation_Binding_Info animation_binding_info) {
+	m_animation_binding_map[object_state] = animation_binding_info;
 }
 
 void Object::Calc_Rotate() {

@@ -367,8 +367,8 @@ void TestScene::Build_O() {
 	//m_object_manager->Get_Obj(L"mouse_test")->Set_Visiable(false);
 
 	Object* object = m_object_manager->Get_Obj(L"player");
-	object->Bind_Anim_2_State(Object_State::IDLE_STATE, L"mouse_idle.fbx");
-	object->Bind_Anim_2_State(Object_State::MOVE_STATE, L"mouse_walk.fbx");
+	object->Bind_Anim_2_State(Object_State::STATE_IDLE, Animation_Binding_Info(L"mouse_idle.fbx", 0.2f, true));
+	object->Bind_Anim_2_State(Object_State::STATE_MOVE, Animation_Binding_Info(L"mouse_walk.fbx", 0.2f, true));
 	//Object* object = m_object_manager->Get_Obj(L"player");
 	//object->Bind_Anim_2_State(Object_State::IDLE_STATE, L"cat_idle.fbx");
 	//object->Bind_Anim_2_State(Object_State::MOVE_STATE, L"cat_walk.fbx");
@@ -376,13 +376,13 @@ void TestScene::Build_O() {
 	object->Set_Phys(true);
 
 	object = m_object_manager->Get_Obj(L"mouse_test");
-	object->Bind_Anim_2_State(Object_State::IDLE_STATE, L"mouse_idle.fbx");
-	object->Bind_Anim_2_State(Object_State::MOVE_STATE, L"mouse_walk.fbx");
+	object->Bind_Anim_2_State(Object_State::STATE_IDLE, Animation_Binding_Info(L"mouse_idle.fbx", 0.2f, true));
+	object->Bind_Anim_2_State(Object_State::STATE_MOVE, Animation_Binding_Info(L"mouse_walk.fbx", 0.2f, true));
 	object->Set_Animated(true);
 
 	object = m_object_manager->Get_Obj(L"cat_test");
-	object->Bind_Anim_2_State(Object_State::IDLE_STATE, L"cat_idle.fbx");
-	object->Bind_Anim_2_State(Object_State::MOVE_STATE, L"cat_walk.fbx");
+	object->Bind_Anim_2_State(Object_State::STATE_IDLE, Animation_Binding_Info(L"cat_idle.fbx", 0.2f, true));
+	object->Bind_Anim_2_State(Object_State::STATE_MOVE, Animation_Binding_Info(L"cat_walk.fbx", 0.2f, true));
 	object->Set_Animated(true);
 }
 

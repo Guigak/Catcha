@@ -98,6 +98,27 @@ void ObjectManager::Rotate(std::wstring object_name, Action action, float degree
     }
 }
 
+void ObjectManager::Actions(std::wstring object_name, Action action) {
+    Object* object = Get_Obj(object_name);
+
+    switch (action) {
+    case Action::ACTION_JUMP:
+        object->Jump();
+        break;
+    case Action::ACTION_ONE:
+        object->Act_One();
+        break;
+    case Action::ACTION_TWO:
+        object->Act_Two();
+        break;
+    case Action::ACTION_THREE:
+        object->Act_Three();
+        break;
+    default:
+        break;
+    }
+}
+
 void ObjectManager::Update(float elapsed_time) {
     m_material_manager.Update();
 

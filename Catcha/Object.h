@@ -35,7 +35,8 @@ protected:
 	//
 	bool m_physics = false;
 
-	float m_gravity = 9.8f;
+	float m_gravity = 980.0f;
+	float m_jump_power = 250.0f;
 
 	DirectX::XMFLOAT3 m_velocity = DirectX::XMFLOAT3();
 
@@ -189,6 +190,12 @@ public:
 
 	void Rotate_Right(float degree);
 	void Rotate_Look(float degree);
+
+	//
+	virtual void Jump();
+	virtual void Act_One();
+	virtual void Act_Two();
+	virtual void Act_Three();
 
 	//
 	void Bind_Camera(Camera* camera);

@@ -39,6 +39,9 @@ DirectX::BoundingOrientedBox Object::Get_Calcd_OBB() {
 }
 
 void Object::Calc_Delta(float elapsed_time) {
+	// Calc Grav
+	m_velocity.y -= m_gravity * elapsed_time;
+
 	m_delta_position = DirectX::XMFLOAT3();
 
 	if (m_physics) {
@@ -57,7 +60,8 @@ void Object::Calc_Delta(float elapsed_time) {
 		m_delta_position = MathHelper::Add(m_delta_position, delta);
 
 		// Calc deceleration
-		if (m_moving == false && (m_state == Object_State::STATE_IDLE || m_state == Object_State::STATE_MOVE)) {
+		if (m_moving == false &&
+			(m_state == Object_State::STATE_IDLE || m_state == Object_State::STATE_MOVE || m_state == Object_State::STATE_JUMP_END)) {
 			if (m_speed > 0.0f) {
 				float deceleration = m_deceleration * elapsed_time;
 				float new_speed = MathHelper::Max(m_speed - deceleration, 0.0f);
@@ -82,16 +86,22 @@ void Object::Calc_Delta(float elapsed_time) {
 
 			m_force = MathHelper::Multiply(Get_Force(), new_speed / speed);
 		}
-		
-		// Calc Grav
-		//m_velocity.y += m_gravity;
 
 		// Move
 		m_position = MathHelper::Add(Get_Position_3f(), m_delta_position);
 
+		// test	// modify later
+		if (m_position.y < -61.592f) {
+			m_position.y = -61.592f;
+			m_velocity.y = 0.0f;
+
+			if (m_state == Object_State::STATE_JUMP_IDLE) {
+				m_next_state = Object_State::STATE_JUMP_END;
+			}
+		}
+
 		Udt_WM();
 
-		m_moving = false;
 		m_dirty = true;
 	}
 }
@@ -106,11 +116,14 @@ void Object::Update(float elapsed_time) {
 	if (m_animated) {
 		AnimationManager& animation_manager = m_object_manager->Get_Animation_Manager();
 
-		if (Get_Spd() > 0.05f) {
-			m_next_state = Object_State::STATE_MOVE;
-		}
-		else {
-			m_next_state = Object_State::STATE_IDLE;
+		if (m_next_state == Object_State::STATE_IDLE || m_next_state == Object_State::STATE_MOVE ||
+			(m_moving == true && m_state == Object_State::STATE_JUMP_END)) {
+			if (Get_Spd() > 0.05f) {
+				m_next_state = Object_State::STATE_MOVE;
+			}
+			else {
+				m_next_state = Object_State::STATE_IDLE;
+			}
 		}
 
 		Animation_Binding_Info animation_binding_info = m_animation_binding_map[m_state];
@@ -188,6 +201,8 @@ void Object::Update(float elapsed_time) {
 
 		m_dirty = false;
 	}
+
+	m_moving = false;
 }
 
 void Object::Udt_WM() {
@@ -508,6 +523,23 @@ void Object::Rotate_Look(float degree) {
 	m_rotate_look += degree;
 
 	m_dirty = true;
+}
+
+void Object::Jump() {
+	m_next_state = Object_State::STATE_JUMP_START;
+	m_velocity.y = m_jump_power;
+}
+
+void Object::Act_One() {
+	m_next_state = Object_State::STATE_ACTION_ONE;
+}
+
+void Object::Act_Two() {
+	m_next_state = Object_State::STATE_ACTION_TWO;
+}
+
+void Object::Act_Three() {
+	m_next_state = Object_State::STATE_ACTION_THREE;
 }
 
 void Object::Bind_Camera(Camera* camera) {

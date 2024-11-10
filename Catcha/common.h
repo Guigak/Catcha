@@ -70,6 +70,9 @@ constexpr BYTE ROTATE_SYNC_NONE = 0b00;
 constexpr BYTE ROTATE_SYNC_ALL = 0b01;
 constexpr BYTE ROTATE_SYNC_RPY = 0b10;	// ROTATE_ROLL_PITCH_YAW
 
+constexpr bool LOOP_ANIMATION = true;
+constexpr bool ONCE_ANIMATION = false;
+
 // virtual key
 #define VK_NUM0 0x30
 #define VK_NUM1 0x31

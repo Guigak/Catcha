@@ -128,6 +128,7 @@ void InputManager::Prcs_Binding_Info(BindingInfo binding_info) {
 			m_object_manager->Rotate(binding_info.object_name, binding_info.action, std::get<float>(binding_info.value));
 			break;
 		default:
+			m_object_manager->Actions(binding_info.object_name, binding_info.action);
 			break;
 		}
 	}

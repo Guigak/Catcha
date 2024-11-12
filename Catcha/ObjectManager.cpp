@@ -21,6 +21,10 @@ Object* ObjectManager::Get_Transparent_Obj(UINT object_number) {
 void ObjectManager::Move(std::wstring object_name, Action action, BYTE flag) {
     Object* object = Get_Obj(object_name);
 
+    if (object->Get_Movable() == false) {
+        return;
+    }
+
     switch (action) {
     case Action::MOVE_FORWARD:
         object->Move_Forward(flag);

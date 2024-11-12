@@ -60,8 +60,8 @@ void Object::Calc_Delta(float elapsed_time) {
 		m_delta_position = MathHelper::Add(m_delta_position, delta);
 
 		// Calc deceleration
-		if (m_moving == false &&
-			(m_state == Object_State::STATE_IDLE || m_state == Object_State::STATE_MOVE || m_state == Object_State::STATE_JUMP_END)) {
+		if (m_moving == false && m_grounded &&
+			(m_state != Object_State::STATE_JUMP_START && m_state != Object_State::STATE_JUMP_IDLE)) {
 			if (m_speed > 0.0f) {
 				float deceleration = m_deceleration * elapsed_time;
 				float new_speed = MathHelper::Max(m_speed - deceleration, 0.0f);
@@ -95,9 +95,18 @@ void Object::Calc_Delta(float elapsed_time) {
 			m_position.y = -61.592f;
 			m_velocity.y = 0.0f;
 
+			m_grounded = true;
+
 			if (m_state == Object_State::STATE_JUMP_IDLE) {
 				m_next_state = Object_State::STATE_JUMP_END;
 			}
+		}
+		else {
+			if (m_next_state == Object_State::STATE_IDLE || m_next_state == Object_State::STATE_MOVE) {
+				m_next_state = Object_State::STATE_JUMP_IDLE;
+			}
+
+			m_grounded = false;
 		}
 
 		Udt_WM();
@@ -116,8 +125,9 @@ void Object::Update(float elapsed_time) {
 	if (m_animated) {
 		AnimationManager& animation_manager = m_object_manager->Get_Animation_Manager();
 
-		if (m_next_state == Object_State::STATE_IDLE || m_next_state == Object_State::STATE_MOVE ||
-			(m_moving == true && m_state == Object_State::STATE_JUMP_END)) {
+		if (m_grounded &&
+			(m_next_state == Object_State::STATE_IDLE || m_next_state == Object_State::STATE_MOVE ||
+			(m_moving == true && m_state == Object_State::STATE_JUMP_END))) {
 			if (Get_Spd() > 0.05f) {
 				m_next_state = Object_State::STATE_MOVE;
 			}
@@ -146,6 +156,8 @@ void Object::Update(float elapsed_time) {
 
 			m_state = m_next_state;
 			m_animated_time = 0.0f;
+
+			m_movable = next_animation_binding_info.movable;
 		}
 
 		// calculate animation
@@ -154,7 +166,7 @@ void Object::Update(float elapsed_time) {
 		animation_manager.Get_Animated_Transform(
 			animation_binding_info.binded_animation_name, m_animated_time, animation_binding_info.loop, transform_info_array);
 
-		// todo : blending
+		// animation blending
 		if (animation_binding_info.blending_time > m_animated_time) {
 			for (UINT i = 0; i < m_skeleton_info->bone_count; ++i) {
 				transform_info_array[i] = Interp_Trans_Info(m_blending_source_transform_info_array[i], transform_info_array[i],

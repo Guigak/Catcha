@@ -36,7 +36,7 @@ protected:
 	bool m_physics = false;
 
 	float m_gravity = 980.0f;
-	float m_jump_power = 250.0f;
+	float m_jump_power = 500.0f;
 
 	DirectX::XMFLOAT3 m_velocity = DirectX::XMFLOAT3();
 
@@ -54,6 +54,7 @@ protected:
 
 	//
 	bool m_moving = false;
+	bool m_grounded = true;
 
 	Object_State m_state = Object_State::STATE_IDLE;
 	Object_State m_next_state = Object_State::STATE_IDLE;
@@ -88,6 +89,10 @@ protected:
 
 	//
 	ObjectManager* m_object_manager = nullptr;
+
+	//
+	bool m_processable_input = true;
+	bool m_movable = true;
 
 public:
 	Object() {}
@@ -226,5 +231,9 @@ public:
 
 	//
 	void Set_Cam_Rotate_Flag(BYTE flag) { m_camera_rotate_synchronization_flag = flag; }
+
+	//
+	bool Get_Processable_Input() { return m_processable_input; }
+	bool Get_Movable() { return m_movable; }
 };
 

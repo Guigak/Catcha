@@ -328,9 +328,12 @@ void TestScene::Build_Mesh(ID3D12Device* device, ID3D12GraphicsCommandList* comm
 	m_object_manager->Ipt_From_FBX(L"cat_walk.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
 	m_object_manager->Ipt_From_FBX(L"cat_run.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
 	m_object_manager->Ipt_From_FBX(L"cat_idle.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
-	m_object_manager->Ipt_From_FBX(L"cat_jump.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
+	//m_object_manager->Ipt_From_FBX(L"cat_jump.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
 	m_object_manager->Ipt_From_FBX(L"cat_bite.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
 	m_object_manager->Ipt_From_FBX(L"cat_paw.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
+	m_object_manager->Ipt_From_FBX(L"cat_jump_start.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
+	m_object_manager->Ipt_From_FBX(L"cat_jump_idle.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
+	m_object_manager->Ipt_From_FBX(L"cat_jump_end.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
 
 	m_object_manager->Ipt_From_FBX(L"mouse_mesh_edit.fbx", true, false, true, MESH_INFO | SKELETON_INFO | MATERIAL_INFO);
 	m_object_manager->Ipt_From_FBX(L"mouse_death.fbx", true, false, true, ANIMATION_INFO, L"mouse_mesh_edit.fbx");
@@ -374,6 +377,12 @@ void TestScene::Build_O() {
 	object->Bind_Anim_2_State(Object_State::STATE_JUMP_START, Animation_Binding_Info(L"mouse_jump_start.fbx", 0.2f, ONCE_ANIMATION, Object_State::STATE_JUMP_IDLE));
 	object->Bind_Anim_2_State(Object_State::STATE_JUMP_IDLE, Animation_Binding_Info(L"mouse_jump_idle.fbx", 0.2f, LOOP_ANIMATION));
 	object->Bind_Anim_2_State(Object_State::STATE_JUMP_END, Animation_Binding_Info(L"mouse_jump_end.fbx", 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE));
+	object->Bind_Anim_2_State(Object_State::STATE_ACTION_ONE, Animation_Binding_Info(L"mouse_hit.fbx", 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE, NOT_MOVABLE));
+	//object->Bind_Anim_2_State(Object_State::STATE_IDLE, Animation_Binding_Info(L"cat_idle.fbx", 0.2f, LOOP_ANIMATION));
+	//object->Bind_Anim_2_State(Object_State::STATE_MOVE, Animation_Binding_Info(L"cat_walk.fbx", 0.2f, LOOP_ANIMATION));
+	//object->Bind_Anim_2_State(Object_State::STATE_JUMP_START, Animation_Binding_Info(L"cat_jump_start.fbx", 0.2f, ONCE_ANIMATION, Object_State::STATE_JUMP_IDLE));
+	//object->Bind_Anim_2_State(Object_State::STATE_JUMP_IDLE, Animation_Binding_Info(L"cat_jump_idle.fbx", 0.2f, LOOP_ANIMATION));
+	//object->Bind_Anim_2_State(Object_State::STATE_JUMP_END, Animation_Binding_Info(L"cat_jump_end.fbx", 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE));
 	object->Set_Animated(true);
 	object->Set_Phys(true);
 
@@ -550,6 +559,7 @@ void TestScene::Binding_Key() {
 	m_input_manager->Bind_Key_Down(VK_D, BindingInfo(L"player", Action::MOVE_RIGHT, MOVE_ONLY_XZ));
 
 	m_input_manager->Bind_Key_First_Down(VK_SPACE, BindingInfo(L"player", Action::ACTION_JUMP));
+	m_input_manager->Bind_Key_First_Down(VK_LBUTTON, BindingInfo(L"player", Action::ACTION_ONE));
 
 	m_input_manager->Bind_Mouse_Move(BindingInfo(L"maincamera", Action::ROTATE_PITCH, 0.01f),
 		BindingInfo(L"maincamera", Action::ROTATE_RIGHT, 0.01f));

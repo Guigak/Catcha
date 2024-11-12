@@ -73,6 +73,9 @@ constexpr BYTE ROTATE_SYNC_RPY = 0b10;	// ROTATE_ROLL_PITCH_YAW
 constexpr bool LOOP_ANIMATION = true;
 constexpr bool ONCE_ANIMATION = false;
 
+constexpr bool MOVABLE = true;
+constexpr bool NOT_MOVABLE = false;
+
 // virtual key
 #define VK_NUM0 0x30
 #define VK_NUM1 0x31
@@ -1854,4 +1857,5 @@ struct Animation_Binding_Info {
 	float blending_time = 0.0f;
 	bool loop = false;
 	Object_State next_object_state = Object_State::STATE_IDLE;
+	bool movable = true;
 };

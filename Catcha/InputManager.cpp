@@ -25,10 +25,16 @@ void InputManager::Prcs_Input_Msg(HWND hwnd, UINT message, WPARAM wparam, LPARAM
 		m_state[wparam] = true;
 		break;
 	case WM_KEYUP:
-	case WM_LBUTTONUP:
-	case WM_RBUTTONUP:
-	case WM_MBUTTONUP:
 		m_state[wparam] = false;
+		break;
+	case WM_LBUTTONUP:
+		m_state[VK_LBUTTON] = false;
+		break;
+	case WM_RBUTTONUP:
+		m_state[VK_RBUTTON] = false;
+		break;
+	case WM_MBUTTONUP:
+		m_state[VK_MBUTTON] = false;
 		break;
 	default:
 		break;
@@ -102,6 +108,10 @@ void InputManager::Prcs_Input() {
 
 void InputManager::Prcs_Binding_Info(BindingInfo binding_info) {
 	if (binding_info.object_name != L"") {
+		if (m_object_manager->Get_Obj(binding_info.object_name)->Get_Processable_Input() == false) {
+			return;
+		}
+
 		switch (binding_info.action) {
 		case Action::MOVE_FORWARD:
 		case Action::MOVE_BACK:

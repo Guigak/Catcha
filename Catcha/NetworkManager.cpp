@@ -372,7 +372,7 @@ void NetworkManager::ProcessPacket(char* ptr)
 		{
 			// 다른 캐릭터의 캐릭터 변경
 			characters[id].character_id = new_character_num;
-			m_objects[characters[id].character_id]->Set_Character_Number(new_character_num);
+			//m_objects[characters[id].character_id]->Set_Character_Number(new_character_num);
 		}
 		break;
 	}

@@ -106,8 +106,8 @@ protected:
 	float total_pitch = 0.0f;											// 각도 변화량의 합	
 
 	// [SC] 캐릭터 번호
-	int m_character_number = -1;
-	bool m_is_need_send = false;
+	int m_character_number = -1;										// 캐릭터 번호 (0~3 쥐, 4~7 ai, 8 고양이)
+	bool m_is_need_send = false;										// 회전각 서버로 보내는지 여부
 	//////////////////////////////////////////////////////////////////
 
 public:
@@ -249,7 +249,7 @@ public:
 	void Set_Character_Number(int number) { m_character_number = number; }
 	int Get_Character_Number() { return m_character_number; }
 
-	// 카메라 설정
+	// 카메라 회전값 서버로 보내는지 설정
 	void Set_Camera_Need_Send(bool is_need_send) { m_is_need_send = is_need_send; }
 	bool Get_Camera_Need_Send() { return m_is_need_send; }
 

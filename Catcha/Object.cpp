@@ -349,7 +349,7 @@ void Object::Rotate(float degree_roll, float degree_pitch, float degree_yaw) {
 	Rotate_Yaw(degree_yaw / 100.0f);
 
 	// [CS] 시간이 지날때만 시야각 보냄
-	if (true == m_is_need_send)
+	if (true == Get_Camera_Need_Send())
 	{
 		auto current_time = std::chrono::high_resolution_clock::now();
 		float delta_time = std::chrono::duration<float>(current_time - m_last_sent_time).count();

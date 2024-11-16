@@ -394,7 +394,9 @@ void TestScene::Build_O() {
 	m_object_manager->Get_Obj(L"cat")->Set_Animated(true);
 
 
-	m_object_manager->Add_Obj(L"player", L"mouse_mesh.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
+	m_object_manager->Add_Obj(L"player", L"mouse_mesh_edit.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
+	m_object_manager->Set_Sklt_2_Obj(L"player", L"mouse_mesh_edit.fbx");
+
 	m_object_manager->Get_Obj(L"player")->Set_Visiable(false);
 }
 

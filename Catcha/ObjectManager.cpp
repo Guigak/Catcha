@@ -189,12 +189,6 @@ Object* ObjectManager::Add_Obj(std::wstring object_name, std::wstring mesh_name,
         // [CS] 서버 캐릭터 등록
         NetworkManager::GetInstance().AddCharacter(*object_pointer);
         break;
-    case ObjectType::GHOST_OBJECT:
-        object_pointer->Set_Character_Number(static_cast<int>(m_characters.size()));
-		m_characters.emplace_back(object_pointer);
-        // [CS] 서버 캐릭터 등록
-        NetworkManager::GetInstance().AddCharacter(*object_pointer);
-		break;
     }
 
     m_objects.emplace_back(object_pointer);

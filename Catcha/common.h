@@ -1630,7 +1630,7 @@ inline Microsoft::WRL::ComPtr<ID3DBlob> Compile_Shader(
 
 // _Info
 struct Material_Factor {
-	DirectX::XMFLOAT4 diffuse_albedo = DirectX::XMFLOAT4(DirectX::Colors::LightBlue);
+	DirectX::XMFLOAT4 diffuse_albedo = DirectX::XMFLOAT4(DirectX::Colors::LightGreen);
 	DirectX::XMFLOAT3 fresnel = { 0.1f, 0.1f, 0.1f };
 	float shininess = 0.25f;
 };
@@ -1694,6 +1694,18 @@ struct Vertex_Info {
 	UINT bone_indices[MAX_WEIGHT_BONE_COUNT] = { (UINT)-1, (UINT)-1, (UINT)-1, (UINT)-1 };
 	float bone_weights[MAX_WEIGHT_BONE_COUNT];
 	UINT material_index = 0;
+
+	Vertex_Info() {}
+	Vertex_Info(
+		float position_x, float position_y, float position_z,
+		float normal_x, float normal_y, float normal_z,
+		float tangent_x, float tangent_y, float tangent_z,
+		float u, float v)
+		:
+		position(position_x, position_y, position_z),
+		normal(normal_x, normal_y, normal_z),
+		tangent(tangent_x, tangent_y, tangent_z),
+		uv(u, v) {}
 };
 
 struct Mesh_Info {

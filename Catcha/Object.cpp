@@ -6,7 +6,7 @@ Object::Object(ObjectManager* object_manager, std::wstring object_name, Mesh_Inf
 	Set_Object_Manager(object_manager);
 	Set_Name(object_name);
 	Set_CB_Index(constant_buffer_index);
-	Add_Mesh(mesh, MathHelper::Identity_4x4());
+	Add_Mesh(mesh);
 	Set_WM(world_matrix);
 	Set_PT(primitive_topology);
 	Set_Phys(physics);
@@ -39,12 +39,12 @@ DirectX::BoundingOrientedBox Object::Get_Calcd_OBB() {
 }
 
 void Object::Calc_Delta(float elapsed_time) {
-	// Calc Grav
-	m_velocity.y -= m_gravity * elapsed_time;
-
 	m_delta_position = DirectX::XMFLOAT3();
 
 	if (m_physics) {
+		// Calc Grav
+		m_velocity.y -= m_gravity * elapsed_time;
+
 		// Calc Vel
 		m_speed = MathHelper::Length_XZ(Get_Vel());
 
@@ -290,6 +290,26 @@ void Object::Set_Position(float position_x, float position_y, float position_z) 
 	m_position.z = position_z;
 
 	m_dirty = true;
+}
+
+void Object::Set_Rotate(float rotate_x, float rotate_y, float rotate_z, float rotate_w) {
+	m_rotate = DirectX::XMFLOAT4(rotate_x, rotate_y, rotate_z, rotate_w);
+}
+
+void Object::Set_Scale(float scale_x, float scale_y, float scale_z) {
+	m_scale = DirectX::XMFLOAT3(scale_x, scale_y, scale_z);
+}
+
+void Object::Set_Position(DirectX::XMFLOAT3 position) {
+	m_position = position;
+}
+
+void Object::Set_Rotate(DirectX::XMFLOAT4 rotate) {
+	m_rotate_roll_pitch_yaw = rotate;
+}
+
+void Object::Set_Scale(DirectX::XMFLOAT3 scale) {
+	m_scale = scale;
 }
 
 void Object::Move(DirectX::XMFLOAT3 direction) {
@@ -739,6 +759,16 @@ void Object::Calc_Rotate() {
 	DirectX::XMStoreFloat4(&m_rotate, DirectX::XMQuaternionMultiply(
 		DirectX::XMLoadFloat4(&m_rotate),
 		DirectX::XMQuaternionRotationAxis(DirectX::XMLoadFloat3(&Get_Look()), m_rotate_look)));
+}
+
+void Object::Set_OBB(DirectX::BoundingOrientedBox obb) {
+	m_OBB = obb;
+
+	Set_Position(obb.Center);
+	Set_Rotate(obb.Orientation);
+	Set_Scale(obb.Extents);
+
+	m_dirty = true;
 }
 
 void Object::Set_Look(DirectX::XMFLOAT4 quat)

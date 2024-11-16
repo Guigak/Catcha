@@ -69,6 +69,7 @@ protected:
 	BYTE m_camera_rotate_synchronization_flag = ROTATE_SYNC_NONE;
 
 	//
+	bool m_obb_object = false;
 	DirectX::BoundingOrientedBox m_OBB;
 
 	//
@@ -198,6 +199,12 @@ public:
 
 	//
 	void Set_Position(float position_x, float position_y, float position_z);
+	void Set_Rotate(float rotate_x, float rotate_y, float rotate_z, float rotate_w);
+	void Set_Scale(float scale_x, float scale_y, float scale_z);
+
+	void Set_Position(DirectX::XMFLOAT3 position);
+	void Set_Rotate(DirectX::XMFLOAT4 rotate);
+	void Set_Scale(DirectX::XMFLOAT3 scale);
 
 	// move
 	void Move(DirectX::XMFLOAT3 direction);
@@ -246,7 +253,7 @@ public:
 	void Bind_Camera(Camera* camera);
 
 	//
-	void Add_Mesh(Mesh_Info* mesh_info, DirectX::XMFLOAT4X4 local_transform_matrix);
+	void Add_Mesh(Mesh_Info* mesh_info, DirectX::XMFLOAT4X4 local_transform_matrix = MathHelper::Identity_4x4());
 	void Add_Mesh(std::vector<Mesh>& mesh_array);
 
 	std::vector<Mesh>& Get_Mesh_Array() { return m_meshes; }
@@ -275,7 +282,9 @@ public:
 	//
 	bool Get_Processable_Input() { return m_processable_input; }
 	bool Get_Movable() { return m_movable; }
-	//std::array<DirectX::XMFLOAT4X4, MAX_BONE_COUNT>& Get_Animation_Matrix() { return m_animation_matrix_array; }
+
+	//
+	void Set_OBB(DirectX::BoundingOrientedBox obb);
 
 	void Set_Look(DirectX::XMFLOAT4 quat);
 

@@ -2,10 +2,6 @@
 #include "common.h"
 #include "NetworkManager.h"
 
-enum class Object_State {
-	IDLE_STATE, MOVE_STATE, JUMP_STATE
-};
-
 class Camera;
 class ObjectManager;
 
@@ -14,7 +10,6 @@ protected:
 	std::wstring m_name = L"";
 
 	DirectX::XMFLOAT3 m_position = { 0.0f, 0.0f, 0.0f };
-	DirectX::XMFLOAT3 m_rotate = { 0.0f, 0.0f, 0.0f };
 	DirectX::XMFLOAT3 m_scale = { 0.0f, 0.0f, 0.0f };
 
 	DirectX::XMFLOAT3 m_look = { 0.0f, 0.0f, 1.0f };
@@ -41,7 +36,8 @@ protected:
 	//
 	bool m_physics = false;
 
-	float m_gravity = 9.8f;
+	float m_gravity = 980.0f;
+	float m_jump_power = 500.0f;
 
 	DirectX::XMFLOAT3 m_velocity = DirectX::XMFLOAT3();
 
@@ -59,13 +55,18 @@ protected:
 
 	//
 	bool m_moving = false;
+	bool m_grounded = true;
 
-	Object_State m_state = Object_State::IDLE_STATE;
+	Object_State m_state = Object_State::STATE_IDLE;
+	Object_State m_next_state = Object_State::STATE_IDLE;
 
 	//
 	Camera* m_camera = nullptr;
 
 	bool m_visiable = false;
+
+	//
+	BYTE m_camera_rotate_synchronization_flag = ROTATE_SYNC_NONE;
 
 	//
 	DirectX::BoundingOrientedBox m_OBB;
@@ -74,16 +75,25 @@ protected:
 	std::vector<Mesh> m_meshes;
 	Skeleton_Info* m_skeleton_info = nullptr;
 
-	DirectX::XMFLOAT4 m_rotate_quat = { 0.0f, 0.0f, 0.0f, 1.0f };
+	float m_rotate_right = 0.0f;
+	float m_rotate_look = 0.0f;
+	DirectX::XMFLOAT4 m_rotate_roll_pitch_yaw = { 0.0f, 0.0f, 0.0f, 1.0f };
+	DirectX::XMFLOAT4 m_rotate = { 0.0f, 0.0f, 0.0f, 1.0f };
 
 	//
 	bool m_animated = false;
 	float m_animated_time = 0.0f;
+	std::array<Transform_Info, MAX_BONE_COUNT> m_blending_source_transform_info_array;
 	std::array<DirectX::XMFLOAT4X4, MAX_BONE_COUNT> m_animation_matrix_array;
-	std::wstring m_playing_animation_name = L"";
+
+	std::unordered_map<Object_State, Animation_Binding_Info> m_animation_binding_map;
 
 	//
 	ObjectManager* m_object_manager = nullptr;
+
+	//
+	bool m_processable_input = true;
+	bool m_movable = true;
 
 	//////////////////////////////////////////////////////////////////
 	// [SC] 위치 보간을 위한 변수
@@ -134,8 +144,13 @@ public:
 	DirectX::XMVECTOR Get_Position_V() { return DirectX::XMLoadFloat3(&m_position); }	// Get Position Vector
 	DirectX::XMFLOAT3 Get_Position_3f() { return m_position; }	// Get Position float3
 
-	DirectX::XMFLOAT4 Get_Rotate_Quat() const { return m_rotate_quat; }	// Get Rotate Quaternion
-	DirectX::XMFLOAT3 Get_Rotate_3f() { return m_rotate; }	// Get Rotate float3
+	DirectX::XMVECTOR Get_Rotate_V() { return DirectX::XMLoadFloat4(&m_rotate); }	// Get Rotate Vector
+	DirectX::XMFLOAT4 Get_Rotate_4f() { return m_rotate; }	// Get Rotate float3
+	DirectX::XMVECTOR Get_Rotate_RPY_V() { return DirectX::XMLoadFloat4(&m_rotate_roll_pitch_yaw); }
+	DirectX::XMFLOAT4 Get_Rotate_RPY_4f() { return m_rotate_roll_pitch_yaw; }
+
+	float Get_Rotate_Right() { return m_rotate_right; }
+	float Get_Rotate_Look() { return m_rotate_look; }
 
 	DirectX::XMVECTOR Get_Scale_V() { return DirectX::XMLoadFloat3(&m_scale); }	// Get Scale Vector
 	DirectX::XMFLOAT3 Get_Scale_3f() { return m_scale; }	// Get Scale float3
@@ -187,12 +202,12 @@ public:
 	// move
 	void Move(DirectX::XMFLOAT3 direction);
 
-	void Move_Forward();
-	void Move_Back();
-	void Move_Left();
-	void Move_Right();
-	void Move_Up();
-	void Move_Down();
+	void Move_Forward(BYTE flag);
+	void Move_Back(BYTE flag);
+	void Move_Left(BYTE flag);
+	void Move_Right(BYTE flag);
+	void Move_Up(BYTE flag);
+	void Move_Down(BYTE flag);
 
 	// teleport
 	void Teleport(DirectX::XMFLOAT3 direction, float distance);
@@ -212,6 +227,15 @@ public:
 	void Rotate_Roll(float degree);
 	void Rotate_Pitch(float degree);
 	void Rotate_Yaw(float degree);
+
+	void Rotate_Right(float degree);
+	void Rotate_Look(float degree);
+
+	//
+	virtual void Jump();
+	virtual void Act_One();
+	virtual void Act_Two();
+	virtual void Act_Three();
 
 	// [SC] 회전 보간을 위한 함수
 	void LerpRotate(float deltaTime);
@@ -236,12 +260,21 @@ public:
 	void Set_Animated(bool animated) { m_animated = animated; }
 	bool Get_Animated() { return m_animated; }
 
-	void Set_Animation(std::wstring animation_name) {
-		m_playing_animation_name = animation_name;
-		m_animated_time = 0.0f;
-	}
-
 	std::array<DirectX::XMFLOAT4X4, MAX_BONE_COUNT>& Get_Animation_Matrix() { return m_animation_matrix_array; }
+
+	//
+	void Bind_Anim_2_State(Object_State object_state, Animation_Binding_Info animation_binding_info);
+
+	//
+	void Calc_Rotate();
+
+	//
+	void Set_Cam_Rotate_Flag(BYTE flag) { m_camera_rotate_synchronization_flag = flag; }
+
+	//
+	bool Get_Processable_Input() { return m_processable_input; }
+	bool Get_Movable() { return m_movable; }
+	//std::array<DirectX::XMFLOAT4X4, MAX_BONE_COUNT>& Get_Animation_Matrix() { return m_animation_matrix_array; }
 
 	void Set_Look(DirectX::XMFLOAT4 quat);
 

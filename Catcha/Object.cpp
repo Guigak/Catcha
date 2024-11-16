@@ -39,6 +39,9 @@ DirectX::BoundingOrientedBox Object::Get_Calcd_OBB() {
 }
 
 void Object::Calc_Delta(float elapsed_time) {
+	// Calc Grav
+	m_velocity.y -= m_gravity * elapsed_time;
+
 	m_delta_position = DirectX::XMFLOAT3();
 
 	if (m_physics) {
@@ -57,7 +60,8 @@ void Object::Calc_Delta(float elapsed_time) {
 		m_delta_position = MathHelper::Add(m_delta_position, delta);
 
 		// Calc deceleration
-		if (m_moving == false && m_state == Object_State::IDLE_STATE) {
+		if (m_moving == false && m_grounded &&
+			(m_state != Object_State::STATE_JUMP_START && m_state != Object_State::STATE_JUMP_IDLE)) {
 			if (m_speed > 0.0f) {
 				float deceleration = m_deceleration * elapsed_time;
 				float new_speed = MathHelper::Max(m_speed - deceleration, 0.0f);
@@ -85,16 +89,31 @@ void Object::Calc_Delta(float elapsed_time) {
 
 			m_force = MathHelper::Multiply(Get_Force(), new_speed / speed);
 		}
-		
-		// Calc Grav
-		//m_velocity.y += m_gravity;
 
 		// Move
 		m_position = MathHelper::Add(Get_Position_3f(), m_delta_position);
 
+		// test	// modify later
+		if (m_position.y < -61.592f) {
+			m_position.y = -61.592f;
+			m_velocity.y = 0.0f;
+
+			m_grounded = true;
+
+			if (m_state == Object_State::STATE_JUMP_IDLE) {
+				m_next_state = Object_State::STATE_JUMP_END;
+			}
+		}
+		else {
+			if (m_next_state == Object_State::STATE_IDLE || m_next_state == Object_State::STATE_MOVE) {
+				m_next_state = Object_State::STATE_JUMP_IDLE;
+			}
+
+			m_grounded = false;
+		}
+
 		Udt_WM();
 
-		m_moving = false;
 		m_dirty = true;
 	}
 
@@ -123,18 +142,89 @@ void Object::Calc_Delta_Characters(float elapsed_time)
 
 void Object::Update(float elapsed_time) {
 	if (m_animated) {
+		AnimationManager& animation_manager = m_object_manager->Get_Animation_Manager();
+
+		if (m_grounded &&
+			(m_next_state == Object_State::STATE_IDLE || m_next_state == Object_State::STATE_MOVE ||
+			(m_moving == true && m_state == Object_State::STATE_JUMP_END))) {
+			if (Get_Spd() > 0.05f) {
+				m_next_state = Object_State::STATE_MOVE;
+			}
+			else {
+				m_next_state = Object_State::STATE_IDLE;
+			}
+		}
+
+		Animation_Binding_Info animation_binding_info = m_animation_binding_map[m_state];
+
+		// checking animation end
+		if (animation_binding_info.loop == false) {
+			if (animation_manager.Get_Animation(animation_binding_info.binded_animation_name)->animation_time < m_animated_time) {
+				m_next_state = animation_binding_info.next_object_state;
+			}
+		}
+
+		// check next state
+		if (m_state != m_next_state) {
+			Animation_Binding_Info next_animation_binding_info = m_animation_binding_map[m_next_state];
+
+			if (next_animation_binding_info.blending_time > 0.0f) {
+				animation_manager.Get_Animated_Transform(
+					animation_binding_info.binded_animation_name, m_animated_time, animation_binding_info.loop, m_blending_source_transform_info_array);
+			}
+
+			m_state = m_next_state;
+			m_animated_time = 0.0f;
+
+			m_movable = next_animation_binding_info.movable;
+		}
+
+		// calculate animation
+		animation_binding_info = m_animation_binding_map[m_state];
+		std::array<Transform_Info, MAX_BONE_COUNT> transform_info_array;
+		animation_manager.Get_Animated_Transform(
+			animation_binding_info.binded_animation_name, m_animated_time, animation_binding_info.loop, transform_info_array);
+
+		// animation blending
+		if (animation_binding_info.blending_time > m_animated_time) {
+			for (UINT i = 0; i < m_skeleton_info->bone_count; ++i) {
+				transform_info_array[i] = Interp_Trans_Info(m_blending_source_transform_info_array[i], transform_info_array[i],
+					m_animated_time / animation_binding_info.blending_time);
+			}
+		}
+
+		for (UINT i = 0; i < m_skeleton_info->bone_count; ++i) {
+			DirectX::XMMATRIX translate_matrix = MathHelper::XMMATRIX_Translation(transform_info_array[i].translate);
+			DirectX::XMMATRIX rotate_matrix = MathHelper::XMMATRIX_Rotation(transform_info_array[i].rotate);
+			DirectX::XMMATRIX scale_matrix = MathHelper::XMMATRIX_Scaling(transform_info_array[i].scale);
+
+			DirectX::XMMATRIX animation_matrix = scale_matrix * rotate_matrix * translate_matrix;
+			DirectX::XMStoreFloat4x4(&m_animation_matrix_array[i], DirectX::XMMatrixTranspose(animation_matrix));
+		}
+
 		m_animated_time += elapsed_time;
-
-		m_object_manager->Get_Animation_Manager().Get_Animated_Matrix(m_playing_animation_name, m_animated_time, m_animation_matrix_array);
-
 		Rst_Dirty_Count();
 	}
 
 	if (m_dirty) {
 		if (m_camera) {
-			//m_rotate = m_camera->Get_Rotate_3f();
+			switch (m_camera_rotate_synchronization_flag) {
+			case ROTATE_SYNC_NONE:
+				break;
+			case ROTATE_SYNC_ALL:
+				m_rotate_roll_pitch_yaw = m_camera->Get_Rotate_RPY_4f();
+				m_rotate_right = m_camera->Get_Rotate_Right();
+				m_rotate_look = m_camera->Get_Rotate_Look();
+				break;
+			case ROTATE_SYNC_RPY:
+				m_rotate_roll_pitch_yaw = m_camera->Get_Rotate_RPY_4f();
+				break;
+			default:
+				break;
+			}
 		}
 
+		Calc_Rotate();
 		Udt_WM();
 		Udt_LUR();
 
@@ -142,22 +232,20 @@ void Object::Update(float elapsed_time) {
 
 		m_dirty = false;
 	}
+
+	m_moving = false;
 }
 
 void Object::Udt_WM() {
 	DirectX::XMMATRIX translate_matrix = DirectX::XMMatrixTranslation(m_position.x, m_position.y, m_position.z);
-	//DirectX::XMMATRIX rotate_matrix = DirectX::XMMatrixRotationRollPitchYaw(
-	//	DirectX::XMConvertToRadians(m_rotate.x), DirectX::XMConvertToRadians(m_rotate.y), DirectX::XMConvertToRadians(m_rotate.z));
-	DirectX::XMMATRIX rotate_matrix = DirectX::XMMatrixRotationQuaternion(DirectX::XMLoadFloat4(&m_rotate_quat));
+	DirectX::XMMATRIX rotate_matrix = DirectX::XMMatrixRotationQuaternion(DirectX::XMLoadFloat4(&m_rotate));
 	DirectX::XMMATRIX scale_matrix = DirectX::XMMatrixScaling(m_scale.x, m_scale.y, m_scale.z);
 
 	DirectX::XMStoreFloat4x4(&m_world_matrix, scale_matrix * rotate_matrix * translate_matrix);
 }
 
 void Object::Udt_LUR() {
-	//DirectX::XMMATRIX rotate_matrix = DirectX::XMMatrixRotationRollPitchYaw(
-	//	DirectX::XMConvertToRadians(m_rotate.x), DirectX::XMConvertToRadians(m_rotate.y), DirectX::XMConvertToRadians(m_rotate.z));
-	DirectX::XMMATRIX rotate_matrix = DirectX::XMMatrixRotationQuaternion(DirectX::XMLoadFloat4(&m_rotate_quat));
+	DirectX::XMMATRIX rotate_matrix = DirectX::XMMatrixRotationQuaternion(DirectX::XMLoadFloat4(&m_rotate));
 
 	m_look = MathHelper::Normalize(MathHelper::Multiply(DirectX::XMFLOAT3(0.0f, 0.0f, 1.0f), rotate_matrix));
 	m_up = MathHelper::Normalize(MathHelper::Multiply(DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f), rotate_matrix));
@@ -204,67 +292,175 @@ void Object::Move(DirectX::XMFLOAT3 direction) {
 	m_moving = true;
 }
 
-void Object::Move_Forward() {
-	/*if (m_camera) {
-		m_velocity = MathHelper::Add(Get_Vel(), m_camera->Get_Look(), m_acceleration);
-	}
-	else*/ {
-		//m_velocity = MathHelper::Add(Get_Vel(), Get_Look(), m_acceleration);
-	}
-
-	m_moving = true;
-}
-
-void Object::Move_Back() {
-	/*if (m_camera) {
-		m_velocity = MathHelper::Add(Get_Vel(), m_camera->Get_Look(), -m_acceleration);
-	}
-	else*/ {
-		//m_velocity = MathHelper::Add(Get_Vel(), Get_Look(), -m_acceleration);
-	}
-
-	m_moving = true;
-}
-
-void Object::Move_Left() {
-	/*if (m_camera) {
-		m_velocity = MathHelper::Add(Get_Vel(), m_camera->Get_Right(), -m_acceleration);
-	}
-	else*/ {
-		//m_velocity = MathHelper::Add(Get_Vel(), Get_Right(), -m_acceleration);
-	}
-
-	m_moving = true;
-}
-
-void Object::Move_Right() {
-	/*if (m_camera) {
-		m_velocity = MathHelper::Add(Get_Vel(), m_camera->Get_Right(), m_acceleration);
-	}
-	else*/ {
-		//m_velocity = MathHelper::Add(Get_Vel(), Get_Right(), m_acceleration);
-	}
-
-	m_moving = true;
-}
-
-void Object::Move_Up() {
+void Object::Move_Forward(BYTE flag) {
 	if (m_camera) {
-		m_velocity = MathHelper::Add(Get_Vel(), m_camera->Get_Up(), m_acceleration);
+		switch (flag) {
+		case MOVE_ALL_AXIS:
+			m_velocity = MathHelper::Add(Get_Vel(), m_camera->Get_Look(), m_acceleration);
+			break;
+		case MOVE_ONLY_XZ:
+			m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ_Norm(m_camera->Get_Look()), m_acceleration);
+			break;
+		default:
+			break;
+		}
 	}
 	else {
-		m_velocity = MathHelper::Add(Get_Vel(), Get_Up(), m_acceleration);
+		switch (flag) {
+		case MOVE_ALL_AXIS:
+			m_velocity = MathHelper::Add(Get_Vel(), Get_Look(), m_acceleration);
+			break;
+		case MOVE_ONLY_XZ:
+			m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ_Norm(Get_Look()), m_acceleration);
+			break;
+		default:
+			break;
+		}
 	}
 
 	m_moving = true;
 }
 
-void Object::Move_Down() {
+void Object::Move_Back(BYTE flag) {
 	if (m_camera) {
-		m_velocity = MathHelper::Add(Get_Vel(), m_camera->Get_Up(), -m_acceleration);
+		switch (flag) {
+		case MOVE_ALL_AXIS:
+			m_velocity = MathHelper::Add(Get_Vel(), m_camera->Get_Look(), -m_acceleration);
+			break;
+		case MOVE_ONLY_XZ:
+			m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ_Norm(m_camera->Get_Look()), -m_acceleration);
+			break;
+		default:
+			break;
+		}
 	}
 	else {
-		m_velocity = MathHelper::Add(Get_Vel(), Get_Up(), -m_acceleration);
+		switch (flag) {
+		case MOVE_ALL_AXIS:
+			m_velocity = MathHelper::Add(Get_Vel(), Get_Look(), -m_acceleration);
+			break;
+		case MOVE_ONLY_XZ:
+			m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ_Norm(Get_Look()), -m_acceleration);
+			break;
+		default:
+			break;
+		}
+	}
+
+	m_moving = true;
+}
+
+void Object::Move_Left(BYTE flag) {
+	if (m_camera) {
+		switch (flag) {
+		case MOVE_ALL_AXIS:
+			m_velocity = MathHelper::Add(Get_Vel(), m_camera->Get_Right(), -m_acceleration);
+			break;
+		case MOVE_ONLY_XZ:
+			m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ_Norm(m_camera->Get_Right()), -m_acceleration);
+			break;
+		default:
+			break;
+		}
+	}
+	else {
+		switch (flag) {
+		case MOVE_ALL_AXIS:
+			m_velocity = MathHelper::Add(Get_Vel(), Get_Right(), -m_acceleration);
+			break;
+		case MOVE_ONLY_XZ:
+			m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ_Norm(Get_Right()), -m_acceleration);
+			break;
+		default:
+			break;
+		}
+	}
+
+	m_moving = true;
+}
+
+void Object::Move_Right(BYTE flag) {
+	if (m_camera) {
+		switch (flag) {
+		case MOVE_ALL_AXIS:
+			m_velocity = MathHelper::Add(Get_Vel(), m_camera->Get_Right(), m_acceleration);
+			break;
+		case MOVE_ONLY_XZ:
+			m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ_Norm(m_camera->Get_Right()), m_acceleration);
+			break;
+		default:
+			break;
+		}
+	}
+	else {
+		switch (flag) {
+		case MOVE_ALL_AXIS:
+			m_velocity = MathHelper::Add(Get_Vel(), Get_Right(), m_acceleration);
+			break;
+		case MOVE_ONLY_XZ:
+			m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ_Norm(Get_Right()), m_acceleration);
+			break;
+		default:
+			break;
+		}
+	}
+
+	m_moving = true;
+}
+
+void Object::Move_Up(BYTE flag) {
+	if (m_camera) {
+		switch (flag) {
+		case MOVE_ALL_AXIS:
+			m_velocity = MathHelper::Add(Get_Vel(), m_camera->Get_Up(), m_acceleration);
+			break;
+		case MOVE_ONLY_XZ:
+			m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ_Norm(m_camera->Get_Up()), m_acceleration);
+			break;
+		default:
+			break;
+		}
+	}
+	else {
+		switch (flag) {
+		case MOVE_ALL_AXIS:
+			m_velocity = MathHelper::Add(Get_Vel(), Get_Up(), m_acceleration);
+			break;
+		case MOVE_ONLY_XZ:
+			m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ_Norm(Get_Up()), m_acceleration);
+			break;
+		default:
+			break;
+		}
+	}
+
+	m_moving = true;
+}
+
+void Object::Move_Down(BYTE flag) {
+	if (m_camera) {
+		switch (flag) {
+		case MOVE_ALL_AXIS:
+			m_velocity = MathHelper::Add(Get_Vel(), m_camera->Get_Up(), -m_acceleration);
+			break;
+		case MOVE_ONLY_XZ:
+			m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ_Norm(m_camera->Get_Up()), -m_acceleration);
+			break;
+		default:
+			break;
+		}
+	}
+	else {
+		switch (flag) {
+		case MOVE_ALL_AXIS:
+			m_velocity = MathHelper::Add(Get_Vel(), Get_Up(), -m_acceleration);
+			break;
+		case MOVE_ONLY_XZ:
+			m_velocity = MathHelper::Add(Get_Vel(), MathHelper::Get_XZ_Norm(Get_Up()), -m_acceleration);
+			break;
+		default:
+			break;
+		}
 	}
 
 	m_moving = true;
@@ -381,27 +577,58 @@ void Object::Rotate_Character(float elapsed_time) {
 }
 
 void Object::Rotate_Roll(float degree) {
-	DirectX::XMStoreFloat4(&m_rotate_quat,
-		DirectX::XMQuaternionMultiply(DirectX::XMLoadFloat4(&m_rotate_quat),
-			DirectX::XMQuaternionRotationAxis(DirectX::XMLoadFloat3(&Get_Right()), degree)));
+	DirectX::XMStoreFloat4(&m_rotate_roll_pitch_yaw,
+		DirectX::XMQuaternionMultiply(DirectX::XMLoadFloat4(&m_rotate_roll_pitch_yaw),
+			DirectX::XMQuaternionRotationAxis(DirectX::XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f), degree)));
 
 	m_dirty = true;
 }
 
 void Object::Rotate_Pitch(float degree) {
-	DirectX::XMStoreFloat4(&m_rotate_quat,
-		DirectX::XMQuaternionMultiply(DirectX::XMLoadFloat4(&m_rotate_quat),
+	DirectX::XMStoreFloat4(&m_rotate_roll_pitch_yaw,
+		DirectX::XMQuaternionMultiply(DirectX::XMLoadFloat4(&m_rotate_roll_pitch_yaw),
 			DirectX::XMQuaternionRotationAxis(DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f), degree)));
 
 	m_dirty = true;
 }
 
 void Object::Rotate_Yaw(float degree) {
-	DirectX::XMStoreFloat4(&m_rotate_quat,
-		DirectX::XMQuaternionMultiply(DirectX::XMLoadFloat4(&m_rotate_quat),
-			DirectX::XMQuaternionRotationAxis(DirectX::XMLoadFloat3(&Get_Look()), degree)));
+	DirectX::XMStoreFloat4(&m_rotate_roll_pitch_yaw,
+		DirectX::XMQuaternionMultiply(DirectX::XMLoadFloat4(&m_rotate_roll_pitch_yaw),
+			DirectX::XMQuaternionRotationAxis(DirectX::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f), degree)));
 
 	m_dirty = true;
+}
+
+void Object::Rotate_Right(float degree) {
+	m_rotate_right += degree;
+
+	//m_rotate_right = MathHelper::Min(RIGHT_ANGLE_RADIAN, MathHelper::Max(m_rotate_right, -RIGHT_ANGLE_RADIAN));
+
+	m_dirty = true;
+}
+
+void Object::Rotate_Look(float degree) {
+	m_rotate_look += degree;
+
+	m_dirty = true;
+}
+
+void Object::Jump() {
+	m_next_state = Object_State::STATE_JUMP_START;
+	m_velocity.y = m_jump_power;
+}
+
+void Object::Act_One() {
+	m_next_state = Object_State::STATE_ACTION_ONE;
+}
+
+void Object::Act_Two() {
+	m_next_state = Object_State::STATE_ACTION_TWO;
+}
+
+void Object::Act_Three() {
+	m_next_state = Object_State::STATE_ACTION_THREE;
 }
 
 void Object::LerpRotate(float deltaTime)
@@ -462,16 +689,15 @@ void Object::Add_Mesh(std::vector<Mesh>& mesh_array) {
 }
 
 void Object::Set_WM(DirectX::XMMATRIX world_matrix) {
-	//world_matrix = DirectX::XMMatrixMultiply(world_matrix, DirectX::XMMatrixRotationRollPitchYaw(0.0f, 0.0f, DirectX::XMConvertToRadians(180.0f)));
-
 	DirectX::XMVECTOR translate, rotate, scale;
 
 	DirectX::XMMatrixDecompose(&scale, &rotate, &translate, world_matrix);
 
 	DirectX::XMStoreFloat3(&m_position, translate);
-	DirectX::XMStoreFloat4(&m_rotate_quat, rotate);
+	DirectX::XMStoreFloat4(&m_rotate_roll_pitch_yaw, rotate);
 	DirectX::XMStoreFloat3(&m_scale, scale);
 
+	Calc_Rotate();
 	Udt_WM();
 
 	//m_world_matrix = XMMATRIX_2_XMFLOAT4X4(world_matrix);
@@ -481,6 +707,24 @@ void Object::Draw(ID3D12GraphicsCommandList* command_list) {
 	for (auto& m : m_meshes) {
 		m.mesh_info->Draw(command_list);
 	}
+}
+
+void Object::Bind_Anim_2_State(Object_State object_state, Animation_Binding_Info animation_binding_info) {
+	m_animation_binding_map[object_state] = animation_binding_info;
+}
+
+void Object::Calc_Rotate() {
+	DirectX::XMStoreFloat4(&m_rotate, DirectX::XMLoadFloat4(&m_rotate_roll_pitch_yaw));
+	Udt_LUR();
+
+	DirectX::XMStoreFloat4(&m_rotate, DirectX::XMQuaternionMultiply(
+		DirectX::XMLoadFloat4(&m_rotate),
+		DirectX::XMQuaternionRotationAxis(DirectX::XMLoadFloat3(&Get_Right()), m_rotate_right)));
+	Udt_LUR();
+
+	DirectX::XMStoreFloat4(&m_rotate, DirectX::XMQuaternionMultiply(
+		DirectX::XMLoadFloat4(&m_rotate),
+		DirectX::XMQuaternionRotationAxis(DirectX::XMLoadFloat3(&Get_Look()), m_rotate_look)));
 }
 
 void Object::Set_Look(DirectX::XMFLOAT4 quat)

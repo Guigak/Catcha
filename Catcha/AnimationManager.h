@@ -15,7 +15,7 @@ public:
 
 	Animation_Info* Get_Animation(std::wstring animation_name);
 
-	void Get_Animated_Matrix(std::wstring animation_name, float animation_time,
-		std::array<DirectX::XMFLOAT4X4, MAX_BONE_COUNT>& animation_matrix_array);
+	void Get_Animated_Transform(std::wstring animation_name, float animated_time, bool loop,
+		std::array<Transform_Info, MAX_BONE_COUNT>& transform_info_array);
 };
 

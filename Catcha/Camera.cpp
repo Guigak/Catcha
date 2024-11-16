@@ -4,16 +4,6 @@ Camera::Camera() {
 	Set_Frustum(0.25f * MathHelper::Pi(), 1.0f, 1.0f, 1000.0f);
 }
 
-//void Camera::Set_Position(float position_x, float position_y, float position_z) {
-//	m_position = DirectX::XMFLOAT3(position_x, position_y, position_z);
-//	m_dirty = true;
-//}
-//
-//void Camera::Set_Position(DirectX::XMFLOAT3 position_vector) {
-//	m_position = position_vector;
-//	m_dirty = true;
-//}
-
 void Camera::Set_Frustum(float FOV_y, float aspect_ratio, float near_z, float far_z) {
 	m_FOV_y = FOV_y;
 	m_aspect_ratio = aspect_ratio;
@@ -49,7 +39,18 @@ void Camera::Look_At(const DirectX::XMFLOAT3 position, const DirectX::XMFLOAT3 t
 }
 
 void Camera::Update(float elapsed_time) {
+	if (m_dirty) {
+		if (m_limit_rotate_right) {
+			m_rotate_right = MathHelper::Min(m_limit_max_right, MathHelper::Max(m_rotate_right, m_limit_min_right));
+		}
+
+		if (m_limit_rotate_look) {
+			m_rotate_look = MathHelper::Min(m_limit_max_look, MathHelper::Max(m_rotate_look, m_limit_min_look));
+		}
+	}
+
 	if (m_object) {
+		Calc_Rotate();
 		Udt_LUR();
 
 		m_position = MathHelper::Add(m_object->Get_Position_3f(), Get_Look(), -m_distance);
@@ -58,6 +59,7 @@ void Camera::Update(float elapsed_time) {
 	}
 
 	if (m_dirty) {
+		Calc_Rotate();
 		Udt_WM();
 		Udt_LUR();
 
@@ -118,4 +120,16 @@ void Camera::Udt_VM() {
 void Camera::Bind_Obj(Object* object, float distance) {
 	m_object = object;
 	m_distance = distance;
+}
+
+void Camera::Set_Limit_Rotate_Right(bool limit_rotate, float degree_min, float degree_max) {
+	m_limit_rotate_right = limit_rotate;
+	m_limit_min_right = degree_min;
+	m_limit_max_right = degree_max;
+}
+
+void Camera::Set_Limit_Rotate_Look(bool limit_rotate, float degree_min, float degree_max) {
+	m_limit_rotate_look = limit_rotate;
+	m_limit_min_look = degree_min;
+	m_limit_max_look = degree_max;
 }

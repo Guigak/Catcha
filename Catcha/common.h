@@ -81,6 +81,21 @@ constexpr int MAX_WEIGHT_BONE_COUNT = 4;
 
 constexpr int MAX_MATERIAL_COUNT = 32;
 
+constexpr float RIGHT_ANGLE_RADIAN = DirectX::XMConvertToRadians(90.0f);
+
+constexpr BYTE MOVE_ALL_AXIS = 0b00;
+constexpr BYTE MOVE_ONLY_XZ = 0b01;
+
+constexpr BYTE ROTATE_SYNC_NONE = 0b00;
+constexpr BYTE ROTATE_SYNC_ALL = 0b01;
+constexpr BYTE ROTATE_SYNC_RPY = 0b10;	// ROTATE_ROLL_PITCH_YAW
+
+constexpr bool LOOP_ANIMATION = true;
+constexpr bool ONCE_ANIMATION = false;
+
+constexpr bool MOVABLE = true;
+constexpr bool NOT_MOVABLE = false;
+
 // virtual key
 #define VK_NUM0 0x30
 #define VK_NUM1 0x31
@@ -124,6 +139,13 @@ constexpr int MAX_MATERIAL_COUNT = 32;
 #define MATERIAL_INFO 0b0010
 #define SKELETON_INFO 0b0100
 #define ANIMATION_INFO 0b1000
+
+// enum class
+enum class Object_State {
+	STATE_IDLE, STATE_MOVE,
+	STATE_JUMP_START, STATE_JUMP_IDLE, STATE_JUMP_END,
+	STATE_ACTION_ONE, STATE_ACTION_TWO, STATE_ACTION_THREE
+};
 
 // struct
 struct D3D12_DEFAULT;
@@ -283,10 +305,23 @@ struct MathHelper {
 		return DirectX::XMVectorGetX(DirectX::XMVector3Length(DirectX::XMLoadFloat3(&xmfloat3)));
 	}
 
-	static float Length_XZ(const DirectX::XMFLOAT3& xmfloat3) {
-		DirectX::XMFLOAT3 xmfloat3_xz(xmfloat3.x, 0.0f, xmfloat3.z);
+	static DirectX::XMFLOAT3 Get_XZ(const DirectX::XMFLOAT3& xmfloat3) {
+		DirectX::XMFLOAT3 result = DirectX::XMFLOAT3(xmfloat3.x, 0.0f, xmfloat3.z);
 
-		return DirectX::XMVectorGetX(DirectX::XMVector3Length(DirectX::XMLoadFloat3(&xmfloat3_xz)));
+		return result;
+	}
+
+	static DirectX::XMFLOAT3 Get_XZ_Norm(const DirectX::XMFLOAT3& xmfloat3) {
+		DirectX::XMFLOAT3 result;
+		DirectX::XMStoreFloat3(&result, DirectX::XMVector3Normalize(DirectX::XMLoadFloat3(&Get_XZ(xmfloat3))));
+
+		return result;
+	}
+
+	static float Length_XZ(const DirectX::XMFLOAT3& xmfloat3) {
+		DirectX::XMFLOAT3 result = Get_XZ(xmfloat3);
+
+		return DirectX::XMVectorGetX(DirectX::XMVector3Length(DirectX::XMLoadFloat3(&result)));
 	}
 
 	static DirectX::XMFLOAT3 Dot(const DirectX::XMFLOAT3& xmfloat3_a, const DirectX::XMFLOAT3 xmfloat3_b) {
@@ -415,30 +450,6 @@ inline DirectX::XMFLOAT4 FbxQuaternion_2_XMFLOAT4(const FbxQuaternion& fbxquater
 		(float)fbxquaternion[0], (float)fbxquaternion[1], (float)fbxquaternion[2], (float)fbxquaternion[3]);
 
 	return xmfloat4;
-}
-
-inline DirectX::XMFLOAT3 Quat_2_Euler(const DirectX::XMVECTOR& quaternion) {
-	DirectX::XMFLOAT3 euler;
-	DirectX::XMVECTOR quat = DirectX::XMQuaternionNormalize(quaternion);
-
-	float ysqr = DirectX::XMVectorGetY(quat) * DirectX::XMVectorGetY(quat);
-
-	// Roll
-	float t0 = 2.0f * (DirectX::XMVectorGetW(quat) * DirectX::XMVectorGetX(quat) + DirectX::XMVectorGetY(quat) * DirectX::XMVectorGetZ(quat));
-	float t1 = 1.0f - 2.0f * (DirectX::XMVectorGetX(quat) * DirectX::XMVectorGetX(quat) + ysqr);
-	euler.x = std::atan2(t0, t1);
-
-	// Pitch
-	float t2 = 2.0f * (DirectX::XMVectorGetW(quat) * DirectX::XMVectorGetY(quat) - DirectX::XMVectorGetZ(quat) * DirectX::XMVectorGetX(quat));
-	t2 = std::clamp(t2, -1.0f, 1.0f);
-	euler.y = std::asin(t2);
-
-	// Yaw
-	float t3 = 2.0f * (DirectX::XMVectorGetW(quat) * DirectX::XMVectorGetZ(quat) + DirectX::XMVectorGetX(quat) * DirectX::XMVectorGetY(quat));
-	float t4 = 1.0f - 2.0f * (ysqr + DirectX::XMVectorGetZ(quat) * DirectX::XMVectorGetZ(quat));
-	euler.z = std::atan2(t3, t4);
-
-	return euler;
 }
 
 #define Throw_If_Failed(x)															\
@@ -1846,10 +1857,27 @@ struct Skeleton_Info {
 };
 
 struct Transform_Info {
-	DirectX::XMFLOAT3 trenslate = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
+	DirectX::XMFLOAT3 translate = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
 	DirectX::XMFLOAT4 rotate = DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
 	DirectX::XMFLOAT3 scale = DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f);
 };
+
+inline Transform_Info Interp_Trans_Info(const Transform_Info& transform_info_a, const Transform_Info& transform_info_b, float interpolation_factor) {
+	DirectX::XMVECTOR translate_a = DirectX::XMLoadFloat3(&transform_info_a.translate);
+	DirectX::XMVECTOR rotate_a = DirectX::XMLoadFloat4(&transform_info_a.rotate);
+	DirectX::XMVECTOR scale_a = DirectX::XMLoadFloat3(&transform_info_a.scale);
+
+	DirectX::XMVECTOR translate_b = DirectX::XMLoadFloat3(&transform_info_b.translate);
+	DirectX::XMVECTOR rotate_b = DirectX::XMLoadFloat4(&transform_info_b.rotate);
+	DirectX::XMVECTOR scale_b = DirectX::XMLoadFloat3(&transform_info_b.scale);
+
+	Transform_Info result;
+	DirectX::XMStoreFloat3(&result.translate, DirectX::XMVectorLerp(translate_a, translate_b, interpolation_factor));
+	DirectX::XMStoreFloat4(&result.rotate, DirectX::XMQuaternionSlerp(rotate_a, rotate_b, interpolation_factor));
+	DirectX::XMStoreFloat3(&result.scale, DirectX::XMVectorLerp(scale_a, scale_b, interpolation_factor));
+
+	return result;
+}
 
 struct Keyframe_Info {
 	float time;
@@ -1872,8 +1900,21 @@ struct Animation_Info {
 	}
 
 	float Get_Upper_Keyframe_Time(float time) {
-		float keyframe_time = std::fmod(time, animation_time);
+		//float keyframe_time = std::fmod(time, animation_time);
+		auto keyframe = keyframe_map.lower_bound(time);
 
-		return keyframe_map.lower_bound(keyframe_time)->first;
+		if (keyframe == keyframe_map.end()) {
+			--keyframe;
+		}
+
+		return keyframe->first;
 	 }
+};
+
+struct Animation_Binding_Info {
+	std::wstring binded_animation_name = L"";
+	float blending_time = 0.0f;
+	bool loop = false;
+	Object_State next_object_state = Object_State::STATE_IDLE;
+	bool movable = true;
 };

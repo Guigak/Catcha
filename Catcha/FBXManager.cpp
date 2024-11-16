@@ -830,31 +830,6 @@ void FBXManager::Add_Keyframe(FbxTime time, Skeleton_Info* skeleton_info, std::v
     Keyframe_Info keyframe_info;
     keyframe_info.time = (float)time.GetSecondDouble();
 
-    //std::array<DirectX::XMMATRIX, MAX_BONE_COUNT> global_transform_matrix_array;
-
-    //global_transform_matrix_array[0] = FbxAMatrix_2_XMMATRIX(bone_node_array[0]->EvaluateLocalTransform(time));
-    ////global_transform_matrix_array[0] = FbxAMatrix_2_XMMATRIX(Normalization_FbxMatrix(bone_node_array[0]->EvaluateLocalTransform(time)));
-
-    //for (UINT i = 1; i < (UINT)bone_node_array.size(); ++ i) {
-    //    auto& bone_node = bone_node_array[i];
-
-    //    global_transform_matrix_array[i] = FbxAMatrix_2_XMMATRIX(bone_node->EvaluateLocalTransform(time))
-    //        * global_transform_matrix_array[skeleton_info->bone_array[i].parent_bone_index];
-    //}
-
-    //for (UINT i = 0; i < bone_node_array.size(); ++i) {
-    //    DirectX::XMMATRIX animation_fransform_matrix = DirectX::XMLoadFloat4x4(&skeleton_info->bone_offset_matrix_array[i])
-    //        * global_transform_matrix_array[i];
-
-    //    DirectX::XMVECTOR translate, rotate, scale;
-
-    //    DirectX::XMMatrixDecompose(&scale, &rotate, &translate, animation_fransform_matrix);
-
-    //    DirectX::XMStoreFloat3(&keyframe_info.animation_transform_array[i].trenslate, translate);
-    //    DirectX::XMStoreFloat4(&keyframe_info.animation_transform_array[i].rotate, rotate);
-    //    DirectX::XMStoreFloat3(&keyframe_info.animation_transform_array[i].scale, scale);
-    //}
-
     UINT bone_count = 0;
     DirectX::XMMATRIX global_transform_matrix;
 
@@ -866,13 +841,9 @@ void FBXManager::Add_Keyframe(FbxTime time, Skeleton_Info* skeleton_info, std::v
 
         DirectX::XMMatrixDecompose(&scale, &rotate, &translate, animation_fransform_matrix);
 
-        DirectX::XMStoreFloat3(&keyframe_info.animation_transform_array[bone_count].trenslate, translate);
+        DirectX::XMStoreFloat3(&keyframe_info.animation_transform_array[bone_count].translate, translate);
         DirectX::XMStoreFloat4(&keyframe_info.animation_transform_array[bone_count].rotate, rotate);
         DirectX::XMStoreFloat3(&keyframe_info.animation_transform_array[bone_count].scale, scale);
-
-        //keyframe_info.animation_transform_array[bone_count].trenslate = FbxVector4_2_XMFLOAT3(global_transform_matrix.GetT());
-        //keyframe_info.animation_transform_array[bone_count].rotate = FbxQuaternion_2_XMFLOAT4(global_transform_matrix.GetQ());
-        //keyframe_info.animation_transform_array[bone_count].scale = FbxVector4_2_XMFLOAT3(global_transform_matrix.GetS());
         bone_count++;
     }
 

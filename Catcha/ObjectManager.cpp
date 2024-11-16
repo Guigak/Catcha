@@ -126,13 +126,22 @@ void ObjectManager::Actions(std::wstring object_name, Action action) {
 void ObjectManager::Update(float elapsed_time) {
     m_material_manager.Update();
 
-    for (auto& o : m_objects) {
+    for (auto& o : m_opaque_objects) {
         o->Calc_Delta(elapsed_time);
     }
 
     Solve_Collision();
 
-    for (auto& o : m_objects) {
+    for (auto& o : m_opaque_objects) {
+        o->Update(elapsed_time);
+    }
+
+    for (auto& o : m_camera_objects) {
+        o->Update(elapsed_time);
+    }
+
+    //
+    for (auto& o : m_collision_obb_objects) {
         o->Update(elapsed_time);
     }
 }
@@ -230,6 +239,9 @@ Object* ObjectManager::Add_Cam(std::wstring camera_name, std::wstring set_name, 
     std::unique_ptr<Object> object;
     object = std::make_unique<Camera>();
 
+    object->Set_CB_Index(m_object_count++);
+    object->Add_Mesh(m_mesh_manager.Get_Mesh(L"default_box"));
+
     m_object_map[camera_name] = std::move(object);
 
     Object* object_pointer = m_object_map[camera_name].get();
@@ -243,4 +255,23 @@ Object* ObjectManager::Add_Cam(std::wstring camera_name, std::wstring set_name, 
     }
 
     return object_pointer;
+}
+
+Object* ObjectManager::Add_Col_OBB_Obj(std::wstring obb_object_name, DirectX::BoundingOrientedBox obb, std::wstring object_name) {
+    std::unique_ptr<Object> object;
+    object = std::make_unique<Object>(this, object_name, m_mesh_manager.Get_Mesh(L"default_box"),
+        DirectX::XMMatrixIdentity(), m_object_count++, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, false, true);
+
+    object->Set_OBB(obb);
+
+    m_object_map[object_name] = std::move(object);
+
+    Object* object_pointer = m_object_map[object_name].get();
+    m_objects.emplace_back(object_pointer);
+
+    m_collision_obb_objects.emplace_back(object_pointer);
+
+    m_object_set_map[L"BoundingBox"].emplace_back(object_pointer);
+
+    return m_object_map[object_name].get();
 }

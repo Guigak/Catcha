@@ -28,6 +28,10 @@ private:
 	UINT m_object_count = 0;
 
 	//
+	std::vector<Object*> m_optimization_obb_objects;
+	std::vector<Object*> m_collision_obb_objects;
+
+	//
 	std::unordered_map<std::wstring, std::vector<Object*>> m_object_set_map;
 	std::unordered_map<std::wstring, std::wstring> m_collision_pair_map;
 
@@ -45,6 +49,13 @@ public:
 	Object* Get_Obj(UINT object_number);
 	Object* Get_Opaque_Obj(UINT object_number);
 	Object* Get_Transparent_Obj(UINT object_number);
+
+	std::vector<Object*>& Get_Obj_Arr() { return m_objects; }
+	std::vector<Object*>& Get_Opaque_Obj_Arr() { return m_opaque_objects; }
+	std::vector<Object*>& Get_Transparent_Obj_Arr() { return m_transparent_objects; }
+	std::vector<Object*>& Get_Cam_Obj_Arr() { return m_camera_objects; }
+	std::vector<Object*>& Get_Optmz_OBB_Obj_Arr() { return m_optimization_obb_objects; }	// Get Optimization OBB Object Array
+	std::vector<Object*>& Get_Col_OBB_Obj_Arr() { return m_collision_obb_objects; }	// Get Collision OBB Object Array
 
 	size_t Get_Opaque_Obj_Count() { return m_opaque_objects.size(); }
 	size_t Get_Transparent_Obj_Count() { return m_transparent_objects.size(); }
@@ -97,5 +108,8 @@ public:
 
 	//
 	Object* Add_Cam(std::wstring camera_name, std::wstring set_name = L"camera", std::wstring bind_object_name = L"", float distance = 0.0f, BYTE flag = ROTATE_SYNC_NONE);
+
+	//
+	Object* Add_Col_OBB_Obj(std::wstring obb_object_name, DirectX::BoundingOrientedBox obb, std::wstring object_name = L"");
 };
 

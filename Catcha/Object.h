@@ -238,6 +238,7 @@ public:
 	virtual void Act_Three();
 
 	// [SC] 회전 보간을 위한 함수
+	void SendRotate(float degree);
 	void LerpRotate(float deltaTime);
 	void SetTargetPitch(float newpitch);
 

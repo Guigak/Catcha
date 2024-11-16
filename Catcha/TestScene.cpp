@@ -563,26 +563,22 @@ void TestScene::Build_PSO(D3DManager* d3d_manager) {
 }
 
 void TestScene::Binding_Key() {
-	m_input_manager->Bind_Key_First_Down(VK_W, BindingInfo(L"player", Action::MOVE_FORWARD));
-	m_input_manager->Bind_Key_First_Down(VK_S, BindingInfo(L"player", Action::MOVE_BACK));
-	m_input_manager->Bind_Key_First_Down(VK_A, BindingInfo(L"player", Action::MOVE_LEFT));
-	m_input_manager->Bind_Key_First_Down(VK_D, BindingInfo(L"player", Action::MOVE_RIGHT));
+	m_input_manager->Bind_Key_First_Down(VK_W, BindingInfo(L"player", Action::MOVE_FORWARD, MOVE_ONLY_XZ));
+	m_input_manager->Bind_Key_First_Down(VK_S, BindingInfo(L"player", Action::MOVE_BACK, MOVE_ONLY_XZ));
+	m_input_manager->Bind_Key_First_Down(VK_A, BindingInfo(L"player", Action::MOVE_LEFT, MOVE_ONLY_XZ));
+	m_input_manager->Bind_Key_First_Down(VK_D, BindingInfo(L"player", Action::MOVE_RIGHT, MOVE_ONLY_XZ));
 
-	m_input_manager->Bind_Key_Down(VK_W, BindingInfo(L"player", Action::MOVE_FORWARD));
-	m_input_manager->Bind_Key_Down(VK_S, BindingInfo(L"player", Action::MOVE_BACK));
-	m_input_manager->Bind_Key_Down(VK_A, BindingInfo(L"player", Action::MOVE_LEFT));
-	m_input_manager->Bind_Key_Down(VK_D, BindingInfo(L"player", Action::MOVE_RIGHT));
-
-	m_input_manager->Bind_Key_Up(VK_W, BindingInfo(L"player", Action::MOVE_FORWARD));
-	m_input_manager->Bind_Key_Up(VK_S, BindingInfo(L"player", Action::MOVE_BACK));
-	m_input_manager->Bind_Key_Up(VK_A, BindingInfo(L"player", Action::MOVE_LEFT));
-	m_input_manager->Bind_Key_Up(VK_D, BindingInfo(L"player", Action::MOVE_RIGHT));
-
-	// TODO : move only xz È®ÀÎ
 	m_input_manager->Bind_Key_Down(VK_W, BindingInfo(L"player", Action::MOVE_FORWARD, MOVE_ONLY_XZ));
 	m_input_manager->Bind_Key_Down(VK_S, BindingInfo(L"player", Action::MOVE_BACK, MOVE_ONLY_XZ));
 	m_input_manager->Bind_Key_Down(VK_A, BindingInfo(L"player", Action::MOVE_LEFT, MOVE_ONLY_XZ));
 	m_input_manager->Bind_Key_Down(VK_D, BindingInfo(L"player", Action::MOVE_RIGHT, MOVE_ONLY_XZ));
+
+	m_input_manager->Bind_Key_Up(VK_W, BindingInfo(L"player", Action::MOVE_FORWARD, MOVE_ONLY_XZ));
+	m_input_manager->Bind_Key_Up(VK_S, BindingInfo(L"player", Action::MOVE_BACK, MOVE_ONLY_XZ));
+	m_input_manager->Bind_Key_Up(VK_A, BindingInfo(L"player", Action::MOVE_LEFT, MOVE_ONLY_XZ));
+	m_input_manager->Bind_Key_Up(VK_D, BindingInfo(L"player", Action::MOVE_RIGHT, MOVE_ONLY_XZ));
+
+
 	m_input_manager->Bind_Key_First_Down(VK_NUM1, BindingInfo(L"player", Action::CHANGE_MOUSE));
 	m_input_manager->Bind_Key_First_Down(VK_NUM2, BindingInfo(L"player", Action::CHANGE_CAT));
 

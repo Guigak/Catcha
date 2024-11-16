@@ -333,10 +333,10 @@ void NetworkManager::ProcessPacket(char* ptr)
 			sync.x = m_objects[characters[m_myid].character_id]->Get_Position_3f().x;
 			sync.y = m_objects[characters[m_myid].character_id]->Get_Position_3f().y;
 			sync.z = m_objects[characters[m_myid].character_id]->Get_Position_3f().z;
-			sync.quat_x = m_objects[characters[m_myid].character_id]->Get_Rotate_Quat().x;
-			sync.quat_y = m_objects[characters[m_myid].character_id]->Get_Rotate_Quat().y;
-			sync.quat_z = m_objects[characters[m_myid].character_id]->Get_Rotate_Quat().z;
-			sync.quat_w = m_objects[characters[m_myid].character_id]->Get_Rotate_Quat().w;
+			sync.quat_x = m_objects[characters[m_myid].character_id]->Get_Rotate_RPY_4f().x;
+			sync.quat_y = m_objects[characters[m_myid].character_id]->Get_Rotate_RPY_4f().y;
+			sync.quat_z = m_objects[characters[m_myid].character_id]->Get_Rotate_RPY_4f().z;
+			sync.quat_w = m_objects[characters[m_myid].character_id]->Get_Rotate_RPY_4f().w;
 
 			sync.size = sizeof(sync);
 			sync.type = CS_SYNC_PLAYER;

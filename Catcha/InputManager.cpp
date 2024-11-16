@@ -114,7 +114,11 @@ void InputManager::Prcs_Input() {
 			Prcs_Binding_Info(binding_info);
 		}
 
-			Prcs_Binding_Info(m_mouse_move_info);
+		if (m_previous_point.y != new_point.y) {
+			binding_info = m_mouse_move_info[1];
+			binding_info.value = std::get<float>(binding_info.value) * (float)(new_point.y - m_previous_point.y);
+
+			Prcs_Binding_Info(binding_info);
 		}
 	}
 

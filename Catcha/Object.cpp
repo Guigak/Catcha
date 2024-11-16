@@ -54,6 +54,12 @@ void Object::Calc_Delta(float elapsed_time) {
 
 			m_speed = m_max_speed;
 		}
+		// 서버 연결시 이동 로직 없애기
+		if( true == Get_Camera_Need_Send() )
+		{
+			m_velocity = DirectX::XMFLOAT3();
+			return;
+		}
 
 		DirectX::XMFLOAT3 delta = MathHelper::Multiply(Get_Vel(), elapsed_time);
 
@@ -543,28 +549,6 @@ void Object::Rotate(float degree_roll, float degree_pitch, float degree_yaw) {
 	Rotate_Roll(degree_roll / 100.0f);
 	Rotate_Pitch(degree_pitch / 100.0f);
 	Rotate_Yaw(degree_yaw / 100.0f);
-
-	// [CS] 시간이 지날때만 시야각 보냄
-	if (true == Get_Camera_Need_Send())
-	{
-		auto current_time = std::chrono::high_resolution_clock::now();
-		float delta_time = std::chrono::duration<float>(current_time - m_last_sent_time).count();
-		total_pitch += degree_pitch;
-
-
-		if (delta_time >= m_pitch_send_delay)
-		{
-			// [CS] 시야각 보냄
-			float pitch = (total_pitch);
-
-			NetworkManager& network_manager = NetworkManager::GetInstance();
-			network_manager.SendRotate(pitch);
-			total_pitch = 0.0f;
-			//OutputDebugStringA("Send Rotate\n");
-
-			m_last_sent_time = current_time;
-		}
-	}
 }
 
 void Object::Rotate_Character(float elapsed_time) {
@@ -590,6 +574,8 @@ void Object::Rotate_Pitch(float degree) {
 			DirectX::XMQuaternionRotationAxis(DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f), degree)));
 
 	m_dirty = true;
+
+	SendRotate(degree);
 }
 
 void Object::Rotate_Yaw(float degree) {
@@ -631,6 +617,34 @@ void Object::Act_Three() {
 	m_next_state = Object_State::STATE_ACTION_THREE;
 }
 
+void Object::SendRotate(float degree)
+{
+	// [CS] 시간이 지날때만 시야각 보냄
+	if (false == Get_Camera_Need_Send())
+	{
+		return;
+	}
+
+	auto current_time = std::chrono::high_resolution_clock::now();
+	float delta_time = std::chrono::duration<float>(current_time - m_last_sent_time).count();
+	total_pitch += degree;
+
+
+	if (delta_time >= m_pitch_send_delay)
+	{
+		// [CS] 시야각 보냄
+		float pitch = (total_pitch);
+
+		NetworkManager& network_manager = NetworkManager::GetInstance();
+		network_manager.SendRotate(pitch);
+		total_pitch = 0.0f;
+		//OutputDebugStringA("Send Rotate\n");
+
+		m_last_sent_time = current_time;
+	}
+	
+}
+
 void Object::LerpRotate(float deltaTime)
 {
 	if (m_lerp_pitch_progress < 1.0f)
@@ -648,11 +662,11 @@ void Object::LerpRotate(float deltaTime)
 		interpolated_quat = DirectX::XMQuaternionNormalize(interpolated_quat);
 
 		// 보간된 쿼터니언을 XMFLOAT4로 저장 후 적용
-		XMStoreFloat4(&m_rotate_quat, interpolated_quat);
+		DirectX::XMStoreFloat4(&m_rotate_roll_pitch_yaw, interpolated_quat);
 	}
 	else
 	{
-		m_rotate_quat = m_target_quat;
+		m_rotate_roll_pitch_yaw = m_target_quat;
 		m_change_pitch = false;
 	}
 }
@@ -662,15 +676,15 @@ void Object::SetTargetPitch(float newpitch)
 {
 	m_change_pitch = true;
 	// 기존 보간되다 말은 값이 있으면 그냥 즉시 적용
-	m_rotate_quat = m_target_quat;
+	m_rotate_roll_pitch_yaw = m_target_quat;
 
 	// 현재 쿼터니언을 보간의 시작 쿼터니언으로 설정
-	m_start_quat = m_rotate_quat;
+	m_start_quat = m_rotate_roll_pitch_yaw;
 
 	// 목표 쿼터니언에 목표 pitch값 미리 적용
 	DirectX::XMStoreFloat4(&m_target_quat,
 		DirectX::XMQuaternionMultiply(DirectX::XMLoadFloat4(&m_target_quat),
-			DirectX::XMQuaternionRotationAxis(DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f), newpitch / 100.0f)));
+			DirectX::XMQuaternionRotationAxis(DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f), newpitch)));
 	
 	// 보간 진행도 초기화
 	m_lerp_pitch_progress = 0.0f;     
@@ -729,7 +743,7 @@ void Object::Calc_Rotate() {
 
 void Object::Set_Look(DirectX::XMFLOAT4 quat)
 {
-	m_rotate_quat = quat;
+	m_rotate_roll_pitch_yaw = quat;
 	m_target_quat = quat;
 	m_dirty = true;
 }

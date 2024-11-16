@@ -432,11 +432,6 @@ void TestScene::Build_O() {
 	object->Set_Animated(true);
 
 	// test
-	//m_object_manager->Add_Col_OBB_Obj(L"test_obb",
-	//	DirectX::BoundingOrientedBox(
-	//		DirectX::XMFLOAT3(239.838f, -29.20395f, 309.0393f),
-	//		DirectX::XMFLOAT3(5.723875f, 30.5045f, 5.916107f),
-	//		DirectX::XMFLOAT4(0, 0, 0, 1)));
 	m_object_manager->Add_Col_OBB_Obj(L"test_obb",
 		DirectX::BoundingOrientedBox(
 			DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f),

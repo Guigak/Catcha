@@ -259,19 +259,19 @@ Object* ObjectManager::Add_Cam(std::wstring camera_name, std::wstring set_name, 
 
 Object* ObjectManager::Add_Col_OBB_Obj(std::wstring obb_object_name, DirectX::BoundingOrientedBox obb, std::wstring object_name) {
     std::unique_ptr<Object> object;
-    object = std::make_unique<Object>(this, object_name, m_mesh_manager.Get_Mesh(L"default_box"),
+    object = std::make_unique<Object>(this, obb_object_name, m_mesh_manager.Get_Mesh(L"default_box"),
         DirectX::XMMatrixIdentity(), m_object_count++, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, false, true);
 
     object->Set_OBB(obb);
 
-    m_object_map[object_name] = std::move(object);
+    m_object_map[obb_object_name] = std::move(object);
 
-    Object* object_pointer = m_object_map[object_name].get();
+    Object* object_pointer = m_object_map[obb_object_name].get();
     m_objects.emplace_back(object_pointer);
 
     m_collision_obb_objects.emplace_back(object_pointer);
 
     m_object_set_map[L"BoundingBox"].emplace_back(object_pointer);
 
-    return m_object_map[object_name].get();
+    return m_object_map[obb_object_name].get();
 }

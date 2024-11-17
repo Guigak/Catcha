@@ -171,12 +171,13 @@ bool ObjectManager::Overlaped(DirectX::XMVECTOR corners_a[], DirectX::XMVECTOR c
     return false;
 }
 
-void ObjectManager::Bind_Cam_2_Obj(std::wstring camera_name, std::wstring object_name, float distance, BYTE flag) {
+void ObjectManager::Bind_Cam_2_Obj(std::wstring camera_name, std::wstring object_name,
+	float offset_look, float offset_up, float offset_right, float distance, BYTE flag) {
     Camera* camera = (Camera*)Get_Obj(camera_name);
     Object* object = Get_Obj(object_name);
 
     object->Bind_Camera(camera);
-    camera->Bind_Obj(object, distance);
+    camera->Bind_Obj(object, offset_look, offset_up, offset_right, distance);
 
     object->Set_Cam_Rotate_Flag(flag);
 }
@@ -235,7 +236,8 @@ void ObjectManager::Set_Sklt_2_Obj(std::wstring object_name, std::wstring skelet
     Get_Obj(object_name)->Set_Skeleton(m_skeleton_manager.Get_Skeleton(skeleton_name));
 }
 
-Object* ObjectManager::Add_Cam(std::wstring camera_name, std::wstring set_name, std::wstring bind_object_name, float distance, BYTE flag) {
+Object* ObjectManager::Add_Cam(std::wstring camera_name, std::wstring set_name, std::wstring bind_object_name,
+    float offset_look, float offset_up, float offset_right, float distance, BYTE flag) {
     std::unique_ptr<Object> object;
     object = std::make_unique<Camera>();
 
@@ -251,7 +253,7 @@ Object* ObjectManager::Add_Cam(std::wstring camera_name, std::wstring set_name, 
     m_object_set_map[set_name].emplace_back(object_pointer);
 
     if (bind_object_name != L"") {
-        Bind_Cam_2_Obj(camera_name, bind_object_name, distance, flag);
+        Bind_Cam_2_Obj(camera_name, bind_object_name, offset_look, offset_up, offset_right, distance, flag);
     }
 
     return object_pointer;

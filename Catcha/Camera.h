@@ -19,6 +19,10 @@ private:
 	Object* m_object = nullptr;
 	float m_distance = 0.0f;
 
+	float m_bind_offset_look = 0.0f;
+	float m_bind_offset_up = 0.0f;
+	float m_bind_offset_right = 0.0f;
+
 	//
 	bool m_limit_rotate_right = false;
 	float m_limit_min_right = 0.0f;
@@ -60,7 +64,7 @@ public:
 	void Udt_VM();	// Update View Matrix
 
 	//
-	void Bind_Obj(Object* object, float distance);
+	void Bind_Obj(Object* object, float offset_look, float offset_up, float offset_right, float distance);
 
 	//
 	void Set_Limit_Rotate_Right(bool limit_rotate, float degree_min = -RIGHT_ANGLE_RADIAN, float degree_max = RIGHT_ANGLE_RADIAN);

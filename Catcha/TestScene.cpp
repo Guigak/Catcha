@@ -432,15 +432,18 @@ void TestScene::Build_O() {
 	object->Set_Animated(true);
 
 	// test
-	m_object_manager->Add_Col_OBB_Obj(L"test_obb",
-		DirectX::BoundingOrientedBox(
-			DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f),
-			DirectX::XMFLOAT3(40.0f, 180.0f, 40.0f),
-			DirectX::XMFLOAT4(0, 0, 0, 1)));
+	for (int i = 0; i < 50; ++i) {
+		m_object_manager->Add_Col_OBB_Obj(L"bed-" + std::to_wstring(i),
+			DirectX::BoundingOrientedBox(
+				DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f),
+				DirectX::XMFLOAT3(1.0f * (float)i, 1.0f * (float)i, 1.0f * (float)i),
+				DirectX::XMFLOAT4(0, 0, 0, 1)));
+	}
 }
 
 void TestScene::Build_C(D3DManager* d3d_manager) {
-	auto main_camera = reinterpret_cast<Camera*>(m_object_manager->Add_Cam(L"maincamera", L"camera", L"player", 250.0f, ROTATE_SYNC_NONE));
+	auto main_camera = reinterpret_cast<Camera*>(m_object_manager->Add_Cam(L"maincamera", L"camera", L"player",
+		0.0f, 50.0f, 0.0f, 250.0f, ROTATE_SYNC_NONE));
 	main_camera->Set_Frustum(0.25f * MathHelper::Pi(), d3d_manager->Get_Aspect_Ratio(), 1.0f, 2000.0f);
 	//main_camera->Set_Limit_Rotate_Right(true, -RIGHT_ANGLE_RADIAN + 0.01f, RIGHT_ANGLE_RADIAN - 0.01f);
 	main_camera->Set_Limit_Rotate_Right(true, DirectX::XMConvertToRadians(1.0f), DirectX::XMConvertToRadians(60.0f));

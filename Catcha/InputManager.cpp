@@ -1,5 +1,6 @@
 #include "InputManager.h"
 #include "ObjectManager.h"
+#include "Scene.h"
 
 void InputManager::Bind_Key_Down(int key_id, BindingInfo binding_info) {
 	m_key_down_map[key_id] = binding_info;
@@ -139,6 +140,18 @@ void InputManager::Prcs_Binding_Info(BindingInfo binding_info) {
 			break;
 		default:
 			m_object_manager->Actions(binding_info.object_name, binding_info.action);
+			break;
+		}
+	}
+	else {
+		switch (binding_info.action) {
+		case Action::CHANGE_WIREFRAME_FLAG:
+			m_scene->Chg_Wireframe_Flag();
+			break;
+		case Action::CHANGE_BOUNDINGBOX_FLAG:
+			m_scene->Chg_Boundingbox_Flag();
+			break;
+		default:
 			break;
 		}
 	}

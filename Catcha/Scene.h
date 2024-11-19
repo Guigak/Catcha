@@ -27,7 +27,6 @@ protected:
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_CBV_heap = nullptr;
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_SRV_heap = nullptr;
 
-	std::unordered_map<std::wstring, std::unique_ptr<MaterialInfo>> m_material_map;
 	std::unordered_map<std::wstring, Microsoft::WRL::ComPtr<ID3DBlob>> m_shader_map;
 	std::unordered_map<std::wstring, Microsoft::WRL::ComPtr<ID3D12PipelineState>> m_pipeline_state_map;
 
@@ -45,6 +44,7 @@ protected:
 	UINT m_animation_CBV_offset = 0;
 
 	bool m_wireframe = false;
+	bool m_render_boundingbox = false;
 
 	//std::unordered_map<std::wstring, std::unique_ptr<Camera>> m_camera_map;
 
@@ -91,5 +91,9 @@ public:
 
 	virtual void Set_BS(Scene* back_scene) { m_back_scene = back_scene; }	// Set Back Scene
 	virtual void Set_SM(SceneManager* scene_manager) { m_scene_manager = scene_manager; }	// Set Scene Manager
+
+	//
+	void Chg_Wireframe_Flag() { m_wireframe = !m_wireframe; }
+	void Chg_Boundingbox_Flag() { m_render_boundingbox = !m_render_boundingbox; }
 };
 

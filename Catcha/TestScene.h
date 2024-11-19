@@ -28,5 +28,9 @@ public:
 
 	virtual void Binding_Key();
 	virtual void Pairing_Collision_Set();
+
+	//
+	void Crt_Voxel(DirectX::XMFLOAT3 position, float scale, UINT detail_level);
+	void Crt_Voxel_Cheese(DirectX::XMFLOAT3 position, float scale, UINT detail_level);
 };
 

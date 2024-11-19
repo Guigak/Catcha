@@ -261,7 +261,7 @@ Object* ObjectManager::Add_Cam(std::wstring camera_name, std::wstring set_name, 
 
 Object* ObjectManager::Add_Col_OBB_Obj(std::wstring obb_object_name, DirectX::BoundingOrientedBox obb, std::wstring object_name) {
     std::unique_ptr<Object> object;
-    object = std::make_unique<Object>(this, obb_object_name, m_mesh_manager.Get_Mesh(L"default_box"),
+    object = std::make_unique<Object>(this, obb_object_name, m_mesh_manager.Get_Mesh(L"boundingbox"),
         DirectX::XMMatrixIdentity(), m_object_count++, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, false, true);
 
     object->Set_OBB(obb);

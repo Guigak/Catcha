@@ -2,6 +2,8 @@
 #include "D3DManager.h"
 #include "MeshCreater.h"
 
+UINT m_voxel_count = 0;
+
 void TestScene::Enter(D3DManager* d3d_manager) {
 	m_object_manager = std::make_unique<ObjectManager>();
 	m_input_manager = std::make_unique<InputManager>(this, m_object_manager.get());
@@ -15,8 +17,8 @@ void TestScene::Enter(D3DManager* d3d_manager) {
 
 	Build_RS(device);
 	Build_S_N_L();
-	Build_Mesh(device, command_list);
 	Build_Material();
+	Build_Mesh(device, command_list);
 	Build_O();
 	Build_C(d3d_manager);
 	Build_FR(device);
@@ -37,8 +39,6 @@ void TestScene::Exit(D3DManager* d3d_manager) {
 	d3d_manager->Cls_Cmd_List();
 	d3d_manager->Exct_Cmd_List();
 	d3d_manager->Flush_Cmd_Q();
-
-
 }
 
 void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
@@ -177,15 +177,12 @@ void TestScene::Draw(D3DManager* d3d_manager, ID3D12CommandList** command_lists)
 
 	Throw_If_Failed(command_allocator->Reset());
 
-	//if (m_wireframe) {
-	//	Throw_If_Failed(command_list->Reset(command_allocator, m_pipeline_state_map[L"opaque_wireframe"].Get()));
-	//}
-	//else {
-	//	Throw_If_Failed(command_list->Reset(command_allocator, m_pipeline_state_map[L"opaque"].Get()));
-	//}
-
-	//Throw_If_Failed(command_list->Reset(command_allocator, m_pipeline_state_map[L"opaque_wireframe"].Get()));
-	Throw_If_Failed(command_list->Reset(command_allocator, m_pipeline_state_map[L"opaque"].Get()));
+	if (m_wireframe) {
+		Throw_If_Failed(command_list->Reset(command_allocator, m_pipeline_state_map[L"opaque_wireframe"].Get()));
+	}
+	else {
+		Throw_If_Failed(command_list->Reset(command_allocator, m_pipeline_state_map[L"opaque"].Get()));
+	}
 
 	d3d_manager->Clr_RTV(command_list);
 	d3d_manager->Clr_DSV(command_list);
@@ -253,37 +250,37 @@ void TestScene::Draw(D3DManager* d3d_manager, ID3D12CommandList** command_lists)
 	// draw transparent objects
 
 	// draw wireframe bounding box
-	d3d_manager->Clr_DSV(command_list);
-	command_list->SetPipelineState(m_pipeline_state_map[L"opaque_wireframe"].Get());
+	if (m_render_boundingbox) {
+		d3d_manager->Clr_DSV(command_list);
+		command_list->SetPipelineState(m_pipeline_state_map[L"opaque_wireframe"].Get());
 
-	// todo : check render obb
+		for (auto& object : m_object_manager->Get_Col_OBB_Obj_Arr()) {
+			UINT object_CBV_index = m_current_frameresource_index * (UINT)m_object_manager->Get_Obj_Count() + object->Get_CB_Index();
+			auto object_CBV_gpu_descriptor_handle = D3D12_GPU_DESCRIPTOR_HANDLE_EX(m_CBV_heap->GetGPUDescriptorHandleForHeapStart());
+			object_CBV_gpu_descriptor_handle.Get_By_Offset(object_CBV_index, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size());
 
-	for (auto& object : m_object_manager->Get_Col_OBB_Obj_Arr()) {
-		UINT object_CBV_index = m_current_frameresource_index * (UINT)m_object_manager->Get_Obj_Count() + object->Get_CB_Index();
-		auto object_CBV_gpu_descriptor_handle = D3D12_GPU_DESCRIPTOR_HANDLE_EX(m_CBV_heap->GetGPUDescriptorHandleForHeapStart());
-		object_CBV_gpu_descriptor_handle.Get_By_Offset(object_CBV_index, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size());
+			//
+			command_list->SetGraphicsRootDescriptorTable(0, object_CBV_gpu_descriptor_handle);
 
-		//
-		command_list->SetGraphicsRootDescriptorTable(0, object_CBV_gpu_descriptor_handle);
+			UINT material_CBV_index;
+			for (auto& m : object->Get_Mesh_Array()) {
+				if (m.mesh_info->material == nullptr) {
+					material_CBV_index = m_material_CBV_offset +
+						m_current_frameresource_index * (UINT)m_object_manager->Get_Material_Manager().Get_Material_Count() + 0;
+				}
+				else {
+					material_CBV_index = m_material_CBV_offset +
+						m_current_frameresource_index * (UINT)m_object_manager->Get_Material_Manager().Get_Material_Count() +
+						m.mesh_info->material->constant_buffer_index;
+				}
 
-		UINT material_CBV_index;
-		for (auto& m : object->Get_Mesh_Array()) {
-			if (m.mesh_info->material == nullptr) {
-				material_CBV_index = m_material_CBV_offset +
-					m_current_frameresource_index * (UINT)m_object_manager->Get_Material_Manager().Get_Material_Count() + 0;
+				auto material_CBV_gpu_descriptor_handle = D3D12_GPU_DESCRIPTOR_HANDLE_EX(m_CBV_heap->GetGPUDescriptorHandleForHeapStart());
+				material_CBV_gpu_descriptor_handle.Get_By_Offset(material_CBV_index, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size());
+
+				command_list->SetGraphicsRootDescriptorTable(1, material_CBV_gpu_descriptor_handle);
+
+				m.mesh_info->Draw(command_list);
 			}
-			else {
-				material_CBV_index = m_material_CBV_offset +
-					m_current_frameresource_index * (UINT)m_object_manager->Get_Material_Manager().Get_Material_Count() +
-					m.mesh_info->material->constant_buffer_index;
-			}
-
-			auto material_CBV_gpu_descriptor_handle = D3D12_GPU_DESCRIPTOR_HANDLE_EX(m_CBV_heap->GetGPUDescriptorHandleForHeapStart());
-			material_CBV_gpu_descriptor_handle.Get_By_Offset(material_CBV_index, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size());
-
-			command_list->SetGraphicsRootDescriptorTable(1, material_CBV_gpu_descriptor_handle);
-
-			m.mesh_info->Draw(command_list);
 		}
 	}
 
@@ -356,6 +353,14 @@ void TestScene::Build_S_N_L() {
 }
 
 void TestScene::Build_Mesh(ID3D12Device* device, ID3D12GraphicsCommandList* command_list) {
+	//
+	Mesh_Info* mesh_info;
+	mesh_info = m_object_manager->Get_Mesh_Manager().Crt_Box_Mesh(L"boundingbox");
+	mesh_info->material = m_object_manager->Get_Material_Manager().Get_Material(L"boundingbox");
+
+	mesh_info = m_object_manager->Get_Mesh_Manager().Crt_Box_Mesh(L"cheese");
+	mesh_info->material = m_object_manager->Get_Material_Manager().Get_Material(L"cheese");
+
 	m_object_manager->Ipt_From_FBX(L"cat_mesh_edit.fbx", true, false, true, MESH_INFO | SKELETON_INFO | MATERIAL_INFO);
 	m_object_manager->Ipt_From_FBX(L"cat_walk.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
 	m_object_manager->Ipt_From_FBX(L"cat_run.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
@@ -384,14 +389,16 @@ void TestScene::Build_Mesh(ID3D12Device* device, ID3D12GraphicsCommandList* comm
 }
 
 void TestScene::Build_Material() {
-	m_object_manager->Get_Material_Manager().Crt_Default_Material();
+	//
+	m_object_manager->Get_Material_Manager().Add_Material(L"boundingbox", Material_Factor(DirectX::XMFLOAT4(DirectX::Colors::LightGreen)));
+	m_object_manager->Get_Material_Manager().Add_Material(L"cheese", Material_Factor(DirectX::XMFLOAT4(DirectX::Colors::Yellow)));
 }
 
 void TestScene::Build_O() {
-	//m_object_manager->Add_Obj(L"player", L"mouse_mesh_edit.fbx");
-	//m_object_manager->Set_Sklt_2_Obj(L"player", L"mouse_mesh_edit.fbx");
-	m_object_manager->Add_Obj(L"player", L"cat_mesh_edit.fbx");
-	m_object_manager->Set_Sklt_2_Obj(L"player", L"cat_mesh_edit.fbx");
+	m_object_manager->Add_Obj(L"player", L"mouse_mesh_edit.fbx");
+	m_object_manager->Set_Sklt_2_Obj(L"player", L"mouse_mesh_edit.fbx");
+	//m_object_manager->Add_Obj(L"player", L"cat_mesh_edit.fbx");
+	//m_object_manager->Set_Sklt_2_Obj(L"player", L"cat_mesh_edit.fbx");
 
 	m_object_manager->Add_Obj(L"cat_test", L"cat_mesh_edit.fbx");
 	m_object_manager->Set_Sklt_2_Obj(L"cat_test", L"cat_mesh_edit.fbx");
@@ -400,22 +407,22 @@ void TestScene::Build_O() {
 	m_object_manager->Set_Sklt_2_Obj(L"mouse_test", L"mouse_mesh_edit.fbx");
 
 	//m_object_manager->Get_Obj(L"player")->Set_Visiable(false);
-	//m_object_manager->Get_Obj(L"cat_test")->Set_Visiable(false);
-	//m_object_manager->Get_Obj(L"mouse_test")->Set_Visiable(false);
+	m_object_manager->Get_Obj(L"cat_test")->Set_Visiable(false);
+	m_object_manager->Get_Obj(L"mouse_test")->Set_Visiable(false);
 
 	Object* object = m_object_manager->Get_Obj(L"player");
-	//object->Bind_Anim_2_State(Object_State::STATE_IDLE, Animation_Binding_Info(L"mouse_idle.fbx", 0.2f, LOOP_ANIMATION));
-	//object->Bind_Anim_2_State(Object_State::STATE_MOVE, Animation_Binding_Info(L"mouse_walk.fbx", 0.2f, LOOP_ANIMATION));
-	//object->Bind_Anim_2_State(Object_State::STATE_JUMP_START, Animation_Binding_Info(L"mouse_jump_start.fbx", 0.2f, ONCE_ANIMATION, Object_State::STATE_JUMP_IDLE));
-	//object->Bind_Anim_2_State(Object_State::STATE_JUMP_IDLE, Animation_Binding_Info(L"mouse_jump_idle.fbx", 0.2f, LOOP_ANIMATION));
-	//object->Bind_Anim_2_State(Object_State::STATE_JUMP_END, Animation_Binding_Info(L"mouse_jump_end.fbx", 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE));
-	//object->Bind_Anim_2_State(Object_State::STATE_ACTION_ONE, Animation_Binding_Info(L"mouse_hit.fbx", 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE, NOT_MOVABLE));
-	object->Bind_Anim_2_State(Object_State::STATE_IDLE, Animation_Binding_Info(L"cat_idle.fbx", 0.2f, LOOP_ANIMATION));
-	object->Bind_Anim_2_State(Object_State::STATE_MOVE, Animation_Binding_Info(L"cat_walk.fbx", 0.2f, LOOP_ANIMATION));
-	object->Bind_Anim_2_State(Object_State::STATE_JUMP_START, Animation_Binding_Info(L"cat_jump_start.fbx", 0.2f, ONCE_ANIMATION, Object_State::STATE_JUMP_IDLE));
-	object->Bind_Anim_2_State(Object_State::STATE_JUMP_IDLE, Animation_Binding_Info(L"cat_jump_idle.fbx", 0.2f, LOOP_ANIMATION));
-	object->Bind_Anim_2_State(Object_State::STATE_JUMP_END, Animation_Binding_Info(L"cat_jump_end.fbx", 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE));
-	object->Bind_Anim_2_State(Object_State::STATE_ACTION_ONE, Animation_Binding_Info(L"cat_paw.fbx", 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE, NOT_MOVABLE));
+	object->Bind_Anim_2_State(Object_State::STATE_IDLE, Animation_Binding_Info(L"mouse_idle.fbx", 0.2f, LOOP_ANIMATION));
+	object->Bind_Anim_2_State(Object_State::STATE_MOVE, Animation_Binding_Info(L"mouse_walk.fbx", 0.2f, LOOP_ANIMATION));
+	object->Bind_Anim_2_State(Object_State::STATE_JUMP_START, Animation_Binding_Info(L"mouse_jump_start.fbx", 0.2f, ONCE_ANIMATION, Object_State::STATE_JUMP_IDLE));
+	object->Bind_Anim_2_State(Object_State::STATE_JUMP_IDLE, Animation_Binding_Info(L"mouse_jump_idle.fbx", 0.2f, LOOP_ANIMATION));
+	object->Bind_Anim_2_State(Object_State::STATE_JUMP_END, Animation_Binding_Info(L"mouse_jump_end.fbx", 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE));
+	object->Bind_Anim_2_State(Object_State::STATE_ACTION_ONE, Animation_Binding_Info(L"mouse_hit.fbx", 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE, NOT_MOVABLE));
+	//object->Bind_Anim_2_State(Object_State::STATE_IDLE, Animation_Binding_Info(L"cat_idle.fbx", 0.2f, LOOP_ANIMATION));
+	//object->Bind_Anim_2_State(Object_State::STATE_MOVE, Animation_Binding_Info(L"cat_walk.fbx", 0.2f, LOOP_ANIMATION));
+	//object->Bind_Anim_2_State(Object_State::STATE_JUMP_START, Animation_Binding_Info(L"cat_jump_start.fbx", 0.2f, ONCE_ANIMATION, Object_State::STATE_JUMP_IDLE));
+	//object->Bind_Anim_2_State(Object_State::STATE_JUMP_IDLE, Animation_Binding_Info(L"cat_jump_idle.fbx", 0.2f, LOOP_ANIMATION));
+	//object->Bind_Anim_2_State(Object_State::STATE_JUMP_END, Animation_Binding_Info(L"cat_jump_end.fbx", 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE));
+	//object->Bind_Anim_2_State(Object_State::STATE_ACTION_ONE, Animation_Binding_Info(L"cat_paw.fbx", 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE, NOT_MOVABLE));
 	object->Set_Animated(true);
 	object->Set_Phys(true);
 
@@ -431,6 +438,8 @@ void TestScene::Build_O() {
 	object->Bind_Anim_2_State(Object_State::STATE_MOVE, Animation_Binding_Info(L"cat_walk.fbx", 0.2f, LOOP_ANIMATION));
 	object->Set_Animated(true);
 
+	Crt_Voxel_Cheese(DirectX::XMFLOAT3(0.0f, -61.592f, 0.0f), 5.0f, 2);
+
 	// test
 	for (int i = 0; i < 50; ++i) {
 		m_object_manager->Add_Col_OBB_Obj(L"bed-" + std::to_wstring(i),
@@ -443,10 +452,10 @@ void TestScene::Build_O() {
 
 void TestScene::Build_C(D3DManager* d3d_manager) {
 	auto main_camera = reinterpret_cast<Camera*>(m_object_manager->Add_Cam(L"maincamera", L"camera", L"player",
-		0.0f, 50.0f, 0.0f, 250.0f, ROTATE_SYNC_NONE));
+		0.0f, 10.0f, 0.0f, 50.0f, ROTATE_SYNC_RPY));
 	main_camera->Set_Frustum(0.25f * MathHelper::Pi(), d3d_manager->Get_Aspect_Ratio(), 1.0f, 2000.0f);
-	//main_camera->Set_Limit_Rotate_Right(true, -RIGHT_ANGLE_RADIAN + 0.01f, RIGHT_ANGLE_RADIAN - 0.01f);
-	main_camera->Set_Limit_Rotate_Right(true, DirectX::XMConvertToRadians(1.0f), DirectX::XMConvertToRadians(60.0f));
+	main_camera->Set_Limit_Rotate_Right(true, -RIGHT_ANGLE_RADIAN + 0.01f, RIGHT_ANGLE_RADIAN - 0.01f);
+	//main_camera->Set_Limit_Rotate_Right(true, DirectX::XMConvertToRadians(1.0f), DirectX::XMConvertToRadians(60.0f));
 
 	m_main_camera = main_camera;
 }
@@ -609,8 +618,60 @@ void TestScene::Binding_Key() {
 
 	m_input_manager->Bind_Mouse_Move(BindingInfo(L"maincamera", Action::ROTATE_PITCH, 0.01f),
 		BindingInfo(L"maincamera", Action::ROTATE_RIGHT, 0.01f));
+
+	m_input_manager->Bind_Key_First_Down(VK_F1, BindingInfo(L"", Action::CHANGE_WIREFRAME_FLAG));
+	m_input_manager->Bind_Key_First_Down(VK_F2, BindingInfo(L"", Action::CHANGE_BOUNDINGBOX_FLAG));
 }
 
 void TestScene::Pairing_Collision_Set() {
 	//m_object_manager->Add_Collision_Pair(L"")
+}
+
+void TestScene::Crt_Voxel(DirectX::XMFLOAT3 position, float scale, UINT detail_level) {
+	if (detail_level == 0) {
+		Object* object = m_object_manager->Add_Obj(L"voxel_" + std::to_wstring(m_voxel_count++), L"cheese", L"Object",
+			DirectX::XMMATRIX(
+				scale, 0.0f, 0.0f, 0.0f,
+				0.0f, scale, 0.0f, 0.0f,
+				0.0f, 0.0f, scale, 0.0f,
+				position.x, position.y, position.z, 1.0f));
+	}
+	else {
+		float half = scale / 2.0f;
+		float quarter = scale / 4.0f;
+
+		for (int i = -1; i < 2; ++++i) {
+			for (int j = -1; j < 2; ++++j) {
+				for (int k = -1; k < 2; ++++k) {
+					Crt_Voxel(
+						DirectX::XMFLOAT3(position.x + quarter * k, position.y + quarter * i, position.z + quarter * j),
+						half, detail_level - 1);
+				}
+			}
+		}
+	}
+}
+
+void TestScene::Crt_Voxel_Cheese(DirectX::XMFLOAT3 position, float scale, UINT detail_level) {
+	DirectX::XMFLOAT3 pivot_position = position;
+
+	position.y += scale / 2.0f;
+
+	for (int i = 0; i < 2; ++i) {
+		position.z = pivot_position.z - scale * 2.0f;
+
+		for (int j = 1; j <= 5; ++j) {
+			position.x = pivot_position.x - scale;
+
+			for (int k = 0; k <= j / 2; ++k) {
+				Crt_Voxel(position, scale, detail_level);
+				position.x += scale;
+			}
+
+			position.z += scale;
+		}
+
+		position.y += scale;
+	}
+
 }

@@ -17,7 +17,7 @@ public:
 	Mesh_Info* Get_Mesh(std::wstring mesh_name);
 
 	//
-	Mesh_Info* Crt_Box_Mesh(std::wstring mesh_name, float width, float height, float depth);
+	Mesh_Info* Crt_Box_Mesh(std::wstring mesh_name, float width = 1.0f, float height = 1.0f, float depth = 1.0f);
 
 	Mesh_Info* Crt_Default_Box();
 

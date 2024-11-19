@@ -36,10 +36,10 @@ private:
 	std::unordered_map<std::wstring, std::wstring> m_collision_pair_map;
 
 	//
+	MaterialManager m_material_manager;
 	MeshManager m_mesh_manager;
 	SkeletonManager m_skeleton_manager;
 	AnimationManager m_animation_manager;
-	MaterialManager m_material_manager;
 
 public:
 	ObjectManager() {}

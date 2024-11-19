@@ -41,6 +41,21 @@ DirectX::BoundingOrientedBox Object::Get_Calcd_OBB() {
 void Object::Calc_Delta(float elapsed_time) {
 	m_delta_position = DirectX::XMFLOAT3();
 
+	// 서버 연결시 이동 로직 없애기
+	if (-1 != Get_Character_Number())
+	{
+		m_velocity = DirectX::XMFLOAT3(); 
+		Udt_WM();
+		m_grounded = true;
+		m_dirty = true;
+
+		// m_position.y 값을 출력
+		wchar_t debugMessage[256];
+		swprintf_s(debugMessage, L"position : %f, %f, %f\n", m_position.x, m_position.y, m_position.z);
+		OutputDebugStringW(debugMessage);
+		return;
+	}
+
 	if (m_physics) {
 		// Calc Grav
 		m_velocity.y -= m_gravity * elapsed_time;
@@ -53,12 +68,6 @@ void Object::Calc_Delta(float elapsed_time) {
 			m_velocity.z *= (m_max_speed / m_speed);
 
 			m_speed = m_max_speed;
-		}
-		// 서버 연결시 이동 로직 없애기
-		if( true == Get_Camera_Need_Send() )
-		{
-			m_velocity = DirectX::XMFLOAT3();
-			return;
 		}
 
 		DirectX::XMFLOAT3 delta = MathHelper::Multiply(Get_Vel(), elapsed_time);
@@ -127,9 +136,8 @@ void Object::Calc_Delta(float elapsed_time) {
 
 void Object::Calc_Delta_Characters(float elapsed_time)
 {
-	m_delta_position = DirectX::XMFLOAT3();
-
-	if (m_physics) {
+	if (m_physics) 
+	{
 		// 서버에서 받은 위치 동기화
 		LerpPosition(elapsed_time);
 
@@ -767,6 +775,13 @@ void Object::Set_OBB(DirectX::BoundingOrientedBox obb) {
 	Set_Position(obb.Center);
 	Set_Rotate(obb.Orientation);
 	Set_Scale(obb.Extents);
+
+	m_dirty = true;
+}
+
+void Object::Set_OBB_Position(DirectX::XMFLOAT3 pos, DirectX::XMFLOAT4 rot) {
+	m_OBB.Center = pos;
+	m_OBB.Orientation = rot;
 
 	m_dirty = true;
 }

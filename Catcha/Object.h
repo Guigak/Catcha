@@ -285,6 +285,8 @@ public:
 
 	//
 	void Set_OBB(DirectX::BoundingOrientedBox obb);
+	void Set_OBB_Position(DirectX::XMFLOAT3 pos, DirectX::XMFLOAT4 rot);
+	DirectX::BoundingOrientedBox Object::Get_OBB() { return m_OBB; }
 
 	void Set_Look(DirectX::XMFLOAT4 quat);
 

@@ -143,7 +143,22 @@ void ObjectManager::Update(float elapsed_time) {
         {
             o->Rotate_Character(elapsed_time);
         }
-        
+   //     if (o->Get_Name() == L"player")
+   //     {
+   //         int i = o->Get_Character_Number();
+   //         if(i < NUM_CAT && i >= NUM_MOUSE1)
+			//{
+   //             Object* obj = Get_Obj(L"mouse" + std::to_wstring(i));
+			//}
+   //         else 
+   //         {
+   //             Object* obj = Get_Obj(L"cat");
+   //         }
+   //         Object* obj = Get_Obj(L"mouse" + std::to_wstring(i));
+   //         DirectX::XMFLOAT3 curr_pos = obj->Get_Position_3f();
+   //         DirectX::XMFLOAT4 curr_rot = obj->Get_Rotate_4f();
+   //         o->Set_OBB_Position(curr_pos, curr_rot);
+   //     }
     }
 
     Solve_Collision();
@@ -162,9 +177,26 @@ void ObjectManager::Update(float elapsed_time) {
     }
 
     //
+    int i = 0;
     for (auto& o : m_collision_obb_objects) {
+        if (o->Get_Name() == L"mouse" + std::to_wstring(i) + L"_OBB_")
+        {
+            Object* obj = Get_Obj(L"mouse" + std::to_wstring(i));
+            DirectX::XMFLOAT3 curr_pos = obj->Get_Position_3f();
+            DirectX::XMFLOAT4 curr_rot = obj->Get_Rotate_4f();
+            o->Set_OBB_Position(curr_pos, curr_rot);
+        }
+        if (o->Get_Name() == L"cat_OBB_")
+        {
+            Object* obj = Get_Obj(L"cat");
+            DirectX::XMFLOAT3 curr_pos = obj->Get_Position_3f();
+            DirectX::XMFLOAT4 curr_rot = obj->Get_Rotate_4f();
+            o->Set_OBB_Position(curr_pos, curr_rot);
+        }
+
         o->Update(elapsed_time);
     }
+    
 }
 
 void ObjectManager::Solve_Collision() {

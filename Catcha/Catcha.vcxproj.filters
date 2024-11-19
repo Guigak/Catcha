@@ -16,6 +16,9 @@
     <Filter Include="Network">
       <UniqueIdentifier>{c8c5d64c-9a27-43f7-83db-3c948689ef46}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Map">
+      <UniqueIdentifier>{bc44d259-5850-4035-b012-b88b707065dd}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -71,6 +74,9 @@
     </ClCompile>
     <ClCompile Include="NetworkManager.cpp">
       <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="MapData.cpp">
+      <Filter>Map</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -142,6 +148,9 @@
     </ClInclude>
     <ClInclude Include="NetworkObserver.h">
       <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="MapData.h">
+      <Filter>Map</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -1,6 +1,9 @@
 #include "TestScene.h"
 #include "D3DManager.h"
 #include "MeshCreater.h"
+#include "MapData.h"
+
+std::unordered_map<std::wstring, ObjectOBB> g_obbData;
 
 void TestScene::Enter(D3DManager* d3d_manager) {
 	m_object_manager = std::make_unique<ObjectManager>();
@@ -12,6 +15,18 @@ void TestScene::Enter(D3DManager* d3d_manager) {
 	Resize(d3d_manager);
 
 	d3d_manager->Rst_Cmd_List();
+
+	// OBB 시각화용 메쉬 생성
+	MapData* mapData = new MapData();
+	if (mapData->LoadMapData("Map.txt"))
+	{
+		std::cout << "Map data loaded." << std::endl;
+		delete mapData;
+	}
+	else
+	{
+		std::cout << "Failed to load map data." << std::endl;
+	}
 
 	Build_RS(device);
 	Build_S_N_L();
@@ -422,6 +437,14 @@ void TestScene::Build_O() {
 		object->Bind_Anim_2_State(Object_State::STATE_ACTION_ONE, Animation_Binding_Info(L"mouse_hit.fbx", 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE, NOT_MOVABLE));
 		object->Set_Animated(true);
 		object->Set_Phys(true);
+
+		m_object_manager->Add_Col_OBB_Obj(L"mouse" + std::to_wstring(i) + L"_OBB_",
+			DirectX::BoundingOrientedBox(
+				DirectX::XMFLOAT3(0.00781226f, 2.38999f, 0.004617309f),
+				DirectX::XMFLOAT3(3.864098f, 5.104148f, 10.92712f),
+				DirectX::XMFLOAT4(0, 0, 0, 1)
+			)
+		);
 	}
 
 	object = m_object_manager->Get_Obj(L"cat");
@@ -432,6 +455,13 @@ void TestScene::Build_O() {
 	object->Bind_Anim_2_State(Object_State::STATE_JUMP_END, Animation_Binding_Info(L"cat_jump_end.fbx", 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE));
 	object->Set_Animated(true);
 	object->Set_Phys(true);
+	m_object_manager->Add_Col_OBB_Obj(L"cat_OBB_",
+		DirectX::BoundingOrientedBox(
+			DirectX::XMFLOAT3(-6.570594E-05f, 19.85514f, 1.016994f),
+			DirectX::XMFLOAT3(26.47168f, 53.77291f, 39.95445f),
+			DirectX::XMFLOAT4(-0.7071068f, 0.0f, 0.0f, 0.7071068f)
+		)
+	);
 
 	m_object_manager->Add_Obj(L"player", L"mouse_mesh_edit.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
 	m_object_manager->Set_Sklt_2_Obj(L"player", L"mouse_mesh_edit.fbx");
@@ -440,15 +470,25 @@ void TestScene::Build_O() {
 
 
 	// test
-	m_object_manager->Add_Col_OBB_Obj(L"test_obb",
+	/*m_object_manager->Add_Col_OBB_Obj(L"test_obb",
 		DirectX::BoundingOrientedBox(
 			DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f),
 			DirectX::XMFLOAT3(40.0f, 180.0f, 40.0f),
-			DirectX::XMFLOAT4(0, 0, 0, 1)));
+			DirectX::XMFLOAT4(0, 0, 0, 1)));*/
+	
+	for (const auto& obj : g_obbData)
+	{
+		m_object_manager->Add_Col_OBB_Obj(obj.second.name,
+			DirectX::BoundingOrientedBox(
+				obj.second.obb.Center,
+				obj.second.obb.Extents,
+				obj.second.obb.Orientation)
+		);
+	}
 }
 
 void TestScene::Build_C(D3DManager* d3d_manager) {
-	auto main_camera = reinterpret_cast<Camera*>(m_object_manager->Add_Cam(L"maincamera", L"camera", L"player", 250.0f, ROTATE_SYNC_RPY));
+	auto main_camera = reinterpret_cast<Camera*>(m_object_manager->Add_Cam(L"maincamera", L"camera", L"player", 0.1f, ROTATE_SYNC_RPY));
 	main_camera->Set_Frustum(0.25f * MathHelper::Pi(), d3d_manager->Get_Aspect_Ratio(), 1.0f, 2000.0f);
 	//main_camera->Set_Limit_Rotate_Right(true, -RIGHT_ANGLE_RADIAN + 0.01f, RIGHT_ANGLE_RADIAN - 0.01f);
 	main_camera->Set_Limit_Rotate_Right(true, DirectX::XMConvertToRadians(1.0f), DirectX::XMConvertToRadians(60.0f));
@@ -638,7 +678,7 @@ void TestScene::CharacterChange(bool is_cat, const std::wstring& key1, const std
 	if (true == is_cat)
 	{
 		m_object_manager->Swap_Object(key1, key2);
-		m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"player", 100.1f);
+		m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"player", 200.1f);
 		m_object_manager->Set_Camera_4_Server(L"maincamera", true);
 	}
 	else

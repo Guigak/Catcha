@@ -282,6 +282,7 @@ void NetworkManager::ProcessPacket(char* ptr)
 		if (id == m_myid)
 		{
 			// 자기 자신
+			m_objects[characters[id].character_id]->Set_Position(coord.x, coord.y, coord.z);
 		}
 		else
 		{

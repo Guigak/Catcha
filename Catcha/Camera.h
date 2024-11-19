@@ -23,6 +23,8 @@ private:
 	float m_bind_offset_up = 0.0f;
 	float m_bind_offset_right = 0.0f;
 
+	DirectX::XMFLOAT3 m_bind_position = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
+
 	//
 	bool m_limit_rotate_right = false;
 	float m_limit_min_right = 0.0f;

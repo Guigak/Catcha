@@ -53,13 +53,12 @@ void Camera::Update(float elapsed_time) {
 		Calc_Rotate();
 		Udt_LUR();
 
-		DirectX::XMFLOAT3 bind_offset = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
-		bind_offset = MathHelper::Add(bind_offset, m_object->Get_Look(), m_bind_offset_look);
-		bind_offset = MathHelper::Add(bind_offset, m_object->Get_Up(), m_bind_offset_up);
-		bind_offset = MathHelper::Add(bind_offset, m_object->Get_Right(), m_bind_offset_right);
+		m_bind_position = m_object->Get_Position_3f();
+		m_bind_position = MathHelper::Add(m_bind_position, m_object->Get_Look(), m_bind_offset_look);
+		m_bind_position = MathHelper::Add(m_bind_position, m_object->Get_Up(), m_bind_offset_up);
+		m_bind_position = MathHelper::Add(m_bind_position, m_object->Get_Right(), m_bind_offset_right);
 
-		m_position = MathHelper::Add(m_object->Get_Position_3f(), bind_offset);
-		m_position = MathHelper::Add(m_position, Get_Look(), -m_distance);
+		m_position = MathHelper::Add(m_bind_position, Get_Look(), -m_distance);
 
 		m_dirty = true;
 	}
@@ -70,7 +69,7 @@ void Camera::Update(float elapsed_time) {
 		Udt_LUR();
 
 		if (m_object) {
-			Look_At(Get_Position_3f(), m_object->Get_Position_3f(), Get_Up());
+			Look_At(Get_Position_3f(), m_bind_position, Get_Up());
 		}
 		else {
 			Look_At(Get_Position_3f(), MathHelper::Add(Get_Position_3f(), Get_Look(), 300.0f), Get_Up());

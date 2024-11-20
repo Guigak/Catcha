@@ -37,9 +37,19 @@ private:
 	Scene* m_scene = nullptr;
 	ObjectManager* m_object_manager = nullptr;
 
+	//
+	bool m_captured = false;
+
+	int m_client_width = 0;
+	int m_client_height = 0;
+
+	bool m_hide_cursor = false;
+	bool m_fix_cursor = false;
+
 public:
 	InputManager() {}
-	InputManager(Scene* scene, ObjectManager* object_manager) : m_scene(scene), m_object_manager(object_manager) {}
+	InputManager(Scene* scene, ObjectManager* object_manager, int client_width, int client_height)
+		: m_scene(scene), m_object_manager(object_manager), m_client_width(client_width), m_client_height(client_height) {}
 	~InputManager() {}
 
 	void Bind_Key_Down(int key_id, BindingInfo binding_info);
@@ -53,5 +63,8 @@ public:
 	void Prcs_Input();
 
 	void Prcs_Binding_Info(BindingInfo binding_info);
+
+	void Set_Hide_Cursor(bool hide_cursor) { m_hide_cursor = hide_cursor; }
+	void Set_Fix_Cursor(bool fix_cursor) { m_fix_cursor = fix_cursor; }
 };
 

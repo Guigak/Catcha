@@ -6,7 +6,7 @@ UINT m_voxel_count = 0;
 
 void TestScene::Enter(D3DManager* d3d_manager) {
 	m_object_manager = std::make_unique<ObjectManager>();
-	m_input_manager = std::make_unique<InputManager>(this, m_object_manager.get());
+	m_input_manager = std::make_unique<InputManager>(this, m_object_manager.get(), d3d_manager->Get_Client_Width(), d3d_manager->Get_Client_Height());                                   
 
 	ID3D12Device* device = d3d_manager->Get_Device();
 	ID3D12GraphicsCommandList* command_list = d3d_manager->Get_Cmd_List();
@@ -438,7 +438,7 @@ void TestScene::Build_O() {
 	object->Bind_Anim_2_State(Object_State::STATE_MOVE, Animation_Binding_Info(L"cat_walk.fbx", 0.2f, LOOP_ANIMATION));
 	object->Set_Animated(true);
 
-	Crt_Voxel_Cheese(DirectX::XMFLOAT3(0.0f, -61.592f, 0.0f), 5.0f, 2);
+	Crt_Voxel_Cheese(DirectX::XMFLOAT3(0.0f, -61.592f, 0.0f), 2.0f, 2);
 
 	// test
 	for (int i = 0; i < 50; ++i) {
@@ -621,6 +621,10 @@ void TestScene::Binding_Key() {
 
 	m_input_manager->Bind_Key_First_Down(VK_F1, BindingInfo(L"", Action::CHANGE_WIREFRAME_FLAG));
 	m_input_manager->Bind_Key_First_Down(VK_F2, BindingInfo(L"", Action::CHANGE_BOUNDINGBOX_FLAG));
+
+	//
+	m_input_manager->Set_Hide_Cursor(true);
+	m_input_manager->Set_Fix_Cursor(true);
 }
 
 void TestScene::Pairing_Collision_Set() {
@@ -657,10 +661,10 @@ void TestScene::Crt_Voxel_Cheese(DirectX::XMFLOAT3 position, float scale, UINT d
 
 	position.y += scale / 2.0f;
 
-	for (int i = 0; i < 2; ++i) {
+	for (int i = 0; i < 4; ++i) {
 		position.z = pivot_position.z - scale * 2.0f;
 
-		for (int j = 1; j <= 5; ++j) {
+		for (int j = 1; j <= 11; ++j) {
 			position.x = pivot_position.x - scale;
 
 			for (int k = 0; k <= j / 2; ++k) {

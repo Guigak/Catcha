@@ -51,9 +51,18 @@ void InputManager::Prcs_Input() {
 	if (GetActiveWindow() != GetForegroundWindow()) {
 		m_previous_point.x = -1;
 		m_previous_point.y = -1;
+
+		if (m_captured) {
+			ReleaseCapture();
+			m_captured = false;
+		}
 		return;
 	}
 	else {
+		if (!m_captured) {
+			SetCapture(GetActiveWindow());
+			m_captured = true;
+		}
 	}
 
 	for (auto& k : m_key_set) {
@@ -104,7 +113,18 @@ void InputManager::Prcs_Input() {
 		}
 	}
 
-	m_previous_point = new_point;
+	if (m_fix_cursor) {
+		m_previous_point = { m_client_width / 2, m_client_height / 2 };
+		ClientToScreen(GetActiveWindow(), &m_previous_point);
+		SetCursorPos(m_previous_point.x, m_previous_point.y);
+	}
+	else {
+		m_previous_point = new_point;
+	}
+
+	if (m_hide_cursor) {
+		SetCursor(nullptr);
+	}
 }
 
 void InputManager::Prcs_Binding_Info(BindingInfo binding_info) {

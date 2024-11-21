@@ -11,12 +11,15 @@ private:
 	int m_dirty_count = FRAME_RESOURCES_NUMBER;
 
 public:
-	MaterialManager() {}
+	MaterialManager();
 	~MaterialManager() {}
 
 	Material_Info* Add_Material_Info(std::wstring material_info_name, Material_Factor& material_factor);
 
 	Material* Add_Material(std::wstring material_name, std::vector<Material_Info*>& material_info_array);
+	Material* Add_Material(std::wstring material_name, Material_Factor& material_factor);
+
+	Material* Get_Material(std::wstring material_name) { return m_material_map[material_name].get(); }
 
 	bool Contains_Material_Info(std::wstring material_info_name);
 

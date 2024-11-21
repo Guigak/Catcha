@@ -1,5 +1,6 @@
 #include "InputManager.h"
 #include "ObjectManager.h"
+#include "Scene.h"
 
 void InputManager::Bind_Key_Down(int key_id, BindingInfo binding_info) {
 	m_key_down_map[key_id] = binding_info;
@@ -50,9 +51,18 @@ void InputManager::Prcs_Input() {
 	if (GetActiveWindow() != GetForegroundWindow()) {
 		m_previous_point.x = -1;
 		m_previous_point.y = -1;
+
+		if (m_captured) {
+			ReleaseCapture();
+			m_captured = false;
+		}
 		return;
 	}
 	else {
+		if (!m_captured) {
+			SetCapture(GetActiveWindow());
+			m_captured = true;
+		}
 	}
 
 	// NetworkManager ½Ì±ÛÅæ ÀÎ½ºÅÏ½º »ç¿ë
@@ -122,7 +132,18 @@ void InputManager::Prcs_Input() {
 		}
 	}
 
-	m_previous_point = new_point;
+	if (m_fix_cursor) {
+		m_previous_point = { m_client_width / 2, m_client_height / 2 };
+		ClientToScreen(GetActiveWindow(), &m_previous_point);
+		SetCursorPos(m_previous_point.x, m_previous_point.y);
+	}
+	else {
+		m_previous_point = new_point;
+	}
+
+	if (m_hide_cursor) {
+		SetCursor(nullptr);
+	}
 }
 
 void InputManager::Prcs_Binding_Info(BindingInfo binding_info) {
@@ -180,6 +201,18 @@ void InputManager::Prcs_Binding_Info(BindingInfo binding_info) {
 			break;
 		default:
 			m_object_manager->Actions(binding_info.object_name, binding_info.action);
+			break;
+		}
+	}
+	else {
+		switch (binding_info.action) {
+		case Action::CHANGE_WIREFRAME_FLAG:
+			m_scene->Chg_Wireframe_Flag();
+			break;
+		case Action::CHANGE_BOUNDINGBOX_FLAG:
+			m_scene->Chg_Boundingbox_Flag();
+			break;
+		default:
 			break;
 		}
 	}

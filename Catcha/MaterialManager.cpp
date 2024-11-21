@@ -1,5 +1,9 @@
 #include "MaterialManager.h"
 
+MaterialManager::MaterialManager() {
+	Crt_Default_Material();
+}
+
 Material_Info* MaterialManager::Add_Material_Info(std::wstring material_info_name, Material_Factor& material_factor) {
 	std::unique_ptr<Material_Info> material_info = std::make_unique<Material_Info>(material_info_name, material_factor);
 	m_material_info_map[material_info_name] = std::move(material_info);
@@ -12,6 +16,16 @@ Material* MaterialManager::Add_Material(std::wstring material_name, std::vector<
 	m_material_map[material_name] = std::move(material);
 
 	return m_material_map[material_name].get();
+}
+
+Material* MaterialManager::Add_Material(std::wstring material_name, Material_Factor& material_factor) {
+	std::unique_ptr<Material_Info> material_info = std::make_unique<Material_Info>(material_name, material_factor);
+	m_material_info_map[material_name] = std::move(material_info);
+
+	std::vector<Material_Info*> material_info_array;
+	material_info_array.emplace_back(m_material_info_map[material_name].get());
+
+	return Add_Material(material_name, material_info_array);
 }
 
 bool MaterialManager::Contains_Material_Info(std::wstring material_info_name) {

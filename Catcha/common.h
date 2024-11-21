@@ -462,20 +462,6 @@ inline DirectX::XMFLOAT4 FbxQuaternion_2_XMFLOAT4(const FbxQuaternion& fbxquater
 #define Release_Com(x) { if (x) { x->Release(); x = 0; } }
 
 // info
-struct MaterialInfo {
-	std::wstring name;
-
-	UINT constant_buffer_index = -1;
-
-	UINT diffuse_heap_index = -1;
-	UINT normal_heap_index = -1;
-
-	int dirty_frame_count = FRAME_RESOURCES_NUMBER;
-
-	DirectX::XMFLOAT4 diffuse_albedo = { 1.0f, 1.0f, 1.0f, 1.0f };
-	DirectX::XMFLOAT3 fresnel = { 0.01f, 0.01f, 0.01f };
-	float roughness = 0.25f;
-};
 
 struct LightInfo {
 	DirectX::XMFLOAT3 strength = { 0.5f, 0.5f, 0.5f };

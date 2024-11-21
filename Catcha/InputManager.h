@@ -8,6 +8,7 @@ class ObjectManager;
 
 enum class Action {
 	ACTION_NONE,
+	CHANGE_WIREFRAME_FLAG, CHANGE_BOUNDINGBOX_FLAG,
 	MOVE_FORWARD, MOVE_BACK, MOVE_LEFT, MOVE_RIGHT, MOVE_UP, MOVE_DOWN,
 	TELEPORT_FORWARD, TELEPORT_BACK, TELEPORT_LEFT, TELEPORT_RIGHT, TELEPORT_UP, TELEPORT_DOWN,
 	ROTATE, ROTATE_ROLL, ROTATE_PITCH, ROTATE_YAW, ROTATE_RIGHT, ROTATE_LOOK,
@@ -38,13 +39,23 @@ private:
 	Scene* m_scene = nullptr;
 	ObjectManager* m_object_manager = nullptr;
 
+	//
+	bool m_captured = false;
+
+	int m_client_width = 0;
+	int m_client_height = 0;
+
+	bool m_hide_cursor = false;
+	bool m_fix_cursor = false;
+
 	// [CS] 현재 키보드가 입력되고 있는지
 	bool press_keyboard_movement_ = false;
 	uint8_t input_key_;
 
 public:
 	InputManager() {}
-	InputManager(Scene* scene, ObjectManager* object_manager) : m_scene(scene), m_object_manager(object_manager) {}
+	InputManager(Scene* scene, ObjectManager* object_manager, int client_width, int client_height)
+		: m_scene(scene), m_object_manager(object_manager), m_client_width(client_width), m_client_height(client_height) {}
 	~InputManager() {}
 
 	void Bind_Key_Down(int key_id, BindingInfo binding_info);
@@ -58,5 +69,8 @@ public:
 	void Prcs_Input();
 
 	void Prcs_Binding_Info(BindingInfo binding_info);
+
+	void Set_Hide_Cursor(bool hide_cursor) { m_hide_cursor = hide_cursor; }
+	void Set_Fix_Cursor(bool fix_cursor) { m_fix_cursor = fix_cursor; }
 };
 

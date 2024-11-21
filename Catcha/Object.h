@@ -21,7 +21,6 @@ protected:
 	UINT m_constant_buffer_index = -1;
 
 	std::wstring m_submesh_name = L"";
-	MaterialInfo* m_material_info = nullptr;
 
 	D3D12_PRIMITIVE_TOPOLOGY m_primitive_topology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 
@@ -129,7 +128,6 @@ public:
 
 	void Set_Object_Manager(ObjectManager* object_manager) { m_object_manager = object_manager; }
 	void Set_Name(std::wstring object_name) { m_name = object_name; }
-	void Set_Material_Info(MaterialInfo* material_info) { m_material_info = material_info; }
 	void Set_CB_Index(UINT constant_buffer_index) { m_constant_buffer_index = constant_buffer_index; }
 	void Set_PT(D3D12_PRIMITIVE_TOPOLOGY primitive_topology) { m_primitive_topology = primitive_topology; }
 	void Set_Phys(bool physics) { m_physics = physics; }
@@ -163,8 +161,6 @@ public:
 	DirectX::XMFLOAT4X4 Get_WM() { return m_world_matrix; }
 
 	UINT Get_CB_Index() { return m_constant_buffer_index; }
-
-	MaterialInfo* Get_Material_Info() { return m_material_info; }
 
 	D3D12_PRIMITIVE_TOPOLOGY Get_PT() { return m_primitive_topology; }
 

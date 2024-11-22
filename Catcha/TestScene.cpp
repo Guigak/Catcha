@@ -476,7 +476,7 @@ void TestScene::Build_O() {
 	m_object_manager->Get_Obj(L"player")->Set_Visiable(false);
 
 
-	Crt_Voxel_Cheese(DirectX::XMFLOAT3(0.0f, -61.592f, 0.0f), 2.0f, 2);
+	//Crt_Voxel_Cheese(DirectX::XMFLOAT3(0.0f, -61.592f, 0.0f), 2.0f, 2);
 
 	// test
 	/*m_object_manager->Add_Col_OBB_Obj(L"test_obb",
@@ -744,13 +744,13 @@ void TestScene::CharacterChange(bool is_cat, const std::wstring& key1, const std
 	if (true == is_cat)
 	{
 		m_object_manager->Swap_Object(key1, key2);
-		m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"player", 200.1f);
+		m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"player", 0.0f, 50.0f, 0.0f, 250.0f);
 		m_object_manager->Set_Camera_4_Server(L"maincamera", true);
 	}
 	else
 	{
 		m_object_manager->Swap_Object(key1, key2);
-		m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"player", 0.1f);
+		m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"player", 0.0f, 0.0f, 0.0f, 0.1f);
 		m_object_manager->Set_Camera_4_Server(L"maincamera", true);
 	}
 }

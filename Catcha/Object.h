@@ -177,6 +177,8 @@ public:
 
 	float Get_Spd() { return m_speed; }
 
+	void Set_Grounded(bool grounded) { m_grounded = grounded; }
+
 	bool Get_Visiable() { return m_visiable; }
 
 	void Calc_Delta(float elapsed_time);
@@ -265,6 +267,8 @@ public:
 	bool Get_Animated() { return m_animated; }
 
 	std::array<DirectX::XMFLOAT4X4, MAX_BONE_COUNT>& Get_Animation_Matrix() { return m_animation_matrix_array; }
+
+	void Set_Next_State(Object_State object_state) { m_next_state = object_state; }
 
 	//
 	void Bind_Anim_2_State(Object_State object_state, Animation_Binding_Info animation_binding_info);

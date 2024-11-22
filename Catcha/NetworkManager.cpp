@@ -299,18 +299,25 @@ void NetworkManager::ProcessPacket(char* ptr)
 		DirectX::XMFLOAT3 coord = { static_cast<float>(p->x), static_cast<float>(p->y), static_cast<float>(p->z) };
 		characters[id].Location = coord;
 		characters[id].pitch = p->player_pitch;
+		bool on_ground = (p->state & 0x01) != 0;
+		Object_State state = static_cast<Object_State>(p->state >> 1);
 
 		if (id == m_myid)
 		{
 			// 자신의 받은 움직임과 look
 			m_objects[characters[m_myid].character_id]->SetTargetPosition(coord);
 			m_objects[characters[m_myid].character_id]->SetTargetPitch(p->player_pitch);
+			m_objects[characters[m_myid].character_id]->Set_Grounded(on_ground);
+			m_objects[characters[m_myid].character_id]->Set_Next_State(state);
+			
 		}
 		else
 		{
 			// 다른 캐릭터의 받은 움직임
 			m_objects[characters[id].character_id]->SetTargetPosition(coord);
 			m_objects[characters[id].character_id]->SetTargetPitch(p->player_pitch);
+			m_objects[characters[id].character_id]->Set_Grounded(on_ground);
+			m_objects[characters[id].character_id]->Set_Next_State(state);
 		}
 		break;
 	}

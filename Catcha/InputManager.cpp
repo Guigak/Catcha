@@ -201,6 +201,8 @@ void InputManager::Prcs_Binding_Info(BindingInfo binding_info) {
 			break;
 		default:
 			m_object_manager->Actions(binding_info.object_name, binding_info.action);
+			input_key_ = (static_cast<uint8_t>(binding_info.action) << 1) | true;
+			network_manager.SendInput(input_key_);
 			break;
 		}
 	}

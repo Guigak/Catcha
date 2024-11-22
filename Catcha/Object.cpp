@@ -46,7 +46,7 @@ void Object::Calc_Delta(float elapsed_time) {
 	{
 		m_velocity = DirectX::XMFLOAT3(); 
 		Udt_WM();
-		m_grounded = true;
+		//m_grounded = true;
 		m_dirty = true;
 
 		// m_position.y 값을 출력
@@ -143,7 +143,7 @@ void Object::Calc_Delta_Characters(float elapsed_time)
 
 		Udt_WM();
 
-		m_moving = false;
+		m_moving = true;
 		m_dirty = true;
 	}
 }
@@ -158,14 +158,18 @@ void Object::Update(float elapsed_time) {
 	if (m_animated) {
 		AnimationManager& animation_manager = m_object_manager->Get_Animation_Manager();
 
-		if (m_grounded &&
-			(m_next_state == Object_State::STATE_IDLE || m_next_state == Object_State::STATE_MOVE ||
-			(m_moving == true && m_state == Object_State::STATE_JUMP_END))) {
-			if (Get_Spd() > 0.05f) {
-				m_next_state = Object_State::STATE_MOVE;
-			}
-			else {
-				m_next_state = Object_State::STATE_IDLE;
+		// 네트워크 연결시 애니메이션 로직 없애기
+		if (-1 == Get_Character_Number())
+		{
+			if (m_grounded &&
+				(m_next_state == Object_State::STATE_IDLE || m_next_state == Object_State::STATE_MOVE ||
+				(m_moving == true && m_state == Object_State::STATE_JUMP_END))) {
+				if (Get_Spd() > 0.05f) {
+					m_next_state = Object_State::STATE_MOVE;
+				}
+				else {
+					m_next_state = Object_State::STATE_IDLE;
+				}
 			}
 		}
 
@@ -629,7 +633,7 @@ void Object::Rotate_Look(float degree) {
 }
 
 void Object::Jump() {
-	m_next_state = Object_State::STATE_JUMP_START;
+	//m_next_state = Object_State::STATE_JUMP_START;
 	m_velocity.y = m_jump_power;
 }
 

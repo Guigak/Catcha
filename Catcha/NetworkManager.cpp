@@ -299,8 +299,9 @@ void NetworkManager::ProcessPacket(char* ptr)
 		DirectX::XMFLOAT3 coord = { static_cast<float>(p->x), static_cast<float>(p->y), static_cast<float>(p->z) };
 		characters[id].Location = coord;
 		characters[id].pitch = p->player_pitch;
-		bool on_ground = (p->state & 0x01) != 0;
-		Object_State state = static_cast<Object_State>(p->state >> 1);
+		Object_State state = static_cast<Object_State>(p->state >> 2);
+		bool on_ground = (p->state & 0b10) != 0;
+		bool need_blending = (p->state & 0b01) != 0;
 
 		if (id == m_myid)
 		{
@@ -308,8 +309,14 @@ void NetworkManager::ProcessPacket(char* ptr)
 			m_objects[characters[m_myid].character_id]->SetTargetPosition(coord);
 			m_objects[characters[m_myid].character_id]->SetTargetPitch(p->player_pitch);
 			m_objects[characters[m_myid].character_id]->Set_Grounded(on_ground);
-			m_objects[characters[m_myid].character_id]->Set_Next_State(state);
-			
+			if (true == need_blending)
+			{
+				m_objects[characters[m_myid].character_id]->Set_Next_State(state);
+			}
+			else
+			{
+				m_objects[characters[m_myid].character_id]->Set_Network_State(state);
+			}
 		}
 		else
 		{
@@ -317,7 +324,14 @@ void NetworkManager::ProcessPacket(char* ptr)
 			m_objects[characters[id].character_id]->SetTargetPosition(coord);
 			m_objects[characters[id].character_id]->SetTargetPitch(p->player_pitch);
 			m_objects[characters[id].character_id]->Set_Grounded(on_ground);
-			m_objects[characters[id].character_id]->Set_Next_State(state);
+			if (true == need_blending)
+			{
+				m_objects[characters[id].character_id]->Set_Next_State(state);
+			}
+			else
+			{
+				m_objects[characters[id].character_id]->Set_Network_State(state);
+			}
 		}
 		break;
 	}

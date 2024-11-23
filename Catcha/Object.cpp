@@ -179,6 +179,7 @@ void Object::Update(float elapsed_time) {
 		if (animation_binding_info.loop == false) {
 			if (animation_manager.Get_Animation(animation_binding_info.binded_animation_name)->animation_time < m_animated_time) {
 				m_next_state = animation_binding_info.next_object_state;
+				//m_next_state = m_network_state;				
 			}
 		}
 

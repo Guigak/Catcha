@@ -58,6 +58,7 @@ protected:
 
 	Object_State m_state = Object_State::STATE_IDLE;
 	Object_State m_next_state = Object_State::STATE_IDLE;
+	Object_State m_network_state = Object_State::STATE_IDLE;
 
 	//
 	Camera* m_camera = nullptr;
@@ -269,6 +270,7 @@ public:
 	std::array<DirectX::XMFLOAT4X4, MAX_BONE_COUNT>& Get_Animation_Matrix() { return m_animation_matrix_array; }
 
 	void Set_Next_State(Object_State object_state) { m_next_state = object_state; }
+	void Set_Network_State(Object_State object_state) { m_network_state = object_state; }
 
 	//
 	void Bind_Anim_2_State(Object_State object_state, Animation_Binding_Info animation_binding_info);

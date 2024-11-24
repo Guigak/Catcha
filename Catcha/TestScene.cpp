@@ -519,9 +519,9 @@ void TestScene::Build_O() {
 	object->Bind_Anim_2_State(Object_State::STATE_MOVE, Animation_Binding_Info(L"cat_walk.fbx", 0.2f, LOOP_ANIMATION));
 	object->Set_Animated(true);
 
-	Crt_Voxel_Cheese(DirectX::XMFLOAT3(0.0f, -61.592f, 0.0f), 1.0f, 0);
-	Crt_Voxel_Cheese(DirectX::XMFLOAT3(0.0f, -61.592f, 50.0f), 1.0f, 0);
-	Crt_Voxel_Cheese(DirectX::XMFLOAT3(0.0f, -61.592f, 100.0f), 1.0f, 0);
+	Crt_Voxel_Cheese(DirectX::XMFLOAT3(169.475f, 10.049f, 230.732f), 1.0f, 0);
+	//Crt_Voxel_Cheese(DirectX::XMFLOAT3(0.0f, -61.592f, 50.0f), 1.0f, 0);
+	//Crt_Voxel_Cheese(DirectX::XMFLOAT3(0.0f, -61.592f, 100.0f), 1.0f, 0);
 	//Crt_Voxel_Cheese(DirectX::XMFLOAT3(0.0f, -61.592f, 100.0f), 1.0f, 0);
 	
 	// test
@@ -762,22 +762,27 @@ void TestScene::Crt_Voxel(DirectX::XMFLOAT3 position, float scale, UINT detail_l
 }
 
 void TestScene::Crt_Voxel_Cheese(DirectX::XMFLOAT3 position, float scale, UINT detail_level) {
+	int m_random_value = 10;
+	int y_value = 8;
+	int z_value = 21;
+	int x_value = z_value / 2;
+
 	std::random_device rd;
-	std::uniform_int_distribution<int> uid(1, 10);
+	std::uniform_int_distribution<int> uid(1, m_random_value);
 
 	DirectX::XMFLOAT3 pivot_position = position;
 
 	position.y += scale / 2.0f;
 
-	for (int i = 0; i < 8; ++i) {
-		position.z = pivot_position.z - scale * 2.0f;
+	for (int i = 0; i < y_value; ++i) {
+		position.z = pivot_position.z - scale * (float)(z_value / 2);
 
-		for (int j = 1; j <= 21; ++j) {
-			position.x = pivot_position.x - scale;
+		for (int j = 1; j <= z_value; ++j) {
+			position.x = pivot_position.x - scale * (float)(x_value / 2);
 
 			for (int k = 0; k <= j / 2; ++k) {
-				if ((i == 7 || j == 21 || k == 0 || k == j / 2) &&
-					!(uid(rd) % 10)) {
+				if ((i == y_value - 1 || j == z_value || k == 0 || k == j / 2) &&
+					!(uid(rd) % m_random_value)) {
 					position.x += scale;
 					continue;
 				}

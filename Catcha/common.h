@@ -64,6 +64,7 @@ extern void print_error(const char* msg, int err_no);
 #include <fstream>
 #include <sstream>
 #include <cassert>
+#include <random>
 
 #include <variant>
 

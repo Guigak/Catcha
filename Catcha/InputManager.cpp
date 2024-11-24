@@ -60,7 +60,7 @@ void InputManager::Prcs_Input() {
 	}
 	else {
 		if (!m_captured) {
-			SetCapture(GetActiveWindow());
+			//SetCapture(GetActiveWindow());
 			m_captured = true;
 		}
 	}
@@ -213,6 +213,12 @@ void InputManager::Prcs_Binding_Info(BindingInfo binding_info) {
 			break;
 		case Action::CHANGE_BOUNDINGBOX_FLAG:
 			m_scene->Chg_Boundingbox_Flag();
+			break;
+		case Action::HIDE_CURSOR:
+			Set_Hide_Cursor(!m_hide_cursor);
+			break;
+		case Action::FIX_CURSOR:
+			Set_Fix_Cursor(!m_fix_cursor);
 			break;
 		default:
 			break;

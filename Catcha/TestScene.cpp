@@ -83,6 +83,7 @@ void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
 
 			ObjectConstants object_constants;
 			DirectX::XMStoreFloat4x4(&object_constants.world_matrix, DirectX::XMMatrixTranspose(world_matrix));
+			object_constants.color_multiplier = object->Get_Color_Mul();
 			object_constants.animated = (UINT)object->Get_Animated();
 
 			current_object_constant_buffer->Copy_Data(object->Get_CB_Index(), object_constants);
@@ -405,7 +406,7 @@ void TestScene::Build_Mesh(ID3D12Device* device, ID3D12GraphicsCommandList* comm
 
 void TestScene::Build_Material() {
 	//
-	m_object_manager->Get_Material_Manager().Add_Material(L"boundingbox", Material_Factor(DirectX::XMFLOAT4(DirectX::Colors::LightGreen)));
+	m_object_manager->Get_Material_Manager().Add_Material(L"boundingbox", Material_Factor(DirectX::XMFLOAT4(DirectX::Colors::Red)));
 	m_object_manager->Get_Material_Manager().Add_Material(L"cheese", Material_Factor(DirectX::XMFLOAT4(DirectX::Colors::Yellow)));
 }
 
@@ -460,6 +461,7 @@ void TestScene::Build_O() {
 	object->Bind_Anim_2_State(Object_State::STATE_JUMP_START, Animation_Binding_Info(L"cat_jump_start.fbx", 0.2f, ONCE_ANIMATION, Object_State::STATE_JUMP_IDLE));
 	object->Bind_Anim_2_State(Object_State::STATE_JUMP_IDLE, Animation_Binding_Info(L"cat_jump_idle.fbx", 0.2f, LOOP_ANIMATION));
 	object->Bind_Anim_2_State(Object_State::STATE_JUMP_END, Animation_Binding_Info(L"cat_jump_end.fbx", 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE));
+	object->Bind_Anim_2_State(Object_State::STATE_ACTION_ONE, Animation_Binding_Info(L"cat_paw.fbx", 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE, NOT_MOVABLE));
 	object->Set_Animated(true);
 	object->Set_Phys(true);
 	m_object_manager->Add_Col_OBB_Obj(L"cat_OBB_",
@@ -476,8 +478,11 @@ void TestScene::Build_O() {
 	m_object_manager->Get_Obj(L"player")->Set_Visiable(false);
 
 
-	//Crt_Voxel_Cheese(DirectX::XMFLOAT3(0.0f, -61.592f, 0.0f), 2.0f, 2);
-
+	Crt_Voxel_Cheese(DirectX::XMFLOAT3(0.0f, -61.592f, 0.0f), 1.0f, 0);
+	Crt_Voxel_Cheese(DirectX::XMFLOAT3(0.0f, -61.592f, 50.0f), 1.0f, 0);
+	Crt_Voxel_Cheese(DirectX::XMFLOAT3(0.0f, -61.592f, 100.0f), 1.0f, 0);
+	//Crt_Voxel_Cheese(DirectX::XMFLOAT3(0.0f, -61.592f, 100.0f), 1.0f, 0);
+	
 	// test
 	/*m_object_manager->Add_Col_OBB_Obj(L"test_obb",
 		DirectX::BoundingOrientedBox(
@@ -681,9 +686,11 @@ void TestScene::Binding_Key() {
 	m_input_manager->Bind_Key_First_Down(VK_F1, BindingInfo(L"", Action::CHANGE_WIREFRAME_FLAG));
 	m_input_manager->Bind_Key_First_Down(VK_F2, BindingInfo(L"", Action::CHANGE_BOUNDINGBOX_FLAG));
 
+	//m_input_manager->Bind_Key_First_Down(VK_TAB, BindingInfo(L"", Action::FIX_CURSOR));
+
 	//
-	m_input_manager->Set_Hide_Cursor(true);
-	m_input_manager->Set_Fix_Cursor(true);
+	//m_input_manager->Set_Hide_Cursor(true);
+	//m_input_manager->Set_Fix_Cursor(true);
 }
 
 void TestScene::Pairing_Collision_Set() {
@@ -716,17 +723,26 @@ void TestScene::Crt_Voxel(DirectX::XMFLOAT3 position, float scale, UINT detail_l
 }
 
 void TestScene::Crt_Voxel_Cheese(DirectX::XMFLOAT3 position, float scale, UINT detail_level) {
+	std::random_device rd;
+	std::uniform_int_distribution<int> uid(1, 10);
+
 	DirectX::XMFLOAT3 pivot_position = position;
 
 	position.y += scale / 2.0f;
 
-	for (int i = 0; i < 4; ++i) {
+	for (int i = 0; i < 8; ++i) {
 		position.z = pivot_position.z - scale * 2.0f;
 
-		for (int j = 1; j <= 11; ++j) {
+		for (int j = 1; j <= 21; ++j) {
 			position.x = pivot_position.x - scale;
 
 			for (int k = 0; k <= j / 2; ++k) {
+				if ((i == 7 || j == 21 || k == 0 || k == j / 2) &&
+					!(uid(rd) % 10)) {
+					position.x += scale;
+					continue;
+				}
+
 				Crt_Voxel(position, scale, detail_level);
 				position.x += scale;
 			}

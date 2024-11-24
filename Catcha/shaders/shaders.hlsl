@@ -18,7 +18,8 @@
 #include "lighting.hlsl"
 
 cbuffer CB_Object : register(b0) {
-	float4x4 g_world; 
+	float4x4 g_world;
+    float3 g_color_multiplier;
     uint g_animated;
 };
 
@@ -125,10 +126,14 @@ float4 PS(Vertex_Out pixel_in) : SV_Target {
 
     result.a = material.diffuse_albedo.a;
 
+    //
     //float luminance = dot(result.rgb, float3(0.299, 0.587, 0.114));
     //result = float4(luminance, luminance, luminance, result.a);
 
+    //
     //result = lerp(0.2, 1.0, result);
+
+    result = result * float4(g_color_multiplier, 1.0f);
 
     return result;
 }

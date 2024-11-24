@@ -639,7 +639,7 @@ void Object::Jump() {
 }
 
 void Object::Act_One() {
-	m_next_state = Object_State::STATE_ACTION_ONE;
+	//m_next_state = Object_State::STATE_ACTION_ONE;
 }
 
 void Object::Act_Two() {
@@ -796,4 +796,16 @@ void Object::Set_Look(DirectX::XMFLOAT4 quat)
 	m_rotate_roll_pitch_yaw = quat;
 	m_target_quat = quat;
 	m_dirty = true;
+}
+
+void Object::Set_Color_Mul(DirectX::XMFLOAT3 color_rgb) {
+	m_color_multiplier = color_rgb;
+
+	Rst_Dirty_Count();
+}
+
+void Object::Set_Color_Mul(float color_r, float color_g, float color_b) {
+	m_color_multiplier = DirectX::XMFLOAT3(color_r, color_g, color_b);
+
+	Rst_Dirty_Count();
 }

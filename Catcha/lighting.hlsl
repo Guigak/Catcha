@@ -43,7 +43,7 @@ float3 Blinn_Phong(float3 light_strength, float3 light_vector, float3 normal, fl
 	//
 	float brightness = dot(light_strength, float3(0.3, 0.59, 0.11));
 
-	float levels = 2.0;
+	float levels = 8.0;
 	brightness = floor(brightness * levels) / levels;
 	//brightness = lerp(0.2, 1.0, brightness);
 

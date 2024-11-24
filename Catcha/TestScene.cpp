@@ -520,9 +520,7 @@ void TestScene::Build_O() {
 	object->Set_Animated(true);
 
 	Crt_Voxel_Cheese(DirectX::XMFLOAT3(169.475f, 10.049f, 230.732f), 1.0f, 0);
-	//Crt_Voxel_Cheese(DirectX::XMFLOAT3(0.0f, -61.592f, 50.0f), 1.0f, 0);
-	//Crt_Voxel_Cheese(DirectX::XMFLOAT3(0.0f, -61.592f, 100.0f), 1.0f, 0);
-	//Crt_Voxel_Cheese(DirectX::XMFLOAT3(0.0f, -61.592f, 100.0f), 1.0f, 0);
+	Crt_Voxel_Cheese(DirectX::XMFLOAT3(254.871f, 10.049f, 311.188), 1.0f, 0);
 	
 	// test
 	//for (int i = 0; i < 50; ++i) {

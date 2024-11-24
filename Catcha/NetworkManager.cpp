@@ -299,9 +299,10 @@ void NetworkManager::ProcessPacket(char* ptr)
 		DirectX::XMFLOAT3 coord = { static_cast<float>(p->x), static_cast<float>(p->y), static_cast<float>(p->z) };
 		characters[id].Location = coord;
 		characters[id].pitch = p->player_pitch;
-		Object_State state = static_cast<Object_State>(p->state >> 2);
-		bool on_ground = (p->state & 0b10) != 0;
-		bool need_blending = (p->state & 0b01) != 0;
+		Object_State state = static_cast<Object_State>(p->state >> 3);
+		bool on_ground = (p->state & (1 << 2)) != 0;
+		bool need_blending = (p->state & (1 << 1)) != 0;
+		bool cat_attacked = (p->state & 1) != 0;
 
 		if (id == m_myid)
 		{
@@ -320,6 +321,14 @@ void NetworkManager::ProcessPacket(char* ptr)
 		}
 		else
 		{
+			if (true == cat_attacked)
+			{
+				m_objects[characters[id].character_id]->Set_Color_Mul(1.0f, 0.0f, 0.0f);
+			}
+			else
+			{
+				m_objects[characters[id].character_id]->Set_Color_Mul(1.0f, 1.0f, 1.0f);
+			}
 			// 다른 캐릭터의 받은 움직임
 			m_objects[characters[id].character_id]->SetTargetPosition(coord);
 			m_objects[characters[id].character_id]->SetTargetPitch(p->player_pitch);
@@ -388,6 +397,10 @@ void NetworkManager::ProcessPacket(char* ptr)
 		{
 			ChangeOwnCharacter(character_id, new_character_num);
 			characters[m_myid].character_id = new_character_num;
+			for (auto& observer : m_observers)
+			{
+				observer->InitCamera();
+			}
 			//m_objects[characters[m_myid].character_id]->Set_Character_Number(new_character_num);
 		}
 		else

@@ -6,6 +6,7 @@
 std::unordered_map<std::wstring, ObjectOBB> g_obbData;
 
 UINT m_voxel_count = 0;
+bool m_render_silhouette = false;
 
 void TestScene::Enter(D3DManager* d3d_manager) {
 	m_object_manager = std::make_unique<ObjectManager>();
@@ -224,7 +225,54 @@ void TestScene::Draw(D3DManager* d3d_manager, ID3D12CommandList** command_lists)
 
 	auto object_constant_buffer = m_current_frameresource->object_constant_buffer->Get_Resource();
 
+	{
+		// draw cat mesh
+		Object* cat_object = m_object_manager->Get_Obj(L"cat");
+		command_list->OMSetStencilRef(1);
+
+		UINT object_CBV_index = m_current_frameresource_index * (UINT)m_object_manager->Get_Obj_Count() + cat_object->Get_CB_Index();
+		auto object_CBV_gpu_descriptor_handle = D3D12_GPU_DESCRIPTOR_HANDLE_EX(m_CBV_heap->GetGPUDescriptorHandleForHeapStart());
+		object_CBV_gpu_descriptor_handle.Get_By_Offset(object_CBV_index, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size());
+
+		//
+		UINT animation_CBV_index = m_animation_CBV_offset + m_current_frameresource_index * (UINT)m_object_manager->Get_Obj_Count() + cat_object->Get_CB_Index();
+		auto animation_CBV_gpu_descriptor_handle = D3D12_GPU_DESCRIPTOR_HANDLE_EX(m_CBV_heap->GetGPUDescriptorHandleForHeapStart());
+		animation_CBV_gpu_descriptor_handle.Get_By_Offset(animation_CBV_index, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size());
+
+		//
+		command_list->SetGraphicsRootDescriptorTable(0, object_CBV_gpu_descriptor_handle);
+		command_list->SetGraphicsRootDescriptorTable(3, animation_CBV_gpu_descriptor_handle);
+
+		UINT material_CBV_index;
+		for (auto& m : cat_object->Get_Mesh_Array()) {
+			if (m.mesh_info->material == nullptr) {
+				material_CBV_index = m_material_CBV_offset +
+					m_current_frameresource_index * (UINT)m_object_manager->Get_Material_Manager().Get_Material_Count() + 0;
+			}
+			else {
+				material_CBV_index = m_material_CBV_offset +
+					m_current_frameresource_index * (UINT)m_object_manager->Get_Material_Manager().Get_Material_Count() +
+					m.mesh_info->material->constant_buffer_index;
+			}
+
+			auto material_CBV_gpu_descriptor_handle = D3D12_GPU_DESCRIPTOR_HANDLE_EX(m_CBV_heap->GetGPUDescriptorHandleForHeapStart());
+			material_CBV_gpu_descriptor_handle.Get_By_Offset(material_CBV_index, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size());
+
+			command_list->SetGraphicsRootDescriptorTable(1, material_CBV_gpu_descriptor_handle);
+
+			m.mesh_info->Draw(command_list);
+		}
+		//
+	}
+
+	// draw else
+	command_list->OMSetStencilRef(2);
+
 	for (auto& object : m_object_manager->Get_Opaque_Obj_Arr()) {
+		if (object->Get_Name() == L"cat") {
+			continue;
+		}
+
 		if (!object->Get_Visiable()) {
 			continue;
 		}
@@ -264,6 +312,40 @@ void TestScene::Draw(D3DManager* d3d_manager, ID3D12CommandList** command_lists)
 	}
 
 	// draw transparent objects
+
+	// draw siluet
+	if (m_render_silhouette) {
+		command_list->SetPipelineState(m_pipeline_state_map[L"silhouette"].Get());
+
+		Object* cat_object = m_object_manager->Get_Obj(L"cat");
+
+		UINT object_CBV_index = m_current_frameresource_index * (UINT)m_object_manager->Get_Obj_Count() + cat_object->Get_CB_Index();
+		auto object_CBV_gpu_descriptor_handle = D3D12_GPU_DESCRIPTOR_HANDLE_EX(m_CBV_heap->GetGPUDescriptorHandleForHeapStart());
+		object_CBV_gpu_descriptor_handle.Get_By_Offset(object_CBV_index, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size());
+
+		//
+		UINT animation_CBV_index = m_animation_CBV_offset + m_current_frameresource_index * (UINT)m_object_manager->Get_Obj_Count() + cat_object->Get_CB_Index();
+		auto animation_CBV_gpu_descriptor_handle = D3D12_GPU_DESCRIPTOR_HANDLE_EX(m_CBV_heap->GetGPUDescriptorHandleForHeapStart());
+		animation_CBV_gpu_descriptor_handle.Get_By_Offset(animation_CBV_index, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size());
+
+		//
+		command_list->SetGraphicsRootDescriptorTable(0, object_CBV_gpu_descriptor_handle);
+		command_list->SetGraphicsRootDescriptorTable(3, animation_CBV_gpu_descriptor_handle);
+
+		UINT material_CBV_index;
+		for (auto& m : cat_object->Get_Mesh_Array()) {
+			material_CBV_index = m_material_CBV_offset +
+				m_current_frameresource_index * (UINT)m_object_manager->Get_Material_Manager().Get_Material_Count() + 0;
+
+			auto material_CBV_gpu_descriptor_handle = D3D12_GPU_DESCRIPTOR_HANDLE_EX(m_CBV_heap->GetGPUDescriptorHandleForHeapStart());
+			material_CBV_gpu_descriptor_handle.Get_By_Offset(material_CBV_index, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size());
+
+			command_list->SetGraphicsRootDescriptorTable(1, material_CBV_gpu_descriptor_handle);
+
+			m.mesh_info->Draw(command_list);
+		}
+		//
+	}
 
 	// draw wireframe bounding box
 	if (m_render_boundingbox) {
@@ -503,7 +585,7 @@ void TestScene::Build_O() {
 
 void TestScene::Build_C(D3DManager* d3d_manager) {
 	auto main_camera = reinterpret_cast<Camera*>(m_object_manager->Add_Cam(L"maincamera", L"camera", L"player",
-		0.0f, 10.0f, 0.0f, 50.0f, ROTATE_SYNC_RPY));
+		0.0f, 10.0f, 0.0f, 0.1f, ROTATE_SYNC_RPY));
 	main_camera->Set_Frustum(0.25f * MathHelper::Pi(), d3d_manager->Get_Aspect_Ratio(), 1.0f, 2000.0f);
 	main_camera->Set_Limit_Rotate_Right(true, -RIGHT_ANGLE_RADIAN + 0.01f, RIGHT_ANGLE_RADIAN - 0.01f);
 	//main_camera->Set_Limit_Rotate_Right(true, DirectX::XMConvertToRadians(1.0f), DirectX::XMConvertToRadians(60.0f));
@@ -640,7 +722,10 @@ void TestScene::Build_PSO(D3DManager* d3d_manager) {
 	opaque_PSO_desc.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
 	//opaque_PSO_desc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
 	opaque_PSO_desc.BlendState = D3D12_BLEND_DESC_EX(D3D12_DEFAULT());
-	opaque_PSO_desc.DepthStencilState = D3D12_DEPTH_STENCIL_DESC_EX(D3D12_DEFAULT());
+	opaque_PSO_desc.DepthStencilState = D3D12_DEPTH_STENCIL_DESC_EX(
+	TRUE, D3D12_DEPTH_WRITE_MASK_ALL, D3D12_COMPARISON_FUNC_LESS,
+		TRUE, 0xFF, 0xFF, D3D12_STENCIL_OP_KEEP, D3D12_STENCIL_OP_KEEP, D3D12_STENCIL_OP_REPLACE, D3D12_COMPARISON_FUNC_ALWAYS,
+		D3D12_STENCIL_OP_KEEP, D3D12_STENCIL_OP_KEEP, D3D12_STENCIL_OP_KEEP, D3D12_COMPARISON_FUNC_ALWAYS);
 	opaque_PSO_desc.SampleMask = UINT_MAX;
 	opaque_PSO_desc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 	opaque_PSO_desc.NumRenderTargets = 1;
@@ -651,10 +736,19 @@ void TestScene::Build_PSO(D3DManager* d3d_manager) {
 
 	Throw_If_Failed(device->CreateGraphicsPipelineState(&opaque_PSO_desc, IID_PPV_ARGS(&m_pipeline_state_map[L"opaque"])));
 
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC opaque_wireframe_PSO_desc = opaque_PSO_desc;
-	opaque_wireframe_PSO_desc.RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME;
+	//
+	opaque_PSO_desc.RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME;
 
-	Throw_If_Failed(device->CreateGraphicsPipelineState(&opaque_wireframe_PSO_desc, IID_PPV_ARGS(&m_pipeline_state_map[L"opaque_wireframe"])));
+	Throw_If_Failed(device->CreateGraphicsPipelineState(&opaque_PSO_desc, IID_PPV_ARGS(&m_pipeline_state_map[L"opaque_wireframe"])));
+
+	//
+	opaque_PSO_desc.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
+	opaque_PSO_desc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_GREATER;
+	opaque_PSO_desc.DepthStencilState.FrontFace.StencilPassOp = D3D12_STENCIL_OP_KEEP;
+	opaque_PSO_desc.DepthStencilState.FrontFace.StencilFunc = D3D12_COMPARISON_FUNC_EQUAL;
+	//opaque_PSO_desc.DepthStencilState.BackFace.StencilFunc = D3D12_COMPARISON_FUNC_NEVER;
+
+	Throw_If_Failed(device->CreateGraphicsPipelineState(&opaque_PSO_desc, IID_PPV_ARGS(&m_pipeline_state_map[L"silhouette"])));
 }
 
 void TestScene::Binding_Key() {
@@ -686,6 +780,9 @@ void TestScene::Binding_Key() {
 	m_input_manager->Bind_Key_First_Down(VK_F1, BindingInfo(L"", Action::CHANGE_WIREFRAME_FLAG));
 	m_input_manager->Bind_Key_First_Down(VK_F2, BindingInfo(L"", Action::CHANGE_BOUNDINGBOX_FLAG));
 
+	//
+	m_input_manager->Bind_Key_First_Down(VK_F3, BindingInfo(L"", Action::CUSTOM_FUNCTION_ONE));
+
 	//m_input_manager->Bind_Key_First_Down(VK_TAB, BindingInfo(L"", Action::FIX_CURSOR));
 
 	//
@@ -695,6 +792,10 @@ void TestScene::Binding_Key() {
 
 void TestScene::Pairing_Collision_Set() {
 	//m_object_manager->Add_Collision_Pair(L"")
+}
+
+void TestScene::Custom_Function_One() {
+	m_render_silhouette = !m_render_silhouette;
 }
 
 void TestScene::Crt_Voxel(DirectX::XMFLOAT3 position, float scale, UINT detail_level) {
@@ -766,7 +867,12 @@ void TestScene::CharacterChange(bool is_cat, const std::wstring& key1, const std
 	else
 	{
 		m_object_manager->Swap_Object(key1, key2);
-		m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"player", 0.0f, 0.0f, 0.0f, 0.1f);
+		m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"player", 0.0f, 2.5f, 0.0f, 0.1f);
 		m_object_manager->Set_Camera_4_Server(L"maincamera", true);
 	}
+}
+
+void TestScene::InitCamera()
+{
+	m_object_manager->Set_Camera_Init_4_Server(L"maincamera");
 }

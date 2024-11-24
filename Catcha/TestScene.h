@@ -30,9 +30,15 @@ public:
 	virtual void Pairing_Collision_Set();
 
 	//
+	virtual void Custom_Function_One();
+	virtual void Custom_Function_Two() {}
+	virtual void Custom_Function_Three() {}
+
+	//
 	void Crt_Voxel(DirectX::XMFLOAT3 position, float scale, UINT detail_level);
 	void Crt_Voxel_Cheese(DirectX::XMFLOAT3 position, float scale, UINT detail_level);
 
 	void CharacterChange(bool is_cat, const std::wstring& key1, const std::wstring& key2) override;		// 옵저버를 이용한 캐릭터 변경
+	void InitCamera() override;	// 접속시 카메라 값 초기화
 };
 

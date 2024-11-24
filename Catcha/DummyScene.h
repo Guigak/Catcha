@@ -16,5 +16,7 @@ public:
 	virtual void Prcs_Input(UINT message, WPARAM wparam, LPARAM lparam);	// Process Message
 
 	void CharacterChange(bool is_cat, const std::wstring& key1, const std::wstring& key2) {};
+	// 접속시 카메라 값 초기화
+	void InitCamera() {};
 };
 

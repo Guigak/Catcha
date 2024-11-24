@@ -364,3 +364,9 @@ void ObjectManager::Set_Camera_4_Server(std::wstring camera_name, bool NeedSend)
     Camera* camera = (Camera*)Get_Obj(camera_name);
     camera->Set_Camera_Need_Send(NeedSend);
 }
+
+void ObjectManager::Set_Camera_Init_4_Server(std::wstring camera_name)
+{
+	Camera* camera = (Camera*)Get_Obj(camera_name);
+    camera->Set_Rotate(DirectX::XMFLOAT4(0, 0, 0, 1));
+}

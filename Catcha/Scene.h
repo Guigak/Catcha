@@ -76,7 +76,7 @@ public:
 	virtual void Exit(D3DManager* d3d_manager) {}
 
 	virtual void Update(D3DManager* d3d_manager, float elapsed_time) {}
-	virtual void Resize(D3DManager* d3d_manager) {}
+	virtual void Resize(D3DManager* d3d_manager) { Flush_Cmd_Q(d3d_manager); }
 	virtual void Draw(D3DManager* d3d_manager, ID3D12CommandList** command_lists) {}
 
 	virtual void Prcs_Input_Msg(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam) {}	// Process Message
@@ -100,10 +100,17 @@ public:
 	virtual void Set_BS(Scene* back_scene) { m_back_scene = back_scene; }	// Set Back Scene
 	virtual void Set_SM(SceneManager* scene_manager) { m_scene_manager = scene_manager; }	// Set Scene Manager
 
+	virtual void Custom_Function_One() {}
+	virtual void Custom_Function_Two() {}
+	virtual void Custom_Function_Three() {}
+
 	//
 	void Chg_Wireframe_Flag() { m_wireframe = !m_wireframe; }
 	void Chg_Boundingbox_Flag() { m_render_boundingbox = !m_render_boundingbox; }
 
+	void Flush_Cmd_Q(D3DManager* d3d_manager);
+
 	virtual void CharacterChange(bool is_cat, const std::wstring& key1, const std::wstring& key2) = 0;		// 옵저버를 이용한 캐릭터 변경
+	virtual void InitCamera() = 0;	// 접속시 카메라 값 초기화
 };
 

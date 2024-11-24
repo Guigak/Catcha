@@ -15,6 +15,7 @@ void print_error(const char* msg, int err_no)
 }
 
 #define NAGLEOFF
+#define ENTERIP
 void NetworkManager::InitSocket()
 {
 	std::wcout.imbue(std::locale("korean"));
@@ -28,13 +29,19 @@ void NetworkManager::InitSocket()
 	m_server_addr.sin_family = AF_INET;
 	m_server_addr.sin_port = htons(PORT);
 
-	// TODO : 서버 아이피로 변경
+// TODO : 서버 아이피로 변경
 #ifdef ENTERIP
 	char SERVER_ADDR[BUFSIZE];
-	std::cout << "\nEnter IP Address : ";
-	std::cin.getline(SERVER_ADDR, BUFSIZE);
-#endif
+	std::ifstream ip_file("networkip.txt");  // 파일 열기
+
+	if (ip_file.is_open()) 
+	{
+		ip_file.getline(SERVER_ADDR, BUFSIZE);  // 파일에서 IP 주소 읽기
+		ip_file.close();  // 파일 닫기
+	}
+#else
 	char SERVER_ADDR[BUFSIZE] = "127.0.0.1";
+#endif
 
 
 	std::cout << "Enter User Name : ";

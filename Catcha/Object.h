@@ -101,7 +101,7 @@ protected:
 
 	//////////////////////////////////////////////////////////////////
 	// [SC] 위치 보간을 위한 변수
-	DirectX::XMFLOAT3 m_target_position{ 0, 0, 0 };						// 서버에서 받은 Position
+	DirectX::XMFLOAT3 m_target_position{ 0, 999.0f, 0 };				// 서버에서 받은 Position
 	float m_lerp_position_progress = 0.0f;								// Position 선형 보간 진행도 (0.0~1.0)
 
 	// [SC] 회전 보간을 위한 변수

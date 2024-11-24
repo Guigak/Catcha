@@ -32,6 +32,7 @@ extern void print_error(const char* msg, int err_no);
 #include <windows.h>
 #include <wrl.h>
 #include <comdef.h>
+#include <tchar.h>
 
 #pragma comment(lib, "winmm.lib")
 

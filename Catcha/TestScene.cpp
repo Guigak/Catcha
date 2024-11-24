@@ -527,14 +527,14 @@ void TestScene::Build_O() {
 		object->Bind_Anim_2_State(Object_State::STATE_ACTION_ONE, Animation_Binding_Info(L"mouse_hit.fbx", 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE, NOT_MOVABLE));
 		object->Set_Animated(true);
 		object->Set_Phys(true);
-
-		m_object_manager->Add_Col_OBB_Obj(L"mouse" + std::to_wstring(i) + L"_OBB_",
+		object->TP_Down(999.0f);
+		/*m_object_manager->Add_Col_OBB_Obj(L"mouse" + std::to_wstring(i) + L"_OBB_",
 			DirectX::BoundingOrientedBox(
 				DirectX::XMFLOAT3(0.00781226f, 2.38999f, 0.004617309f),
 				DirectX::XMFLOAT3(3.864098f, 5.104148f, 10.92712f),
 				DirectX::XMFLOAT4(0, 0, 0, 1)
 			)
-		);
+		);*/
 	}
 
 	object = m_object_manager->Get_Obj(L"cat");
@@ -546,13 +546,14 @@ void TestScene::Build_O() {
 	object->Bind_Anim_2_State(Object_State::STATE_ACTION_ONE, Animation_Binding_Info(L"cat_paw.fbx", 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE, NOT_MOVABLE));
 	object->Set_Animated(true);
 	object->Set_Phys(true);
-	m_object_manager->Add_Col_OBB_Obj(L"cat_OBB_",
+	object->TP_Down(999.0f);
+	/*m_object_manager->Add_Col_OBB_Obj(L"cat_OBB_",
 		DirectX::BoundingOrientedBox(
 			DirectX::XMFLOAT3(-6.570594E-05f, 19.85514f, 1.016994f),
 			DirectX::XMFLOAT3(26.47168f, 53.77291f, 39.95445f),
 			DirectX::XMFLOAT4(-0.7071068f, 0.0f, 0.0f, 0.7071068f)
 		)
-	);
+	);*/
 
 	m_object_manager->Add_Obj(L"player", L"mouse_mesh_edit.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
 	m_object_manager->Set_Sklt_2_Obj(L"player", L"mouse_mesh_edit.fbx");
@@ -560,10 +561,8 @@ void TestScene::Build_O() {
 	m_object_manager->Get_Obj(L"player")->Set_Visiable(false);
 
 
-	Crt_Voxel_Cheese(DirectX::XMFLOAT3(0.0f, -61.592f, 0.0f), 1.0f, 0);
-	Crt_Voxel_Cheese(DirectX::XMFLOAT3(0.0f, -61.592f, 50.0f), 1.0f, 0);
-	Crt_Voxel_Cheese(DirectX::XMFLOAT3(0.0f, -61.592f, 100.0f), 1.0f, 0);
-	//Crt_Voxel_Cheese(DirectX::XMFLOAT3(0.0f, -61.592f, 100.0f), 1.0f, 0);
+	Crt_Voxel_Cheese(DirectX::XMFLOAT3(169.475f, 10.049f, 230.732f), 1.0f, 0);
+	Crt_Voxel_Cheese(DirectX::XMFLOAT3(254.871f, 10.049f, 311.188), 1.0f, 0);
 	
 	// test
 	/*m_object_manager->Add_Col_OBB_Obj(L"test_obb",
@@ -824,22 +823,27 @@ void TestScene::Crt_Voxel(DirectX::XMFLOAT3 position, float scale, UINT detail_l
 }
 
 void TestScene::Crt_Voxel_Cheese(DirectX::XMFLOAT3 position, float scale, UINT detail_level) {
+	int m_random_value = 10;
+	int y_value = 8;
+	int z_value = 21;
+	int x_value = z_value / 2;
+
 	std::random_device rd;
-	std::uniform_int_distribution<int> uid(1, 10);
+	std::uniform_int_distribution<int> uid(1, m_random_value);
 
 	DirectX::XMFLOAT3 pivot_position = position;
 
 	position.y += scale / 2.0f;
 
-	for (int i = 0; i < 8; ++i) {
-		position.z = pivot_position.z - scale * 2.0f;
+	for (int i = 0; i < y_value; ++i) {
+		position.z = pivot_position.z - scale * (float)(z_value / 2);
 
-		for (int j = 1; j <= 21; ++j) {
-			position.x = pivot_position.x - scale;
+		for (int j = 1; j <= z_value; ++j) {
+			position.x = pivot_position.x - scale * (float)(x_value / 2);
 
 			for (int k = 0; k <= j / 2; ++k) {
-				if ((i == 7 || j == 21 || k == 0 || k == j / 2) &&
-					!(uid(rd) % 10)) {
+				if ((i == y_value - 1 || j == z_value || k == 0 || k == j / 2) &&
+					!(uid(rd) % m_random_value)) {
 					position.x += scale;
 					continue;
 				}
@@ -853,7 +857,6 @@ void TestScene::Crt_Voxel_Cheese(DirectX::XMFLOAT3 position, float scale, UINT d
 
 		position.y += scale;
 	}
-
 }
 
 void TestScene::CharacterChange(bool is_cat, const std::wstring& key1, const std::wstring& key2)

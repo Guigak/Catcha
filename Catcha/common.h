@@ -72,8 +72,8 @@ extern void print_error(const char* msg, int err_no);
 #include "fbxsdk.h"
 
 // constant
-constexpr int CLIENT_WIDTH = 1200;
-constexpr int CLIENT_HEIGHT = 1024;
+constexpr int CLIENT_WIDTH = 1920;
+constexpr int CLIENT_HEIGHT = 1080;
 
 constexpr int FRAME_RESOURCES_NUMBER = 3;
 

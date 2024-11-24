@@ -437,17 +437,19 @@ void TestScene::Build_O() {
 	object->Bind_Anim_2_State(Object_State::STATE_MOVE, Animation_Binding_Info(L"cat_walk.fbx", 0.2f, LOOP_ANIMATION));
 	object->Set_Animated(true);
 
-	Crt_Voxel_Cheese(DirectX::XMFLOAT3(0.0f, -61.592f, 0.0f), 1.0f, 1);
+	Crt_Voxel_Cheese(DirectX::XMFLOAT3(0.0f, -61.592f, 0.0f), 1.0f, 0);
+	Crt_Voxel_Cheese(DirectX::XMFLOAT3(0.0f, -61.592f, 50.0f), 1.0f, 0);
+	Crt_Voxel_Cheese(DirectX::XMFLOAT3(0.0f, -61.592f, 100.0f), 1.0f, 0);
 	//Crt_Voxel_Cheese(DirectX::XMFLOAT3(0.0f, -61.592f, 100.0f), 1.0f, 0);
 	
 	// test
-	for (int i = 0; i < 50; ++i) {
-		m_object_manager->Add_Col_OBB_Obj(L"bed-" + std::to_wstring(i),
-			DirectX::BoundingOrientedBox(
-				DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f),
-				DirectX::XMFLOAT3(1.0f * (float)i, 1.0f * (float)i, 1.0f * (float)i),
-				DirectX::XMFLOAT4(0, 0, 0, 1)));
-	}
+	//for (int i = 0; i < 50; ++i) {
+	//	m_object_manager->Add_Col_OBB_Obj(L"bed-" + std::to_wstring(i),
+	//		DirectX::BoundingOrientedBox(
+	//			DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f),
+	//			DirectX::XMFLOAT3(1.0f * (float)i, 1.0f * (float)i, 1.0f * (float)i),
+	//			DirectX::XMFLOAT4(0, 0, 0, 1)));
+	//}
 }
 
 void TestScene::Build_C(D3DManager* d3d_manager) {
@@ -659,6 +661,9 @@ void TestScene::Crt_Voxel(DirectX::XMFLOAT3 position, float scale, UINT detail_l
 }
 
 void TestScene::Crt_Voxel_Cheese(DirectX::XMFLOAT3 position, float scale, UINT detail_level) {
+	std::random_device rd;
+	std::uniform_int_distribution<int> uid(1, 10);
+
 	DirectX::XMFLOAT3 pivot_position = position;
 
 	position.y += scale / 2.0f;
@@ -670,6 +675,12 @@ void TestScene::Crt_Voxel_Cheese(DirectX::XMFLOAT3 position, float scale, UINT d
 			position.x = pivot_position.x - scale;
 
 			for (int k = 0; k <= j / 2; ++k) {
+				if ((i == 7 || j == 21 || k == 0 || k == j / 2) &&
+					!(uid(rd) % 10)) {
+					position.x += scale;
+					continue;
+				}
+
 				Crt_Voxel(position, scale, detail_level);
 				position.x += scale;
 			}
@@ -679,5 +690,4 @@ void TestScene::Crt_Voxel_Cheese(DirectX::XMFLOAT3 position, float scale, UINT d
 
 		position.y += scale;
 	}
-
 }

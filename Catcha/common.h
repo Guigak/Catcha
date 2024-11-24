@@ -13,6 +13,7 @@
 #include <windows.h>
 #include <wrl.h>
 #include <comdef.h>
+#include <tchar.h>
 
 #pragma comment(lib, "winmm.lib")
 
@@ -30,6 +31,7 @@
 #pragma comment(lib, "dxgi.lib")
 
 // standard
+#include <iostream>
 #include <string>
 #include <memory>
 #include <algorithm>

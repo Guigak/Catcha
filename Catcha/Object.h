@@ -94,6 +94,9 @@ protected:
 	bool m_processable_input = true;
 	bool m_movable = true;
 
+	//
+	DirectX::XMFLOAT3 m_color_multiplier = DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f);
+
 public:
 	Object() {}
 	Object(ObjectManager* object_manager, std::wstring object_name, Mesh_Info* mesh, DirectX::XMMATRIX world_matrix, UINT constant_buffer_index, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, bool physics, bool visiable);
@@ -241,5 +244,9 @@ public:
 
 	//
 	void Set_OBB(DirectX::BoundingOrientedBox obb);
+
+	void Set_Color_Mul(DirectX::XMFLOAT3 color_rgb);
+	void Set_Color_Mul(float color_r, float color_g, float color_b);
+	DirectX::XMFLOAT3 Get_Color_Mul() { return m_color_multiplier; }
 };
 

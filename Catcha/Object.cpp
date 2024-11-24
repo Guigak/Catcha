@@ -634,3 +634,15 @@ void Object::Set_OBB(DirectX::BoundingOrientedBox obb) {
 
 	m_dirty = true;
 }
+
+void Object::Set_Color_Mul(DirectX::XMFLOAT3 color_rgb) {
+	m_color_multiplier = color_rgb;
+
+	Rst_Dirty_Count();
+}
+
+void Object::Set_Color_Mul(float color_r, float color_g, float color_b) {
+	m_color_multiplier = DirectX::XMFLOAT3(color_r, color_g, color_b);
+
+	Rst_Dirty_Count();
+}

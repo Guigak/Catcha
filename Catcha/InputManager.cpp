@@ -176,6 +176,15 @@ void InputManager::Prcs_Binding_Info(BindingInfo binding_info) {
 			break;
 		case Action::FIX_CURSOR:
 			Set_Fix_Cursor(!m_fix_cursor);
+		case Action::CUSTOM_FUNCTION_ONE:
+			m_scene->Custom_Function_One();
+			break;
+		case Action::CUSTOM_FUNCTION_TWO:
+			m_scene->Custom_Function_Two();
+			break;
+		case Action::CUSTOM_FUNCTION_THREE:
+			m_scene->Custom_Function_Three();
+			break;
 			break;
 		default:
 			break;

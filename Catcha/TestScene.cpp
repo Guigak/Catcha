@@ -3,6 +3,7 @@
 #include "MeshCreater.h"
 
 UINT m_voxel_count = 0;
+bool m_render_silhouette = false;
 
 void TestScene::Enter(D3DManager* d3d_manager) {
 	m_object_manager = std::make_unique<ObjectManager>();
@@ -294,8 +295,8 @@ void TestScene::Draw(D3DManager* d3d_manager, ID3D12CommandList** command_lists)
 
 	// draw transparent objects
 
-	{
-		// draw siluet
+	// draw siluet
+	if (m_render_silhouette) {
 		command_list->SetPipelineState(m_pipeline_state_map[L"silhouette"].Get());
 
 		Object* cat_object = m_object_manager->Get_Obj(L"cat_test");
@@ -485,7 +486,7 @@ void TestScene::Build_O() {
 	m_object_manager->Add_Obj(L"mouse_test", L"mouse_mesh_edit.fbx");
 	m_object_manager->Set_Sklt_2_Obj(L"mouse_test", L"mouse_mesh_edit.fbx");
 
-	//m_object_manager->Get_Obj(L"player")->Set_Visiable(false);
+	m_object_manager->Get_Obj(L"player")->Set_Visiable(false);
 	//m_object_manager->Get_Obj(L"cat_test")->Set_Visiable(false);
 	m_object_manager->Get_Obj(L"mouse_test")->Set_Visiable(false);
 
@@ -535,7 +536,7 @@ void TestScene::Build_O() {
 
 void TestScene::Build_C(D3DManager* d3d_manager) {
 	auto main_camera = reinterpret_cast<Camera*>(m_object_manager->Add_Cam(L"maincamera", L"camera", L"player",
-		0.0f, 10.0f, 0.0f, 50.0f, ROTATE_SYNC_RPY));
+		0.0f, 10.0f, 0.0f, 0.1f, ROTATE_SYNC_RPY));
 	main_camera->Set_Frustum(0.25f * MathHelper::Pi(), d3d_manager->Get_Aspect_Ratio(), 1.0f, 2000.0f);
 	main_camera->Set_Limit_Rotate_Right(true, -RIGHT_ANGLE_RADIAN + 0.01f, RIGHT_ANGLE_RADIAN - 0.01f);
 	//main_camera->Set_Limit_Rotate_Right(true, DirectX::XMConvertToRadians(1.0f), DirectX::XMConvertToRadians(60.0f));
@@ -717,6 +718,9 @@ void TestScene::Binding_Key() {
 	m_input_manager->Bind_Key_First_Down(VK_F1, BindingInfo(L"", Action::CHANGE_WIREFRAME_FLAG));
 	m_input_manager->Bind_Key_First_Down(VK_F2, BindingInfo(L"", Action::CHANGE_BOUNDINGBOX_FLAG));
 
+	//
+	m_input_manager->Bind_Key_First_Down(VK_F3, BindingInfo(L"", Action::CUSTOM_FUNCTION_ONE));
+
 	//m_input_manager->Bind_Key_First_Down(VK_TAB, BindingInfo(L"", Action::FIX_CURSOR));
 
 	//
@@ -726,6 +730,10 @@ void TestScene::Binding_Key() {
 
 void TestScene::Pairing_Collision_Set() {
 	//m_object_manager->Add_Collision_Pair(L"")
+}
+
+void TestScene::Custom_Function_One() {
+	m_render_silhouette = !m_render_silhouette;
 }
 
 void TestScene::Crt_Voxel(DirectX::XMFLOAT3 position, float scale, UINT detail_level) {

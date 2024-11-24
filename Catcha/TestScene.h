@@ -30,6 +30,11 @@ public:
 	virtual void Pairing_Collision_Set();
 
 	//
+	virtual void Custom_Function_One();
+	virtual void Custom_Function_Two() {}
+	virtual void Custom_Function_Three() {}
+
+	//
 	void Crt_Voxel(DirectX::XMFLOAT3 position, float scale, UINT detail_level);
 	void Crt_Voxel_Cheese(DirectX::XMFLOAT3 position, float scale, UINT detail_level);
 };

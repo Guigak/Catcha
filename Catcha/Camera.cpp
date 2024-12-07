@@ -1,4 +1,5 @@
 #include "Camera.h"
+#include "MapData.h"
 
 Camera::Camera() {
 	Set_Frustum(0.25f * MathHelper::Pi(), 1.0f, 1.0f, 1000.0f);
@@ -34,6 +35,36 @@ void Camera::Look_At(const DirectX::XMFLOAT3 position, const DirectX::XMFLOAT3 t
 	DirectX::XMVECTOR position_ = DirectX::XMLoadFloat3(&position);
 	DirectX::XMVECTOR target_ = DirectX::XMLoadFloat3(&target);
 	DirectX::XMVECTOR up_ = DirectX::XMLoadFloat3(&up_vector);
+
+	// 현재 타겟 위치에서 카메라 위치까지 거리 계산
+	float length = DirectX::XMVectorGetX(DirectX::XMVector3Length(DirectX::XMVectorSubtract(position_, target_)));
+
+	DirectX::XMVECTOR direction = DirectX::XMVector3Normalize(DirectX::XMVectorSubtract(position_, target_));
+
+	// 카메라 스프링 암 구현
+	for (const auto& obj : g_obbData) {
+		float dist = 0.0f;
+		if (obj.second.obb.Intersects(target_, direction, dist)) {
+			// 충돌 거리 확인
+			if (dist <= length && dist >= 0.0f) {
+				// 충돌 지점에서 약간 떨어진 지점으로 position 갱신위해 거리 추가 계산
+				float offset = 1.0f;
+				float safeDist = dist - offset;
+				// 최소 거리 설정
+				if (safeDist < 1.0f)
+				{
+					safeDist = 1.0f;
+				}
+
+				// 새로운 카메라 위치 갱신
+				position_ = DirectX::XMVectorAdd(target_, DirectX::XMVectorScale(direction, safeDist));
+
+				// 다른 물체 체크 위한 방향과 최소 거리 계산위해 재조정
+				direction = DirectX::XMVector3Normalize(DirectX::XMVectorSubtract(position_, target_));
+				length = DirectX::XMVectorGetX(DirectX::XMVector3Length(DirectX::XMVectorSubtract(position_, target_)));
+			}
+		}
+	}
 
 	Look_At(position_, target_, up_);
 }

@@ -120,7 +120,7 @@ protected:
 	float total_pitch = 0.0f;											// 각도 변화량의 합	
 
 	// [SC] 캐릭터 번호
-	int m_character_number = -1;										// 캐릭터 번호 (0~3 쥐, 4~7 ai, 8 고양이)
+	int m_character_number = -1;										// 캐릭터 번호 (0~3 쥐, 4~7 ai, 8 고양이) - 고정된 캐릭터의 번호임
 	bool m_is_need_send = false;										// 회전각 서버로 보내는지 여부
 	//////////////////////////////////////////////////////////////////
 

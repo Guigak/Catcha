@@ -864,7 +864,7 @@ void TestScene::CharacterChange(bool is_cat, const std::wstring& key1, const std
 	if (true == is_cat)
 	{
 		m_object_manager->Swap_Object(key1, key2);
-		m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"player", 0.0f, 50.0f, 0.0f, 250.0f);
+		m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"player", 0.0f, 50.0f, 0.0f, 150.0f, ROTATE_SYNC_RPY);
 		m_object_manager->Set_Camera_4_Server(L"maincamera", true);
 	}
 	else

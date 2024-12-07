@@ -139,10 +139,15 @@ void ObjectManager::Update(float elapsed_time) {
     for (auto& o : m_characters)
     {
         o->Calc_Delta_Characters(elapsed_time);
-        //if (o->Get_Name() != L"player")
+        if (o->Get_Name() != L"player")
         {
             o->Rotate_Character(elapsed_time);
         }
+        else
+        {
+            std::cout << "player" << std::endl;
+        }
+        
    //     if (o->Get_Name() == L"player")
    //     {
    //         int i = o->Get_Character_Number();
@@ -197,6 +202,7 @@ void ObjectManager::Update(float elapsed_time) {
         o->Update(elapsed_time);
     }
     
+
 }
 
 void ObjectManager::Solve_Collision() {

@@ -285,16 +285,15 @@ void NetworkManager::ProcessPacket(char* ptr)
 		characters[id].Location = coord;
 
 		m_objects[characters[id].character_id]->Set_Look(quat);
+		m_objects[characters[id].character_id]->Set_Position(coord.x, coord.y, coord.z);
 
 		if (id == m_myid)
 		{
 			// 자기 자신
-			m_objects[characters[id].character_id]->Set_Position(coord.x, coord.y, coord.z);
 		}
 		else
 		{
 			// 다른 유저 추가
-			m_objects[characters[id].character_id]->Set_Position(coord.x, coord.y, coord.z);
 			m_objects[characters[id].character_id]->Set_Visiable(true);
 		}
 		break;
@@ -311,23 +310,29 @@ void NetworkManager::ProcessPacket(char* ptr)
 		bool need_blending = (p->state & (1 << 1)) != 0;
 		bool cat_attacked = (p->state & 1) != 0;
 
-		if (id == m_myid)
+		// 공통 동기화
+		m_objects[characters[id].character_id]->SetTargetPosition(coord);
+		m_objects[characters[id].character_id]->Set_Grounded(on_ground);
+
+		// 애니메이션 동기화 정보
+		if (true == need_blending)
 		{
-			// 자신의 받은 움직임과 look
-			m_objects[characters[m_myid].character_id]->SetTargetPosition(coord);
-			m_objects[characters[m_myid].character_id]->SetTargetPitch(p->player_pitch);
-			m_objects[characters[m_myid].character_id]->Set_Grounded(on_ground);
-			if (true == need_blending)
-			{
-				m_objects[characters[m_myid].character_id]->Set_Next_State(state);
-			}
-			else
-			{
-				m_objects[characters[m_myid].character_id]->Set_Network_State(state);
-			}
+			m_objects[characters[id].character_id]->Set_Next_State(state);
 		}
 		else
 		{
+			m_objects[characters[id].character_id]->Set_Network_State(state);
+		}
+
+		// 내 캐릭터
+		if (id == m_myid)
+		{
+			// pass
+		}
+		// 타 캐릭터(자기 자신은 색 및 회전이 변할 필요가 없어서..)
+		else
+		{
+			// 타격시 색 변화 정보
 			if (true == cat_attacked)
 			{
 				m_objects[characters[id].character_id]->Set_Color_Mul(1.0f, 0.0f, 0.0f);
@@ -336,18 +341,9 @@ void NetworkManager::ProcessPacket(char* ptr)
 			{
 				m_objects[characters[id].character_id]->Set_Color_Mul(1.0f, 1.0f, 1.0f);
 			}
-			// 다른 캐릭터의 받은 움직임
-			m_objects[characters[id].character_id]->SetTargetPosition(coord);
-			m_objects[characters[id].character_id]->SetTargetPitch(p->player_pitch);
-			m_objects[characters[id].character_id]->Set_Grounded(on_ground);
-			if (true == need_blending)
-			{
-				m_objects[characters[id].character_id]->Set_Next_State(state);
-			}
-			else
-			{
-				m_objects[characters[id].character_id]->Set_Network_State(state);
-			}
+
+			// 다른 캐릭터의 받은 회전값
+			m_objects[characters[id].character_id]->SetTargetPitch(p->player_pitch);			
 		}
 		break;
 	}
@@ -408,13 +404,11 @@ void NetworkManager::ProcessPacket(char* ptr)
 			{
 				observer->InitCamera();
 			}
-			//m_objects[characters[m_myid].character_id]->Set_Character_Number(new_character_num);
 		}
 		else
 		{
 			// 다른 캐릭터의 캐릭터 변경
 			characters[id].character_id = new_character_num;
-			//m_objects[characters[id].character_id]->Set_Character_Number(new_character_num);
 		}
 		break;
 	}
@@ -445,6 +439,14 @@ void NetworkManager::ChangeOwnCharacter(int character_id, int new_number)
 			// 객체 이름 및 포인터 swap
 			// enum의 순서를 보장하기 위해 오브젝트 순서를 enum 순서에 맞춘다
 			m_objects[character_id]->Set_Name(L"free_mode");
+
+			// 접속전 기본 캐릭터 안보이게 설정
+			if (m_objects[character_id]->Get_Character_Number() == -1)
+			{
+				m_objects[character_id]->Set_Visiable(false);
+				m_objects[character_id]->Set_Position(0.0f, -999.0f, 0.0f);
+			}
+
 			character->Set_Name(L"player");
 
 			// 쥐 1인칭이라 자기 캐릭터 안그리게 설정

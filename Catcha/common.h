@@ -1783,9 +1783,9 @@ struct Mesh_Info {
 
 		//
 		bounding_box.Center = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
-		bounding_box.Extents.x = MathHelper::Max(std::fabsf(min_vertices.x), std::fabsf(max_vertices.x));
-		bounding_box.Extents.y = MathHelper::Max(std::fabsf(min_vertices.y), std::fabsf(max_vertices.y));
-		bounding_box.Extents.z = MathHelper::Max(std::fabsf(min_vertices.z), std::fabsf(max_vertices.z));
+		bounding_box.Extents.x = 2.0f * MathHelper::Max(std::fabsf(min_vertices.x), std::fabsf(max_vertices.x));
+		bounding_box.Extents.y = 2.0f * MathHelper::Max(std::fabsf(min_vertices.y), std::fabsf(max_vertices.y));
+		bounding_box.Extents.z = 2.0f * MathHelper::Max(std::fabsf(min_vertices.z), std::fabsf(max_vertices.z));
 	}
 
 	void Draw(ID3D12GraphicsCommandList* command_list) {

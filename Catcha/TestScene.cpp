@@ -62,7 +62,7 @@ void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
 
 	for (auto& object : m_object_manager->Get_Obj_Arr()) {
 		if (object->Get_Dirty_Count()) {
-			DirectX::XMMATRIX world_matrix = DirectX::XMLoadFloat4x4(&object->Get_WM());
+			DirectX::XMMATRIX world_matrix = DirectX::XMLoadFloat4x4(&object->Get_WM_4x4f());
 
 			ObjectConstants object_constants;
 			DirectX::XMStoreFloat4x4(&object_constants.world_matrix, DirectX::XMMatrixTranspose(world_matrix));
@@ -197,6 +197,12 @@ void TestScene::Draw(D3DManager* d3d_manager, ID3D12CommandList** command_lists)
 	command_list->SetGraphicsRootSignature(m_root_signature.Get());
 
 	//
+	DirectX::BoundingFrustum frustum_OBB;
+	DirectX::BoundingFrustum::CreateFromMatrix(frustum_OBB, m_main_camera->Get_PM_M());
+	//DirectX::BoundingFrustum::CreateFromMatrix(frustum_OBB, m_main_camera->Get_VM_M() * m_main_camera->Get_PM_M());
+	frustum_OBB.Transform(frustum_OBB, MathHelper::Inverse(m_main_camera->Get_VM_M()));
+
+	//
 	UINT pass_CBV_index = m_pass_CBV_offset + m_current_frameresource_index;
 	auto pass_CBV_gpu_descriptor_handle = D3D12_GPU_DESCRIPTOR_HANDLE_EX(m_CBV_heap->GetGPUDescriptorHandleForHeapStart());
 	pass_CBV_gpu_descriptor_handle.Get_By_Offset(pass_CBV_index, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size());
@@ -272,8 +278,18 @@ void TestScene::Draw(D3DManager* d3d_manager, ID3D12CommandList** command_lists)
 		command_list->SetGraphicsRootDescriptorTable(0, object_CBV_gpu_descriptor_handle);
 		command_list->SetGraphicsRootDescriptorTable(3, animation_CBV_gpu_descriptor_handle);
 
+		//
+		DirectX::BoundingOrientedBox mesh_OBB;
+
 		UINT material_CBV_index;
 		for (auto& m : object->Get_Mesh_Array()) {
+			//
+			m.mesh_info->Get_OBB().Transform(mesh_OBB, object->Get_WM_M());
+
+			if (frustum_OBB.Intersects(mesh_OBB) == false) {
+				continue;
+			}
+
 			if (m.mesh_info->material == nullptr) {
 				material_CBV_index = m_material_CBV_offset +
 					m_current_frameresource_index * (UINT)m_object_manager->Get_Material_Manager().Get_Material_Count() + 0;
@@ -522,6 +538,21 @@ void TestScene::Build_O() {
 
 	Crt_Voxel_Cheese(DirectX::XMFLOAT3(169.475f, 10.049f, 230.732f), 1.0f, 0);
 	Crt_Voxel_Cheese(DirectX::XMFLOAT3(254.871f, 10.049f, 311.188f), 1.0f, 0);
+
+	//
+	DirectX::BoundingOrientedBox obj_obb;
+	int count = 0;
+	for (auto& o : m_object_manager->Get_Opaque_Obj_Arr()) {
+		for (auto& m : o->Get_Mesh_Array()) {
+			m.mesh_info->Get_OBB().Transform(obj_obb, o->Get_WM_M());
+
+			m_object_manager->Add_Col_OBB_Obj(L"obb_" + std::to_wstring(count++), obj_obb);
+		}
+
+		//if (count > 10) {
+		//	break;
+		//}
+	}
 	
 	// test
 	//for (int i = 0; i < 50; ++i) {

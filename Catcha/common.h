@@ -1642,6 +1642,10 @@ struct Vertex_Info {
 struct Mesh_Info {
 	std::vector<Vertex_Info> vertices;
 
+	//
+	DirectX::XMFLOAT3 min_vertices = DirectX::XMFLOAT3(FLT_MAX, FLT_MAX, FLT_MAX);
+	DirectX::XMFLOAT3 max_vertices = DirectX::XMFLOAT3(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+
 	std::vector<std::uint16_t> indices_16;
 	std::vector<std::uint32_t> indices_32;
 	UINT index_count = 0;
@@ -1666,11 +1670,24 @@ struct Mesh_Info {
 	//
 	Material* material = nullptr;
 
+	DirectX::BoundingOrientedBox bounding_box = DirectX::BoundingOrientedBox();
+
 	//
 	Mesh_Info() {}
 	Mesh_Info(std::vector<Vertex_Info>& vertex_array, std::vector<std::uint32_t>& index_array_32) {
 		vertices.assign(vertex_array.begin(), vertex_array.end());
 		indices_32.assign(index_array_32.begin(), index_array_32.end());
+
+		//
+		for (auto& v : vertex_array) {
+			min_vertices.x = MathHelper::Min(min_vertices.x, v.position.x);
+			min_vertices.y = MathHelper::Min(min_vertices.y, v.position.y);
+			min_vertices.z = MathHelper::Min(min_vertices.z, v.position.z);
+
+			max_vertices.x = MathHelper::Max(max_vertices.x, v.position.x);
+			max_vertices.y = MathHelper::Max(max_vertices.y, v.position.y);
+			max_vertices.z = MathHelper::Max(max_vertices.z, v.position.z);
+		}
 	}
 
 	void Add_Info(std::vector<Vertex_Info>& vertex_array, std::vector<std::uint32_t>& index_array_32) {
@@ -1681,6 +1698,17 @@ struct Mesh_Info {
 		size_t index_count = indices_32.size();
 		for (size_t i = 0; i < index_array_32.size(); ++i) {
 			indices_32.emplace_back((std::uint32_t)(vertex_count + index_array_32[i]));
+		}
+
+		//
+		for (auto& v : vertex_array) {
+			min_vertices.x = MathHelper::Min(min_vertices.x, v.position.x);
+			min_vertices.y = MathHelper::Min(min_vertices.y, v.position.y);
+			min_vertices.z = MathHelper::Min(min_vertices.z, v.position.z);
+
+			max_vertices.x = MathHelper::Max(max_vertices.x, v.position.x);
+			max_vertices.y = MathHelper::Max(max_vertices.y, v.position.y);
+			max_vertices.z = MathHelper::Max(max_vertices.z, v.position.z);
 		}
 	}
 
@@ -1752,6 +1780,12 @@ struct Mesh_Info {
 		}
 
 		index_count = (UINT)indices_32.size();
+
+		//
+		bounding_box.Center = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
+		bounding_box.Extents.x = MathHelper::Max(std::fabsf(min_vertices.x), std::fabsf(max_vertices.x));
+		bounding_box.Extents.y = MathHelper::Max(std::fabsf(min_vertices.y), std::fabsf(max_vertices.y));
+		bounding_box.Extents.z = MathHelper::Max(std::fabsf(min_vertices.z), std::fabsf(max_vertices.z));
 	}
 
 	void Draw(ID3D12GraphicsCommandList* command_list) {
@@ -1765,6 +1799,11 @@ struct Mesh_Info {
 	void Free_UB() {	// Free Upload Buffer
 		vertex_upload_buffer = nullptr;
 		index_upload_buffer = nullptr;
+	}
+
+	//
+	DirectX::BoundingOrientedBox Get_OBB() {
+		return bounding_box;
 	}
 };
 

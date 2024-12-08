@@ -162,7 +162,8 @@ public:
 	DirectX::XMFLOAT3 Get_Up() { return m_up; }
 	DirectX::XMFLOAT3 Get_Right() { return m_right; }
 
-	DirectX::XMFLOAT4X4 Get_WM() { return m_world_matrix; }
+	DirectX::XMFLOAT4X4 Get_WM_4x4f() { return m_world_matrix; }
+	DirectX::XMMATRIX Get_WM_M() { return DirectX::XMLoadFloat4x4(&m_world_matrix); }
 
 	UINT Get_CB_Index() { return m_constant_buffer_index; }
 

@@ -80,7 +80,7 @@ void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
 
 	for (auto& object : m_object_manager->Get_Obj_Arr()) {
 		if (object->Get_Dirty_Count()) {
-			DirectX::XMMATRIX world_matrix = DirectX::XMLoadFloat4x4(&object->Get_WM());
+			DirectX::XMMATRIX world_matrix = DirectX::XMLoadFloat4x4(&object->Get_WM_4x4f());
 
 			ObjectConstants object_constants;
 			DirectX::XMStoreFloat4x4(&object_constants.world_matrix, DirectX::XMMatrixTranspose(world_matrix));
@@ -215,6 +215,12 @@ void TestScene::Draw(D3DManager* d3d_manager, ID3D12CommandList** command_lists)
 	command_list->SetGraphicsRootSignature(m_root_signature.Get());
 
 	//
+	DirectX::BoundingFrustum frustum_OBB;
+	DirectX::BoundingFrustum::CreateFromMatrix(frustum_OBB, m_main_camera->Get_PM_M());
+	//DirectX::BoundingFrustum::CreateFromMatrix(frustum_OBB, m_main_camera->Get_VM_M() * m_main_camera->Get_PM_M());
+	frustum_OBB.Transform(frustum_OBB, MathHelper::Inverse(m_main_camera->Get_VM_M()));
+
+	//
 	UINT pass_CBV_index = m_pass_CBV_offset + m_current_frameresource_index;
 	auto pass_CBV_gpu_descriptor_handle = D3D12_GPU_DESCRIPTOR_HANDLE_EX(m_CBV_heap->GetGPUDescriptorHandleForHeapStart());
 	pass_CBV_gpu_descriptor_handle.Get_By_Offset(pass_CBV_index, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size());
@@ -290,8 +296,18 @@ void TestScene::Draw(D3DManager* d3d_manager, ID3D12CommandList** command_lists)
 		command_list->SetGraphicsRootDescriptorTable(0, object_CBV_gpu_descriptor_handle);
 		command_list->SetGraphicsRootDescriptorTable(3, animation_CBV_gpu_descriptor_handle);
 
+		//
+		DirectX::BoundingOrientedBox mesh_OBB;
+
 		UINT material_CBV_index;
 		for (auto& m : object->Get_Mesh_Array()) {
+			//
+			m.mesh_info->Get_OBB().Transform(mesh_OBB, object->Get_WM_M());
+
+			if (frustum_OBB.Intersects(mesh_OBB) == false) {
+				continue;
+			}
+
 			if (m.mesh_info->material == nullptr) {
 				material_CBV_index = m_material_CBV_offset +
 					m_current_frameresource_index * (UINT)m_object_manager->Get_Material_Manager().Get_Material_Count() + 0;
@@ -437,6 +453,7 @@ void TestScene::Build_RS(ID3D12Device* device) {
 void TestScene::Build_S_N_L() {
 	m_shader_map[L"standard_VS"] = Compile_Shader(L"shaders\\shaders.hlsl", nullptr, "VS", "vs_5_1");
 	m_shader_map[L"opaque_PS"] = Compile_Shader(L"shaders\\shaders.hlsl", nullptr, "PS", "ps_5_1");
+	m_shader_map[L"silhouette_PS"] = Compile_Shader(L"shaders\\shaders.hlsl", nullptr, "Silhouette_PS", "ps_5_1");
 
 	m_input_layouts = {
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
@@ -562,7 +579,7 @@ void TestScene::Build_O() {
 
 
 	Crt_Voxel_Cheese(DirectX::XMFLOAT3(169.475f, 10.049f, 230.732f), 1.0f, 0);
-	Crt_Voxel_Cheese(DirectX::XMFLOAT3(254.871f, 10.049f, 311.188), 1.0f, 0);
+	Crt_Voxel_Cheese(DirectX::XMFLOAT3(254.871f, 10.049f, 311.188f), 1.0f, 0);
 	
 	// test
 	/*m_object_manager->Add_Col_OBB_Obj(L"test_obb",
@@ -579,6 +596,23 @@ void TestScene::Build_O() {
 				obj.second.obb.Extents,
 				obj.second.obb.Orientation)
 		);
+	}
+
+	
+
+	//
+	DirectX::BoundingOrientedBox obj_obb;
+	int count = 0;
+	for (auto& o : m_object_manager->Get_Opaque_Obj_Arr()) {
+		for (auto& m : o->Get_Mesh_Array()) {
+			m.mesh_info->Get_OBB().Transform(obj_obb, o->Get_WM_M());
+
+			m_object_manager->Add_Col_OBB_Obj(L"obb_" + std::to_wstring(count++), obj_obb);
+		}
+
+		//if (count > 10) {
+		//	break;
+		//}
 	}
 }
 
@@ -741,6 +775,7 @@ void TestScene::Build_PSO(D3DManager* d3d_manager) {
 	Throw_If_Failed(device->CreateGraphicsPipelineState(&opaque_PSO_desc, IID_PPV_ARGS(&m_pipeline_state_map[L"opaque_wireframe"])));
 
 	//
+	opaque_PSO_desc.PS = { reinterpret_cast<BYTE*>(m_shader_map[L"silhouette_PS"]->GetBufferPointer()), m_shader_map[L"silhouette_PS"]->GetBufferSize() };
 	opaque_PSO_desc.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
 	opaque_PSO_desc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_GREATER;
 	opaque_PSO_desc.DepthStencilState.FrontFace.StencilPassOp = D3D12_STENCIL_OP_KEEP;

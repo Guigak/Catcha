@@ -138,4 +138,8 @@ float4 PS(Vertex_Out pixel_in) : SV_Target {
     return result;
 }
 
+float4 Silhouette_PS(Vertex_Out pixel_in) : SV_Target{
+    float4 result = float4(1.0, 0.0, 0.0, 1.0);
 
+    return result;
+}

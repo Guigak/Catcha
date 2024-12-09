@@ -19,7 +19,7 @@
 
 cbuffer CB_Object : register(b0) {
 	float4x4 g_world;
-    float3 g_color_multiplier;
+    float4 g_color_multiplier;
     uint g_animated;
 };
 
@@ -133,13 +133,13 @@ float4 PS(Vertex_Out pixel_in) : SV_Target {
     //
     //result = lerp(0.2, 1.0, result);
 
-    result = result * float4(g_color_multiplier, 1.0f);
+    result = result * g_color_multiplier;
 
     return result;
 }
 
 float4 Silhouette_PS(Vertex_Out pixel_in) : SV_Target{
-    float4 result = float4(1.0, 0.0, 0.0, 1.0);
+    float4 result = float4(1.0, 0.0, 0.0, g_color_multiplier.w);
 
     return result;
 }

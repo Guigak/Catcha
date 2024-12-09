@@ -40,6 +40,10 @@ void TestScene::Exit(D3DManager* d3d_manager) {
 }
 
 void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
+	Object* cat_object = m_object_manager->Get_Obj(L"cat_test");
+	cat_object->Set_Color_Alpha(
+		MathHelper::Min(1.0f, 1.0f - MathHelper::Length(MathHelper::Subtract(cat_object->Get_Position_3f(), m_object_manager->Get_Obj(L"player")->Get_Position_3f())) / 500.0f));
+
 	m_input_manager->Prcs_Input();
 	m_object_manager->Update(elapsed_time);
 
@@ -715,6 +719,19 @@ void TestScene::Build_PSO(D3DManager* d3d_manager) {
 	Throw_If_Failed(device->CreateGraphicsPipelineState(&opaque_PSO_desc, IID_PPV_ARGS(&m_pipeline_state_map[L"opaque_wireframe"])));
 
 	//
+	D3D12_RENDER_TARGET_BLEND_DESC render_target_blend_desc;
+	render_target_blend_desc.BlendEnable = true;
+	render_target_blend_desc.LogicOpEnable = false;
+	render_target_blend_desc.SrcBlend = D3D12_BLEND_SRC_ALPHA;
+	render_target_blend_desc.DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
+	render_target_blend_desc.BlendOp = D3D12_BLEND_OP_ADD;
+	render_target_blend_desc.SrcBlendAlpha = D3D12_BLEND_ONE;
+	render_target_blend_desc.DestBlendAlpha = D3D12_BLEND_ZERO;
+	render_target_blend_desc.BlendOpAlpha = D3D12_BLEND_OP_ADD;
+	render_target_blend_desc.LogicOp = D3D12_LOGIC_OP_NOOP;
+	render_target_blend_desc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+
+	opaque_PSO_desc.BlendState.RenderTarget[0] = render_target_blend_desc;
 	opaque_PSO_desc.PS = { reinterpret_cast<BYTE*>(m_shader_map[L"silhouette_PS"]->GetBufferPointer()), m_shader_map[L"silhouette_PS"]->GetBufferSize() };
 	opaque_PSO_desc.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
 	opaque_PSO_desc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_GREATER;

@@ -4,7 +4,7 @@
 
 struct ObjectConstants {
 	DirectX::XMFLOAT4X4 world_matrix = MathHelper::Identity_4x4();
-	DirectX::XMFLOAT3 color_multiplier = DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f);
+	DirectX::XMFLOAT4 color_multiplier = DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 	UINT animated = 0;
 };
 

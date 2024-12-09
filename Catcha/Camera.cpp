@@ -1,6 +1,8 @@
 #include "Camera.h"
 #include "MapData.h"
 
+std::vector<DirectX::BoundingOrientedBox> g_springArmObj;
+
 Camera::Camera() {
 	Set_Frustum(0.25f * MathHelper::Pi(), 1.0f, 1.0f, 1000.0f);
 }
@@ -33,6 +35,7 @@ void Camera::Look_At(DirectX::FXMVECTOR position, DirectX::FXMVECTOR target, Dir
 
 void Camera::Look_At(const DirectX::XMFLOAT3 position, const DirectX::XMFLOAT3 target, const DirectX::XMFLOAT3 up_vector) {
 	DirectX::XMVECTOR position_ = DirectX::XMLoadFloat3(&position);
+	DirectX::XMVectorSetY(position_, position.y - 39.3701f / 2.0f);
 	DirectX::XMVECTOR target_ = DirectX::XMLoadFloat3(&target);
 	DirectX::XMVECTOR up_ = DirectX::XMLoadFloat3(&up_vector);
 
@@ -42,9 +45,9 @@ void Camera::Look_At(const DirectX::XMFLOAT3 position, const DirectX::XMFLOAT3 t
 	DirectX::XMVECTOR direction = DirectX::XMVector3Normalize(DirectX::XMVectorSubtract(position_, target_));
 
 	// 카메라 스프링 암 구현
-	for (const auto& obj : g_obbData) {
+	for (const auto& obj : g_springArmObj) {
 		float dist = 0.0f;
-		if (obj.second.obb.Intersects(target_, direction, dist)) {
+		if (obj.Intersects(target_, direction, dist)) {
 			// 충돌 거리 확인
 			if (dist <= length && dist >= 0.0f) {
 				// 충돌 지점에서 약간 떨어진 지점으로 position 갱신위해 거리 추가 계산

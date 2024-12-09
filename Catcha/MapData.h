@@ -5,9 +5,11 @@ struct ObjectOBB
 {
     std::wstring name;
     DirectX::BoundingOrientedBox obb;
+    bool is_spring_arm;
 };
 
 extern std::unordered_map<std::wstring, ObjectOBB> g_obbData;
+extern std::vector<DirectX::BoundingOrientedBox> g_springArmObj;
 
 class MapData {
 public:

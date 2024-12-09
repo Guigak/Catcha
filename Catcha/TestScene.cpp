@@ -603,17 +603,17 @@ void TestScene::Build_O() {
 	//
 	DirectX::BoundingOrientedBox obj_obb;
 	int count = 0;
-	for (auto& o : m_object_manager->Get_Opaque_Obj_Arr()) {
-		for (auto& m : o->Get_Mesh_Array()) {
-			m.mesh_info->Get_OBB().Transform(obj_obb, o->Get_WM_M());
+	//for (auto& o : m_object_manager->Get_Opaque_Obj_Arr()) {
+	//	for (auto& m : o->Get_Mesh_Array()) {
+	//		m.mesh_info->Get_OBB().Transform(obj_obb, o->Get_WM_M());
 
-			m_object_manager->Add_Col_OBB_Obj(L"obb_" + std::to_wstring(count++), obj_obb);
-		}
+	//		m_object_manager->Add_Col_OBB_Obj(L"obb_" + std::to_wstring(count++), obj_obb);
+	//	}
 
-		//if (count > 10) {
-		//	break;
-		//}
-	}
+	//	//if (count > 10) {
+	//	//	break;
+	//	//}
+	//}
 }
 
 void TestScene::Build_C(D3DManager* d3d_manager) {

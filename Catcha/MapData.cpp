@@ -21,6 +21,11 @@ bool MapData::LoadMapData(const std::string& filePath)
         if (line.empty())
         {
             currentOBB.obb = DirectX::BoundingOrientedBox(position, extents, rotation);
+            // 카메라가 충돌해야 하는 오브젝트 분리 저장
+            if (true == currentOBB.is_spring_arm)
+            {
+                g_springArmObj.emplace_back(DirectX::BoundingOrientedBox(position, extents, rotation));
+            }
             g_obbData.emplace(currentOBB.name, std::move(currentOBB));
             currentOBB = ObjectOBB();  // 다음 객체를 위해 초기화
             continue;
@@ -55,12 +60,26 @@ bool MapData::LoadMapData(const std::string& filePath)
             std::string values = line.substr(pos + 1);
             ParseVector3(values, extents);
         }
+        // "Tag" 파싱
+        else if (line.find("Tag:") != std::string::npos)
+        {
+            size_t pos = line.find(':');
+            std::string tag = line.substr(pos + 1);
+            tag.erase(0, tag.find_first_not_of(" \t"));
+            // springArm 이면 true
+            currentOBB.is_spring_arm = (tag.find("SpringArm") != std::string::npos) ? true : false;
+        }
     }
 
     // 마지막 객체 추가
     if (!currentOBB.name.empty())
     {
         currentOBB.obb = DirectX::BoundingOrientedBox(position, extents, rotation);
+        // 카메라가 충돌해야 하는 오브젝트 분리 저장
+        if (true == currentOBB.is_spring_arm)
+        {
+            g_springArmObj.emplace_back(DirectX::BoundingOrientedBox(position, extents, rotation));
+        }
         g_obbData.emplace(currentOBB.name, std::move(currentOBB));
     }
 

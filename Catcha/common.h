@@ -241,6 +241,13 @@ struct MathHelper {
 		return DirectX::XMMatrixScaling(xmfloat3.x, xmfloat3.y, xmfloat3.z);
 	}
 
+	static DirectX::XMFLOAT3 Multiply(const DirectX::XMFLOAT3& xmfloat3_a, const DirectX::XMFLOAT3 xmfloat3_b) {
+		DirectX::XMFLOAT3 result;
+		DirectX::XMStoreFloat3(&result, DirectX::XMVectorMultiply(DirectX::XMLoadFloat3(&xmfloat3_a), DirectX::XMLoadFloat3(&xmfloat3_b)));
+
+		return result;
+	}
+
 	static DirectX::XMFLOAT2 Multiply(const DirectX::XMFLOAT2& xmfloat2, const DirectX::XMMATRIX& matrix) {
 		DirectX::XMVECTOR vector = DirectX::XMLoadFloat2(&xmfloat2);
 

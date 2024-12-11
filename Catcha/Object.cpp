@@ -798,14 +798,20 @@ void Object::Set_Look(DirectX::XMFLOAT4 quat)
 	m_dirty = true;
 }
 
-void Object::Set_Color_Mul(DirectX::XMFLOAT3 color_rgb) {
-	m_color_multiplier = color_rgb;
+void Object::Set_Color_Mul(DirectX::XMFLOAT4 color_rgba) {
+	m_color_multiplier = color_rgba;
 
 	Rst_Dirty_Count();
 }
 
-void Object::Set_Color_Mul(float color_r, float color_g, float color_b) {
-	m_color_multiplier = DirectX::XMFLOAT3(color_r, color_g, color_b);
+void Object::Set_Color_Mul(float color_r, float color_g, float color_b, float color_a) {
+	m_color_multiplier = DirectX::XMFLOAT4(color_r, color_g, color_b, color_a);
+
+	Rst_Dirty_Count();
+}
+
+void Object::Set_Color_Alpha(float color_a) {
+	m_color_multiplier.w = color_a;
 
 	Rst_Dirty_Count();
 }

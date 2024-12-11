@@ -97,7 +97,7 @@ protected:
 	bool m_movable = true;
 
 	//
-	DirectX::XMFLOAT3 m_color_multiplier = DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f);
+	DirectX::XMFLOAT4 m_color_multiplier = DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 
 	//////////////////////////////////////////////////////////////////
 	// [SC] 위치 보간을 위한 변수
@@ -305,8 +305,9 @@ public:
 	bool Get_Camera_Need_Send() { return m_is_need_send; }
 
 
-	void Set_Color_Mul(DirectX::XMFLOAT3 color_rgb);
-	void Set_Color_Mul(float color_r, float color_g, float color_b);
-	DirectX::XMFLOAT3 Get_Color_Mul() { return m_color_multiplier; }
+	void Set_Color_Mul(DirectX::XMFLOAT4 color_rgb);
+	void Set_Color_Mul(float color_r, float color_g, float color_b, float color_a);
+	void Set_Color_Alpha(float color_a);
+	DirectX::XMFLOAT4 Get_Color_Mul() { return m_color_multiplier; }
 };
 

@@ -2,8 +2,12 @@
 #include "D3DManager.h"
 #include "MeshCreater.h"
 
+#define PASS_NUMBER 2
+
 UINT m_voxel_count = 0;
 bool m_render_silhouette = false;
+
+DirectX::BoundingSphere m_scene_sphere;
 
 void TestScene::Enter(D3DManager* d3d_manager) {
 	m_object_manager = std::make_unique<ObjectManager>();
@@ -15,6 +19,9 @@ void TestScene::Enter(D3DManager* d3d_manager) {
 	Resize(d3d_manager);
 
 	d3d_manager->Rst_Cmd_List();
+
+	//
+	m_shadow_map = std::make_unique<Shadowmap>(device, 2048, 2048);
 
 	Build_RS(device);
 	Build_S_N_L();
@@ -33,6 +40,10 @@ void TestScene::Enter(D3DManager* d3d_manager) {
 	d3d_manager->Cls_Cmd_List();
 	d3d_manager->Exct_Cmd_List();
 	d3d_manager->Flush_Cmd_Q();
+
+	//
+	m_scene_sphere.Center = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
+	m_scene_sphere.Radius = std::sqrtf(650.0f * 650.0f + 650.0f * 650.0f);
 }
 
 void TestScene::Exit(D3DManager* d3d_manager) {
@@ -60,7 +71,7 @@ void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
 		CloseHandle(event_handle);
 	}
 
-	//
+	// object
 	auto current_object_constant_buffer = m_current_frameresource->object_constant_buffer.get();
 	auto current_animation_constant_buffer = m_current_frameresource->animation_constant_buffer.get();
 
@@ -86,6 +97,7 @@ void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
 		}
 	}
 
+	// material
 	if (m_object_manager->Get_Material_Manager().Get_Dirty_Count()) {
 		auto current_material_constant_buffer = m_current_frameresource->material_constant_buffer.get();
 
@@ -101,6 +113,43 @@ void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
 		m_object_manager->Get_Material_Manager().Sub_Dirty_Count();
 	}
 
+	// shadow transform matrix
+	{
+		DirectX::XMVECTOR light_direction = DirectX::XMVectorSet(0.2f, -1.0f, 0.2f, 0.0f);
+		DirectX::XMVECTOR light_position = DirectX::XMVectorScale(light_direction, -2.0f * m_scene_sphere.Radius);
+		DirectX::XMVECTOR target_position = DirectX::XMLoadFloat3(&m_scene_sphere.Center);
+		DirectX::XMVECTOR light_up = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+		DirectX::XMMATRIX light_view_matrix = DirectX::XMMatrixLookAtLH(light_position, target_position, light_up);
+
+		DirectX::XMStoreFloat3(&m_light_position, light_position);
+
+		DirectX::XMFLOAT3 sphere_center_lightspace;
+		DirectX::XMStoreFloat3(&sphere_center_lightspace, DirectX::XMVector3TransformCoord(target_position, light_view_matrix));
+
+		float left_x = sphere_center_lightspace.x - m_scene_sphere.Radius;
+		float bottom_y = sphere_center_lightspace.y - m_scene_sphere.Radius;
+		float near_z = sphere_center_lightspace.z - m_scene_sphere.Radius;
+		float right_x = sphere_center_lightspace.x + m_scene_sphere.Radius;
+		float top_y = sphere_center_lightspace.y + m_scene_sphere.Radius;
+		float far_z = sphere_center_lightspace.z + m_scene_sphere.Radius;
+
+		m_light_near_z = near_z;
+		m_light_far_z = far_z;
+		DirectX::XMMATRIX light_projection_matrix = DirectX::XMMatrixOrthographicOffCenterLH(left_x, right_x, bottom_y, top_y, near_z, far_z);
+
+		DirectX::XMMATRIX texture_matrix(
+			0.5f, 0.0f, 0.0f, 0.0f,
+			0.0f, -0.5f, 0.0f, 0.0f,
+			0.0f, 0.0f, 1.0f, 0.0f,
+			0.5f, 0.5f, 0.0f, 1.0f);
+
+		DirectX::XMMATRIX shadow_transform_matrix = light_view_matrix * light_projection_matrix * texture_matrix;
+		DirectX::XMStoreFloat4x4(&m_light_view_matrix, light_view_matrix);
+		DirectX::XMStoreFloat4x4(&m_light_projection_matrix, light_projection_matrix);
+		DirectX::XMStoreFloat4x4(&m_shadow_transform_matrix, shadow_transform_matrix);
+	}
+
+	// main pass constants
 	if (m_main_camera) {
 		m_main_camera->Udt_VM();
 
@@ -127,12 +176,15 @@ void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
 	DirectX::XMMATRIX inverse_projection_matrix = DirectX::XMMatrixInverse(&DirectX::XMMatrixDeterminant(projection_matrix), projection_matrix);
 	DirectX::XMMATRIX inverse_view_projection_matrix = DirectX::XMMatrixInverse(&DirectX::XMMatrixDeterminant(view_projection_matrix), view_projection_matrix);
 
+	DirectX::XMMATRIX shadow_transform_matrix = DirectX::XMLoadFloat4x4(&m_shadow_transform_matrix);
+
 	DirectX::XMStoreFloat4x4(&m_main_pass_constant_buffer.view_matrix, DirectX::XMMatrixTranspose(view_matrix));
 	DirectX::XMStoreFloat4x4(&m_main_pass_constant_buffer.inverse_view_matrix, DirectX::XMMatrixTranspose(inverse_view_matrix));
 	DirectX::XMStoreFloat4x4(&m_main_pass_constant_buffer.projection_matrix, DirectX::XMMatrixTranspose(projection_matrix));
 	DirectX::XMStoreFloat4x4(&m_main_pass_constant_buffer.inverse_projection_matrix, DirectX::XMMatrixTranspose(inverse_projection_matrix));
 	DirectX::XMStoreFloat4x4(&m_main_pass_constant_buffer.view_projection_matrix, DirectX::XMMatrixTranspose(view_projection_matrix));
 	DirectX::XMStoreFloat4x4(&m_main_pass_constant_buffer.inverse_view_projection_matrix, DirectX::XMMatrixTranspose(inverse_view_projection_matrix));
+	DirectX::XMStoreFloat4x4(&m_main_pass_constant_buffer.shadow_transform_matrix, DirectX::XMMatrixTranspose(shadow_transform_matrix));
 	m_main_pass_constant_buffer.camera_position = m_camera_position;
 	m_main_pass_constant_buffer.buffer_padding = 0.0f;
 	m_main_pass_constant_buffer.render_target_size = DirectX::XMFLOAT2((float)d3d_manager->Get_Client_Width(), (float)d3d_manager->Get_Client_Height());
@@ -144,7 +196,7 @@ void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
 	m_main_pass_constant_buffer.ambient_light = { 0.25f, 0.25f, 0.35f, 1.0f };
 	//
 	//m_main_pass_constant_buffer.lights[0].direction = { 0.57735f, -0.57735f, 1.0f };
-	m_main_pass_constant_buffer.lights[0].direction = { 0.5f, -1.0f, 0.5f };
+	m_main_pass_constant_buffer.lights[0].direction = { 0.2f, -1.0f, 0.2f };
 	//m_main_pass_constant_buffer.lights[0].direction = { 0.5f, -1.0f, 0.5f };
 	m_main_pass_constant_buffer.lights[0].strength = { 0.6f, 0.6f, 0.6f };
 	//m_main_pass_constant_buffer.lights[0].strength = { 1.0f, 1.0f, 1.0f };
@@ -166,6 +218,32 @@ void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
 
 	auto current_pass_constant_buffer = m_current_frameresource->pass_constant_buffer.get();
 	current_pass_constant_buffer->Copy_Data(0, m_main_pass_constant_buffer);
+
+	// shadow pass constants
+	{
+		DirectX::XMMATRIX view_matrix = DirectX::XMLoadFloat4x4(&m_light_view_matrix);
+		DirectX::XMMATRIX projection_matrix = DirectX::XMLoadFloat4x4(&m_light_projection_matrix);
+		DirectX::XMMATRIX view_projection_matrix = DirectX::XMMatrixMultiply(view_matrix, projection_matrix);
+
+		DirectX::XMMATRIX inverse_view_matrix = DirectX::XMMatrixInverse(&DirectX::XMMatrixDeterminant(view_matrix), view_matrix);
+		DirectX::XMMATRIX inverse_projection_matrix = DirectX::XMMatrixInverse(&DirectX::XMMatrixDeterminant(projection_matrix), projection_matrix);
+		DirectX::XMMATRIX inverse_view_projection_matrix = DirectX::XMMatrixInverse(&DirectX::XMMatrixDeterminant(view_projection_matrix), view_projection_matrix);
+
+		DirectX::XMStoreFloat4x4(&m_shadow_pass_constant_buffer.view_matrix, DirectX::XMMatrixTranspose(view_matrix));
+		DirectX::XMStoreFloat4x4(&m_shadow_pass_constant_buffer.inverse_view_matrix, DirectX::XMMatrixTranspose(inverse_view_matrix));
+		DirectX::XMStoreFloat4x4(&m_shadow_pass_constant_buffer.projection_matrix, DirectX::XMMatrixTranspose(projection_matrix));
+		DirectX::XMStoreFloat4x4(&m_shadow_pass_constant_buffer.inverse_projection_matrix, DirectX::XMMatrixTranspose(inverse_projection_matrix));
+		DirectX::XMStoreFloat4x4(&m_shadow_pass_constant_buffer.view_projection_matrix, DirectX::XMMatrixTranspose(view_projection_matrix));
+		DirectX::XMStoreFloat4x4(&m_shadow_pass_constant_buffer.inverse_view_projection_matrix, DirectX::XMMatrixTranspose(inverse_view_projection_matrix));
+		m_shadow_pass_constant_buffer.camera_position = m_light_position;
+		m_shadow_pass_constant_buffer.render_target_size = DirectX::XMFLOAT2((float)m_shadow_map->Get_Width(), (float)m_shadow_map->Get_Height());
+		m_shadow_pass_constant_buffer.inverse_render_target_size = DirectX::XMFLOAT2(1.0f / (float)m_shadow_map->Get_Width(), 1.0f / (float)m_shadow_map->Get_Height());
+		m_shadow_pass_constant_buffer.near_z = m_light_near_z;
+		m_shadow_pass_constant_buffer.far_z = m_light_far_z;
+
+		auto current_pass_constant_buffer = m_current_frameresource->pass_constant_buffer.get();
+		current_pass_constant_buffer->Copy_Data(1, m_shadow_pass_constant_buffer);
+	}
 }
 
 void TestScene::Resize(D3DManager* d3d_manager) {
@@ -179,35 +257,123 @@ void TestScene::Draw(D3DManager* d3d_manager, ID3D12CommandList** command_lists)
 	ID3D12GraphicsCommandList* command_list = m_current_frameresource->command_list.Get();
 
 	Throw_If_Failed(command_allocator->Reset());
-
-	if (m_wireframe) {
-		Throw_If_Failed(command_list->Reset(command_allocator, m_pipeline_state_map[L"opaque_wireframe"].Get()));
-	}
-	else {
-		Throw_If_Failed(command_list->Reset(command_allocator, m_pipeline_state_map[L"opaque"].Get()));
-	}
-
-	d3d_manager->Clr_RTV(command_list);
-	d3d_manager->Clr_DSV(command_list);
-
-	d3d_manager->Set_VP(command_list);
-	d3d_manager->Set_SR(command_list);
-
-	d3d_manager->Set_RTV_N_DSV(command_list);
+	Throw_If_Failed(command_list->Reset(command_allocator, m_pipeline_state_map[L"shadow"].Get()));
 
 	ID3D12DescriptorHeap* descriptor_heaps[] = { m_CBV_heap.Get() };
 	command_list->SetDescriptorHeaps(_countof(descriptor_heaps), descriptor_heaps);
 
 	command_list->SetGraphicsRootSignature(m_root_signature.Get());
+	
+	// shadow map
+	{
+		command_list->RSSetViewports(1, &m_shadow_map->Get_Viewport());
+		command_list->RSSetScissorRects(1, &m_shadow_map->Get_Scissor_Rect());
+
+		command_list->ResourceBarrier(1, &D3D12_RESOURCE_BARRIER_EX::Transition(m_shadow_map->Get_Resource(),
+			D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_DEPTH_WRITE));
+
+		command_list->ClearDepthStencilView(m_shadow_map->Get_DSV_CPU_Handle(),
+			D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+
+		command_list->OMSetRenderTargets(0, nullptr, false, &m_shadow_map->Get_DSV_CPU_Handle());
+
+		UINT pass_CBV_index = m_pass_CBV_offset + m_current_frameresource_index * PASS_NUMBER + 1;	// main : 0 / shaadow : 1
+		auto pass_CBV_gpu_descriptor_handle = D3D12_GPU_DESCRIPTOR_HANDLE_EX(m_CBV_heap->GetGPUDescriptorHandleForHeapStart());
+		pass_CBV_gpu_descriptor_handle.Get_By_Offset(pass_CBV_index, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size());
+		command_list->SetGraphicsRootDescriptorTable(2, pass_CBV_gpu_descriptor_handle);
+
+		//command_list->SetPipelineState(m_pipeline_state_map[L"shadow"].Get());
+
+		//
+		DirectX::BoundingFrustum frustum_OBB;
+		DirectX::BoundingFrustum::CreateFromMatrix(frustum_OBB, XMFLOAT4X4_2_XMMATRIX(m_light_projection_matrix));
+		frustum_OBB.Transform(frustum_OBB, MathHelper::Inverse(XMFLOAT4X4_2_XMMATRIX(m_light_view_matrix)));
+
+		for (auto& object : m_object_manager->Get_Opaque_Obj_Arr()) {
+			if (object->Get_Name() == L"Ceiling") {
+				continue;
+			}
+
+			//if (!object->Get_Visiable()) {
+			//	continue;
+			//}
+
+			UINT object_CBV_index = m_current_frameresource_index * (UINT)m_object_manager->Get_Obj_Count() + object->Get_CB_Index();
+			auto object_CBV_gpu_descriptor_handle = D3D12_GPU_DESCRIPTOR_HANDLE_EX(m_CBV_heap->GetGPUDescriptorHandleForHeapStart());
+			object_CBV_gpu_descriptor_handle.Get_By_Offset(object_CBV_index, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size());
+
+			//
+			UINT animation_CBV_index = m_animation_CBV_offset + m_current_frameresource_index * (UINT)m_object_manager->Get_Obj_Count() + object->Get_CB_Index();
+			auto animation_CBV_gpu_descriptor_handle = D3D12_GPU_DESCRIPTOR_HANDLE_EX(m_CBV_heap->GetGPUDescriptorHandleForHeapStart());
+			animation_CBV_gpu_descriptor_handle.Get_By_Offset(animation_CBV_index, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size());
+
+			//
+			command_list->SetGraphicsRootDescriptorTable(0, object_CBV_gpu_descriptor_handle);
+			command_list->SetGraphicsRootDescriptorTable(3, animation_CBV_gpu_descriptor_handle);
+
+			//
+			DirectX::BoundingOrientedBox mesh_OBB;
+
+			//UINT material_CBV_index;
+			for (auto& m : object->Get_Mesh_Array()) {
+				//
+				m.mesh_info->Get_OBB().Transform(mesh_OBB, object->Get_WM_M());
+
+				if (frustum_OBB.Intersects(mesh_OBB) == false) {
+					continue;
+				}
+
+				//if (m.mesh_info->material == nullptr) {
+				//	material_CBV_index = m_material_CBV_offset +
+				//		m_current_frameresource_index * (UINT)m_object_manager->Get_Material_Manager().Get_Material_Count() + 0;
+				//}
+				//else {
+				//	material_CBV_index = m_material_CBV_offset +
+				//		m_current_frameresource_index * (UINT)m_object_manager->Get_Material_Manager().Get_Material_Count() +
+				//		m.mesh_info->material->constant_buffer_index;
+				//}
+
+				//auto material_CBV_gpu_descriptor_handle = D3D12_GPU_DESCRIPTOR_HANDLE_EX(m_CBV_heap->GetGPUDescriptorHandleForHeapStart());
+				//material_CBV_gpu_descriptor_handle.Get_By_Offset(material_CBV_index, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size());
+
+				//command_list->SetGraphicsRootDescriptorTable(1, material_CBV_gpu_descriptor_handle);
+
+				m.mesh_info->Draw(command_list);
+			}
+		}
+
+		command_list->ResourceBarrier(1, &D3D12_RESOURCE_BARRIER_EX::Transition(m_shadow_map->Get_Resource(),
+			D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_GENERIC_READ));
+	}
+
+	// 
+	d3d_manager->Set_RTV_N_DSV(command_list);
+
+	d3d_manager->Set_VP(command_list);
+	d3d_manager->Set_SR(command_list);
+
+	d3d_manager->Clr_RTV(command_list);
+	d3d_manager->Clr_DSV(command_list);
+
+	if (m_wireframe) {
+		command_list->SetPipelineState(m_pipeline_state_map[L"opaque_wireframe"].Get());
+	}
+	else {
+		command_list->SetPipelineState(m_pipeline_state_map[L"opaque"].Get());
+	}
+
+	//
+	D3D12_GPU_DESCRIPTOR_HANDLE_EX shadow_map_descriptor_handle(m_CBV_heap->GetGPUDescriptorHandleForHeapStart());
+	shadow_map_descriptor_handle.Get_By_Offset(m_shadow_map_SRV_offset, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size());
+	command_list->SetGraphicsRootDescriptorTable(4, shadow_map_descriptor_handle);
 
 	//
 	DirectX::BoundingFrustum frustum_OBB;
 	DirectX::BoundingFrustum::CreateFromMatrix(frustum_OBB, m_main_camera->Get_PM_M());
-	//DirectX::BoundingFrustum::CreateFromMatrix(frustum_OBB, m_main_camera->Get_VM_M() * m_main_camera->Get_PM_M());
 	frustum_OBB.Transform(frustum_OBB, MathHelper::Inverse(m_main_camera->Get_VM_M()));
 
 	//
-	UINT pass_CBV_index = m_pass_CBV_offset + m_current_frameresource_index;
+	UINT pass_CBV_index = m_pass_CBV_offset + m_current_frameresource_index * PASS_NUMBER;
 	auto pass_CBV_gpu_descriptor_handle = D3D12_GPU_DESCRIPTOR_HANDLE_EX(m_CBV_heap->GetGPUDescriptorHandleForHeapStart());
 	pass_CBV_gpu_descriptor_handle.Get_By_Offset(pass_CBV_index, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size());
 	command_list->SetGraphicsRootDescriptorTable(2, pass_CBV_gpu_descriptor_handle);
@@ -409,14 +575,31 @@ void TestScene::Build_RS(ID3D12Device* device) {
 	D3D12_DESCRIPTOR_RANGE_EX desriptor_range_3;
 	desriptor_range_3.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 3);
 
-	D3D12_ROOT_PARAMETER_EX root_parameters[4];
+	D3D12_DESCRIPTOR_RANGE_EX desriptor_range_4;
+	desriptor_range_4.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
+
+	D3D12_ROOT_PARAMETER_EX root_parameters[5];
 
 	root_parameters[0].Init_As_DT(1, &desriptor_range_0);
 	root_parameters[1].Init_As_DT(1, &desriptor_range_1);
 	root_parameters[2].Init_As_DT(1, &desriptor_range_2);
 	root_parameters[3].Init_As_DT(1, &desriptor_range_3);
+	root_parameters[4].Init_As_DT(1, &desriptor_range_4, D3D12_SHADER_VISIBILITY_PIXEL);
 
-	D3D12_ROOT_SIGNATURE_DESC_EX root_signature_desc(4, root_parameters, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+	std::array<D3D12_STATIC_SAMPLER_DESC_EX, 1> sampler_desc;
+	sampler_desc[0] = D3D12_STATIC_SAMPLER_DESC_EX(
+		0,
+		D3D12_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT,
+		D3D12_TEXTURE_ADDRESS_MODE_BORDER,
+		D3D12_TEXTURE_ADDRESS_MODE_BORDER,
+		D3D12_TEXTURE_ADDRESS_MODE_BORDER,
+		0.0f,
+		16,
+		D3D12_COMPARISON_FUNC_LESS_EQUAL,
+		D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK);
+
+	D3D12_ROOT_SIGNATURE_DESC_EX root_signature_desc(5, root_parameters,
+		(UINT)sampler_desc.size(), sampler_desc.data(), D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
 	Microsoft::WRL::ComPtr<ID3DBlob> serialized_root_signature = nullptr;
 	Microsoft::WRL::ComPtr<ID3DBlob> error_blob = nullptr;
@@ -439,7 +622,11 @@ void TestScene::Build_RS(ID3D12Device* device) {
 void TestScene::Build_S_N_L() {
 	m_shader_map[L"standard_VS"] = Compile_Shader(L"shaders\\shaders.hlsl", nullptr, "VS", "vs_5_1");
 	m_shader_map[L"opaque_PS"] = Compile_Shader(L"shaders\\shaders.hlsl", nullptr, "PS", "ps_5_1");
+
 	m_shader_map[L"silhouette_PS"] = Compile_Shader(L"shaders\\shaders.hlsl", nullptr, "Silhouette_PS", "ps_5_1");
+
+	m_shader_map[L"shadow_VS"] = Compile_Shader(L"shaders\\shaders.hlsl", nullptr, "Shadow_VS", "vs_5_1");
+	m_shader_map[L"shadow_PS"] = Compile_Shader(L"shaders\\shaders.hlsl", nullptr, "Shadow_PS", "ps_5_1");
 
 	m_input_layouts = {
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
@@ -546,21 +733,24 @@ void TestScene::Build_O() {
 
 	//
 	DirectX::BoundingOrientedBox obj_obb;
-	int count = 0;
-	for (auto& o : m_object_manager->Get_Opaque_Obj_Arr()) {
-		for (auto& m : o->Get_Mesh_Array()) {
-			m.mesh_info->Get_OBB().Transform(obj_obb, o->Get_WM_M());
 
-			m_object_manager->Add_Col_OBB_Obj(L"obb_" + std::to_wstring(count++), obj_obb);
-		}
+	obj_obb.Center = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
+	obj_obb.Extents = DirectX::XMFLOAT3(1300.0, 300.0f, 1300.0f);
+	m_object_manager->Add_Col_OBB_Obj(L"scene_obb", obj_obb);
 
-		//if (count > 10) {
-		//	break;
-		//}
-	}
+	//int count = 0;
+	//for (auto& o : m_object_manager->Get_Opaque_Obj_Arr()) {
+	//	for (auto& m : o->Get_Mesh_Array()) {
+	//		m.mesh_info->Get_OBB().Transform(obj_obb, o->Get_WM_M());
+
+	//		m_object_manager->Add_Col_OBB_Obj(L"obb_" + std::to_wstring(count++), obj_obb);
+	//	}
+	//}
 }
 
 void TestScene::Build_C(D3DManager* d3d_manager) {
+	//auto main_camera = reinterpret_cast<Camera*>(m_object_manager->Add_Cam(L"maincamera", L"camera", L"player",
+	//	0.0f, 50.0f, 0.0f, 150.0f, ROTATE_SYNC_RPY));
 	auto main_camera = reinterpret_cast<Camera*>(m_object_manager->Add_Cam(L"maincamera", L"camera", L"player",
 		0.0f, 10.0f, 0.0f, 0.1f, ROTATE_SYNC_RPY));
 	main_camera->Set_Frustum(0.25f * MathHelper::Pi(), d3d_manager->Get_Aspect_Ratio(), 1.0f, 2000.0f);
@@ -572,7 +762,7 @@ void TestScene::Build_C(D3DManager* d3d_manager) {
 
 void TestScene::Build_FR(ID3D12Device* device) {
 	for (int i = 0; i < FRAME_RESOURCES_NUMBER; ++i) {
-		m_frameresources.emplace_back(std::make_unique<FrameResorce>(device, 1,
+		m_frameresources.emplace_back(std::make_unique<FrameResorce>(device, PASS_NUMBER,
 			(UINT)m_object_manager->Get_Obj_Count(), (UINT)m_object_manager->Get_Material_Manager().Get_Material_Count()));
 	}
 }
@@ -581,11 +771,12 @@ void TestScene::Build_DH(ID3D12Device* device) {
 	UINT object_count = (UINT)m_object_manager->Get_Obj_Count();
 	UINT material_count = (UINT)m_object_manager->Get_Material_Manager().Get_Material_Count();
 
-	UINT descriptors_number = (object_count * 2 + material_count + 1) * FRAME_RESOURCES_NUMBER;	// object also has animation
+	UINT descriptors_number = (object_count * 2 + material_count + PASS_NUMBER) * FRAME_RESOURCES_NUMBER + 1;	// object also has animation
 
 	m_material_CBV_offset = object_count * FRAME_RESOURCES_NUMBER;
 	m_pass_CBV_offset = m_material_CBV_offset + material_count * FRAME_RESOURCES_NUMBER;
-	m_animation_CBV_offset = m_pass_CBV_offset + 1 * FRAME_RESOURCES_NUMBER;
+	m_animation_CBV_offset = m_pass_CBV_offset + PASS_NUMBER * FRAME_RESOURCES_NUMBER;
+	m_shadow_map_SRV_offset = m_animation_CBV_offset + object_count * FRAME_RESOURCES_NUMBER;
 
 	D3D12_DESCRIPTOR_HEAP_DESC CBV_heap_desc;
 	CBV_heap_desc.NumDescriptors = descriptors_number;
@@ -649,17 +840,22 @@ void TestScene::Build_CBV(D3DManager* d3d_manager) {
 
 	for (int frameresource_index = 0; frameresource_index < FRAME_RESOURCES_NUMBER; ++frameresource_index) {
 		auto pass_constant_buffer = m_frameresources[frameresource_index]->pass_constant_buffer->Get_Resource();
-		D3D12_GPU_VIRTUAL_ADDRESS constant_buffer_address = pass_constant_buffer->GetGPUVirtualAddress();
 
-		int descriptor_heap_index = m_pass_CBV_offset + frameresource_index;
-		auto cpu_descriptor_handle = D3D12_CPU_DESCRIPTOR_HANDLE_EX(m_CBV_heap->GetCPUDescriptorHandleForHeapStart());
-		cpu_descriptor_handle.Get_By_Offset(descriptor_heap_index, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size());
+		for (UINT i = 0; i < PASS_NUMBER; ++i) {
+			D3D12_GPU_VIRTUAL_ADDRESS constant_buffer_address = pass_constant_buffer->GetGPUVirtualAddress();
 
-		D3D12_CONSTANT_BUFFER_VIEW_DESC constant_buffer_view_desc;
-		constant_buffer_view_desc.BufferLocation = constant_buffer_address;
-		constant_buffer_view_desc.SizeInBytes = pass_constant_buffer_size;
+			constant_buffer_address += i * pass_constant_buffer_size;
 
-		device->CreateConstantBufferView(&constant_buffer_view_desc, cpu_descriptor_handle);
+			int descriptor_heap_index = m_pass_CBV_offset + frameresource_index * PASS_NUMBER + i;
+			auto cpu_descriptor_handle = D3D12_CPU_DESCRIPTOR_HANDLE_EX(m_CBV_heap->GetCPUDescriptorHandleForHeapStart());
+			cpu_descriptor_handle.Get_By_Offset(descriptor_heap_index, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size());
+
+			D3D12_CONSTANT_BUFFER_VIEW_DESC constant_buffer_view_desc;
+			constant_buffer_view_desc.BufferLocation = constant_buffer_address;
+			constant_buffer_view_desc.SizeInBytes = pass_constant_buffer_size;
+
+			device->CreateConstantBufferView(&constant_buffer_view_desc, cpu_descriptor_handle);
+		}
 	}
 
 	UINT animation_constant_buffer_size = Calc_CB_Size(sizeof(AnimationConstants));
@@ -684,6 +880,12 @@ void TestScene::Build_CBV(D3DManager* d3d_manager) {
 			device->CreateConstantBufferView(&constant_buffer_view_desc, cpu_descriptor_handle);
 		}
 	}
+
+	//
+	m_shadow_map->Build_Descriptors(d3d_manager->Get_Device(),
+		D3D12_CPU_DESCRIPTOR_HANDLE_EX(m_CBV_heap->GetCPUDescriptorHandleForHeapStart(), m_shadow_map_SRV_offset, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size()),
+		D3D12_GPU_DESCRIPTOR_HANDLE_EX(m_CBV_heap->GetGPUDescriptorHandleForHeapStart(), m_shadow_map_SRV_offset, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size()),
+		D3D12_CPU_DESCRIPTOR_HANDLE_EX(d3d_manager->Get_DSV(), 1, d3d_manager->Get_DSV_Descritpor_Size()));
 }
 
 void TestScene::Build_PSO(D3DManager* d3d_manager) {
@@ -713,6 +915,8 @@ void TestScene::Build_PSO(D3DManager* d3d_manager) {
 
 	Throw_If_Failed(device->CreateGraphicsPipelineState(&opaque_PSO_desc, IID_PPV_ARGS(&m_pipeline_state_map[L"opaque"])));
 
+	D3D12_GRAPHICS_PIPELINE_STATE_DESC opaque_PSO_desc_copy = opaque_PSO_desc;
+
 	//
 	opaque_PSO_desc.RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME;
 
@@ -740,6 +944,17 @@ void TestScene::Build_PSO(D3DManager* d3d_manager) {
 	//opaque_PSO_desc.DepthStencilState.BackFace.StencilFunc = D3D12_COMPARISON_FUNC_NEVER;
 
 	Throw_If_Failed(device->CreateGraphicsPipelineState(&opaque_PSO_desc, IID_PPV_ARGS(&m_pipeline_state_map[L"silhouette"])));
+
+	//
+	opaque_PSO_desc_copy.RasterizerState.DepthBias = 100000;
+	opaque_PSO_desc_copy.RasterizerState.DepthBiasClamp = 0.0f;
+	opaque_PSO_desc_copy.RasterizerState.SlopeScaledDepthBias = 1.0f;
+	opaque_PSO_desc_copy.VS = { reinterpret_cast<BYTE*>(m_shader_map[L"shadow_VS"]->GetBufferPointer()), m_shader_map[L"shadow_VS"]->GetBufferSize() };
+	opaque_PSO_desc_copy.PS = { reinterpret_cast<BYTE*>(m_shader_map[L"shadow_PS"]->GetBufferPointer()), m_shader_map[L"shadow_PS"]->GetBufferSize() };
+	opaque_PSO_desc_copy.RTVFormats[0] = DXGI_FORMAT_UNKNOWN;
+	opaque_PSO_desc_copy.NumRenderTargets = 0;
+
+	Throw_If_Failed(device->CreateGraphicsPipelineState(&opaque_PSO_desc_copy, IID_PPV_ARGS(&m_pipeline_state_map[L"shadow"])));
 }
 
 void TestScene::Binding_Key() {

@@ -19,6 +19,7 @@ struct PassConstants {
 	DirectX::XMFLOAT4X4 inverse_projection_matrix = MathHelper::Identity_4x4();
 	DirectX::XMFLOAT4X4 view_projection_matrix = MathHelper::Identity_4x4();
 	DirectX::XMFLOAT4X4 inverse_view_projection_matrix = MathHelper::Identity_4x4();
+	DirectX::XMFLOAT4X4 shadow_transform_matrix = MathHelper::Identity_4x4();
 
 	DirectX::XMFLOAT3 camera_position = { 0.0f, 0.0f, 0.0f };
 	float buffer_padding = 0.0f;

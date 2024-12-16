@@ -147,6 +147,7 @@ struct D3D12_ROOT_DESCRIPTOR_TABLE_EX;
 struct D3D12_ROOT_CONSTANTS_EX;
 struct D3D12_ROOT_DESCRIPTOR_EX;
 struct D3D12_ROOT_PARAMETER_EX;
+struct D3D12_STATIC_SAMPLER_DESC_EX;
 
 // math
 struct MathHelper {
@@ -373,6 +374,10 @@ inline DirectX::XMMATRIX FbxAMatrix_2_XMMATRIX(const FbxAMatrix& fbx_matrix) {
 	};
 
 	return xmmatrix;
+}
+
+inline DirectX::XMMATRIX XMFLOAT4X4_2_XMMATRIX(const DirectX::XMFLOAT4X4& xmfloat4x4) {
+	return DirectX::XMLoadFloat4x4(&xmfloat4x4);
 }
 
 inline DirectX::XMFLOAT4X4 XMMATRIX_2_XMFLOAT4X4(const DirectX::XMMATRIX& xmmatrix) {
@@ -1367,6 +1372,105 @@ struct D3D12_ROOT_PARAMETER_EX : public D3D12_ROOT_PARAMETER {
 		D3D12_SHADER_VISIBILITY visibility = D3D12_SHADER_VISIBILITY_ALL
 	) {
 		Init_As_UAV(*this, shader_register, register_space);
+	}
+};
+
+struct D3D12_STATIC_SAMPLER_DESC_EX : public D3D12_STATIC_SAMPLER_DESC {
+	D3D12_STATIC_SAMPLER_DESC_EX() {}
+	explicit D3D12_STATIC_SAMPLER_DESC_EX(const D3D12_STATIC_SAMPLER_DESC& o) : D3D12_STATIC_SAMPLER_DESC(o) {}
+
+	D3D12_STATIC_SAMPLER_DESC_EX(
+		UINT shader_register,
+		D3D12_FILTER filter = D3D12_FILTER_ANISOTROPIC,
+		D3D12_TEXTURE_ADDRESS_MODE address_u = D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+		D3D12_TEXTURE_ADDRESS_MODE address_v = D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+		D3D12_TEXTURE_ADDRESS_MODE address_w = D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+		FLOAT mip_LOD_bias = 0,
+		UINT max_anisotropy = 16,
+		D3D12_COMPARISON_FUNC comparison_finction = D3D12_COMPARISON_FUNC_LESS_EQUAL,
+		D3D12_STATIC_BORDER_COLOR border_color = D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE,
+		FLOAT min_LOD = 0.0f,
+		FLOAT max_LOD = D3D12_FLOAT32_MAX,
+		D3D12_SHADER_VISIBILITY shdaer_visibility = D3D12_SHADER_VISIBILITY_ALL,
+		UINT register_space = 0
+	) {
+		Init(
+			shader_register,
+			filter,
+			address_u,
+			address_v,
+			address_w,
+			mip_LOD_bias,
+			max_anisotropy,
+			comparison_finction,
+			border_color,
+			min_LOD,
+			max_LOD,
+			shdaer_visibility,
+			register_space);
+	}
+
+	static inline void Init(
+		_Out_ D3D12_STATIC_SAMPLER_DESC& sampler_desc,
+		UINT shader_register,
+		D3D12_FILTER filter = D3D12_FILTER_ANISOTROPIC,
+		D3D12_TEXTURE_ADDRESS_MODE address_u = D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+		D3D12_TEXTURE_ADDRESS_MODE address_v = D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+		D3D12_TEXTURE_ADDRESS_MODE address_w = D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+		FLOAT mip_LOD_bias = 0,
+		UINT max_anisotropy = 16,
+		D3D12_COMPARISON_FUNC comparison_finction = D3D12_COMPARISON_FUNC_LESS_EQUAL,
+		D3D12_STATIC_BORDER_COLOR border_color = D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE,
+		FLOAT min_LOD = 0.0f,
+		FLOAT max_LOD = D3D12_FLOAT32_MAX,
+		D3D12_SHADER_VISIBILITY shdaer_visibility = D3D12_SHADER_VISIBILITY_ALL,
+		UINT register_space = 0
+	) {
+		sampler_desc.ShaderRegister = shader_register;
+		sampler_desc.Filter = filter;
+		sampler_desc.AddressU = address_u;
+		sampler_desc.AddressV = address_v;
+		sampler_desc.AddressW = address_w;
+		sampler_desc.MipLODBias = mip_LOD_bias;
+		sampler_desc.MaxAnisotropy = max_anisotropy;
+		sampler_desc.ComparisonFunc = comparison_finction;
+		sampler_desc.BorderColor = border_color;
+		sampler_desc.MinLOD = min_LOD;
+		sampler_desc.MaxLOD = max_LOD;
+		sampler_desc.ShaderVisibility = shdaer_visibility;
+		sampler_desc.RegisterSpace = register_space;
+	}
+
+	inline void Init(
+		UINT shader_register,
+		D3D12_FILTER filter = D3D12_FILTER_ANISOTROPIC,
+		D3D12_TEXTURE_ADDRESS_MODE address_u = D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+		D3D12_TEXTURE_ADDRESS_MODE address_v = D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+		D3D12_TEXTURE_ADDRESS_MODE address_w = D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+		FLOAT mip_LOD_bias = 0,
+		UINT max_anisotropy = 16,
+		D3D12_COMPARISON_FUNC comparison_finction = D3D12_COMPARISON_FUNC_LESS_EQUAL,
+		D3D12_STATIC_BORDER_COLOR border_color = D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE,
+		FLOAT min_LOD = 0.0f,
+		FLOAT max_LOD = D3D12_FLOAT32_MAX,
+		D3D12_SHADER_VISIBILITY shdaer_visibility = D3D12_SHADER_VISIBILITY_ALL,
+		UINT register_space = 0
+	) {
+		Init(
+			*this,
+			shader_register,
+			filter,
+			address_u,
+			address_v,
+			address_w,
+			mip_LOD_bias,
+			max_anisotropy,
+			comparison_finction,
+			border_color,
+			min_LOD,
+			max_LOD,
+			shdaer_visibility,
+			register_space);
 	}
 };
 

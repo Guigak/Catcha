@@ -155,6 +155,7 @@
     <ClCompile Include="Object.cpp" />
     <ClCompile Include="ObjectManager.cpp" />
     <ClCompile Include="Scene.cpp" />
+    <ClCompile Include="Shadowmap.cpp" />
     <ClCompile Include="SkeletonManager.cpp" />
     <ClCompile Include="TestScene.cpp" />
     <ClCompile Include="D3DManager.cpp" />
@@ -174,6 +175,7 @@
     <ClInclude Include="MeshManager.h" />
     <ClInclude Include="Object.h" />
     <ClInclude Include="ObjectManager.h" />
+    <ClInclude Include="Shadowmap.h" />
     <ClInclude Include="SkeletonManager.h" />
     <ClInclude Include="TestScene.h" />
     <ClInclude Include="common.h" />

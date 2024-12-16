@@ -66,7 +66,7 @@ public:
 	void Crt_SwapChain(HWND hwnd, int width, int height);	// Create SwapChain
 	void Crt_RTV_N_DSV_Descriptor_Heap();	// Create RTV and DSV Descriptor Heap
 
-	void Resize();
+	void Resize(int width = CLIENT_WIDTH, int height = CLIENT_HEIGHT);
 	void Draw();
 
 	void Draw_Scene();

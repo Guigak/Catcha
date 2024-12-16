@@ -4,6 +4,7 @@
 #include "Camera.h"
 #include "ObjectManager.h"
 #include "InputManager.h"
+#include "Shadowmap.h"
 
 class Camera;
 
@@ -43,6 +44,8 @@ protected:
 	//
 	UINT m_animation_CBV_offset = 0;
 
+	UINT m_shadow_map_SRV_offset = 0;
+
 	bool m_wireframe = false;
 	bool m_render_boundingbox = false;
 
@@ -58,6 +61,19 @@ protected:
 	float m_theta = 1.5f * DirectX::XM_PI;
 	float m_phi = 0.2f * DirectX::XM_PI;
 	float m_radius = 15.0f;
+
+	//
+	DirectX::BoundingSphere m_shadow_bouding_sphere;
+	std::unique_ptr<Shadowmap> m_shadow_map;
+
+	PassConstants m_shadow_pass_constant_buffer;
+
+	float m_light_near_z = 0.0f;
+	float m_light_far_z = 0.0f;
+	DirectX::XMFLOAT3 m_light_position = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
+	DirectX::XMFLOAT4X4 m_light_view_matrix = MathHelper::Identity_4x4();
+	DirectX::XMFLOAT4X4 m_light_projection_matrix = MathHelper::Identity_4x4();
+	DirectX::XMFLOAT4X4 m_shadow_transform_matrix = MathHelper::Identity_4x4();
 
 public:
 	Scene(std::wstring name, Scene* back_scene = nullptr) : m_name(name), m_back_scene(back_scene) {}

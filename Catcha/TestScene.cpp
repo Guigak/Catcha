@@ -653,12 +653,12 @@ void TestScene::Build_Mesh(ID3D12Device* device, ID3D12GraphicsCommandList* comm
 	m_object_manager->Ipt_From_FBX(L"cat_walk.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
 	m_object_manager->Ipt_From_FBX(L"cat_run.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
 	m_object_manager->Ipt_From_FBX(L"cat_idle.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
-	//m_object_manager->Ipt_From_FBX(L"cat_jump.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
+	m_object_manager->Ipt_From_FBX(L"cat_jump_test.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
 	m_object_manager->Ipt_From_FBX(L"cat_bite.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
 	m_object_manager->Ipt_From_FBX(L"cat_paw.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
-	m_object_manager->Ipt_From_FBX(L"cat_jump_start.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
-	m_object_manager->Ipt_From_FBX(L"cat_jump_idle.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
-	m_object_manager->Ipt_From_FBX(L"cat_jump_end.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
+	m_object_manager->Ipt_From_FBX(L"cat_jump_test_start.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
+	m_object_manager->Ipt_From_FBX(L"cat_jump_test_idle.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
+	m_object_manager->Ipt_From_FBX(L"cat_jump_test_end.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
 
 	m_object_manager->Ipt_From_FBX(L"mouse_mesh_edit.fbx", true, false, true, MESH_INFO | SKELETON_INFO | MATERIAL_INFO);
 	m_object_manager->Ipt_From_FBX(L"mouse_death.fbx", true, false, true, ANIMATION_INFO, L"mouse_mesh_edit.fbx");
@@ -683,10 +683,10 @@ void TestScene::Build_Material() {
 }
 
 void TestScene::Build_O() {
-	m_object_manager->Add_Obj(L"player", L"mouse_mesh_edit.fbx");
-	m_object_manager->Set_Sklt_2_Obj(L"player", L"mouse_mesh_edit.fbx");
-	//m_object_manager->Add_Obj(L"player", L"cat_mesh_edit.fbx");
-	//m_object_manager->Set_Sklt_2_Obj(L"player", L"cat_mesh_edit.fbx");
+	//m_object_manager->Add_Obj(L"player", L"mouse_mesh_edit.fbx");
+	//m_object_manager->Set_Sklt_2_Obj(L"player", L"mouse_mesh_edit.fbx");
+	m_object_manager->Add_Obj(L"player", L"cat_mesh_edit.fbx");
+	m_object_manager->Set_Sklt_2_Obj(L"player", L"cat_mesh_edit.fbx");
 
 	m_object_manager->Add_Obj(L"cat_test", L"cat_mesh_edit.fbx");
 	m_object_manager->Set_Sklt_2_Obj(L"cat_test", L"cat_mesh_edit.fbx");
@@ -694,23 +694,23 @@ void TestScene::Build_O() {
 	m_object_manager->Add_Obj(L"mouse_test", L"mouse_mesh_edit.fbx");
 	m_object_manager->Set_Sklt_2_Obj(L"mouse_test", L"mouse_mesh_edit.fbx");
 
-	m_object_manager->Get_Obj(L"player")->Set_Visiable(false);
+	//m_object_manager->Get_Obj(L"player")->Set_Visiable(false);
 	//m_object_manager->Get_Obj(L"cat_test")->Set_Visiable(false);
 	m_object_manager->Get_Obj(L"mouse_test")->Set_Visiable(false);
 
 	Object* object = m_object_manager->Get_Obj(L"player");
-	object->Bind_Anim_2_State(Object_State::STATE_IDLE, Animation_Binding_Info(L"mouse_idle.fbx", 0.2f, LOOP_ANIMATION));
-	object->Bind_Anim_2_State(Object_State::STATE_MOVE, Animation_Binding_Info(L"mouse_walk.fbx", 0.2f, LOOP_ANIMATION));
-	object->Bind_Anim_2_State(Object_State::STATE_JUMP_START, Animation_Binding_Info(L"mouse_jump_start.fbx", 0.2f, ONCE_ANIMATION, Object_State::STATE_JUMP_IDLE));
-	object->Bind_Anim_2_State(Object_State::STATE_JUMP_IDLE, Animation_Binding_Info(L"mouse_jump_idle.fbx", 0.2f, LOOP_ANIMATION));
-	object->Bind_Anim_2_State(Object_State::STATE_JUMP_END, Animation_Binding_Info(L"mouse_jump_end.fbx", 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE));
-	object->Bind_Anim_2_State(Object_State::STATE_ACTION_ONE, Animation_Binding_Info(L"mouse_hit.fbx", 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE, NOT_MOVABLE));
-	//object->Bind_Anim_2_State(Object_State::STATE_IDLE, Animation_Binding_Info(L"cat_idle.fbx", 0.2f, LOOP_ANIMATION));
-	//object->Bind_Anim_2_State(Object_State::STATE_MOVE, Animation_Binding_Info(L"cat_walk.fbx", 0.2f, LOOP_ANIMATION));
-	//object->Bind_Anim_2_State(Object_State::STATE_JUMP_START, Animation_Binding_Info(L"cat_jump_start.fbx", 0.2f, ONCE_ANIMATION, Object_State::STATE_JUMP_IDLE));
-	//object->Bind_Anim_2_State(Object_State::STATE_JUMP_IDLE, Animation_Binding_Info(L"cat_jump_idle.fbx", 0.2f, LOOP_ANIMATION));
-	//object->Bind_Anim_2_State(Object_State::STATE_JUMP_END, Animation_Binding_Info(L"cat_jump_end.fbx", 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE));
-	//object->Bind_Anim_2_State(Object_State::STATE_ACTION_ONE, Animation_Binding_Info(L"cat_paw.fbx", 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE, NOT_MOVABLE));
+	//object->Bind_Anim_2_State(Object_State::STATE_IDLE, Animation_Binding_Info(L"mouse_idle.fbx", 0.2f, LOOP_ANIMATION));
+	//object->Bind_Anim_2_State(Object_State::STATE_MOVE, Animation_Binding_Info(L"mouse_walk.fbx", 0.2f, LOOP_ANIMATION));
+	//object->Bind_Anim_2_State(Object_State::STATE_JUMP_START, Animation_Binding_Info(L"mouse_jump_start.fbx", 0.2f, ONCE_ANIMATION, Object_State::STATE_JUMP_IDLE));
+	//object->Bind_Anim_2_State(Object_State::STATE_JUMP_IDLE, Animation_Binding_Info(L"mouse_jump_idle.fbx", 0.2f, LOOP_ANIMATION));
+	//object->Bind_Anim_2_State(Object_State::STATE_JUMP_END, Animation_Binding_Info(L"mouse_jump_end.fbx", 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE));
+	//object->Bind_Anim_2_State(Object_State::STATE_ACTION_ONE, Animation_Binding_Info(L"mouse_hit.fbx", 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE, NOT_MOVABLE));
+	object->Bind_Anim_2_State(Object_State::STATE_IDLE, Animation_Binding_Info(L"cat_idle.fbx", 0.2f, LOOP_ANIMATION));
+	object->Bind_Anim_2_State(Object_State::STATE_MOVE, Animation_Binding_Info(L"cat_walk.fbx", 0.2f, LOOP_ANIMATION));
+	object->Bind_Anim_2_State(Object_State::STATE_JUMP_START, Animation_Binding_Info(L"cat_jump_test_start.fbx", 0.2f, ONCE_ANIMATION, Object_State::STATE_JUMP_IDLE));
+	object->Bind_Anim_2_State(Object_State::STATE_JUMP_IDLE, Animation_Binding_Info(L"cat_jump_test_idle.fbx", 0.2f, LOOP_ANIMATION));
+	object->Bind_Anim_2_State(Object_State::STATE_JUMP_END, Animation_Binding_Info(L"cat_jump_test_end.fbx", 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE));
+	object->Bind_Anim_2_State(Object_State::STATE_ACTION_ONE, Animation_Binding_Info(L"cat_paw.fbx", 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE, NOT_MOVABLE));
 	object->Set_Animated(true);
 	object->Set_Phys(true);
 	//object->Set_Color_Mul(1.0f, 0.0f, 0.0f);
@@ -749,10 +749,10 @@ void TestScene::Build_O() {
 }
 
 void TestScene::Build_C(D3DManager* d3d_manager) {
-	//auto main_camera = reinterpret_cast<Camera*>(m_object_manager->Add_Cam(L"maincamera", L"camera", L"player",
-	//	0.0f, 50.0f, 0.0f, 150.0f, ROTATE_SYNC_RPY));
 	auto main_camera = reinterpret_cast<Camera*>(m_object_manager->Add_Cam(L"maincamera", L"camera", L"player",
-		0.0f, 10.0f, 0.0f, 0.1f, ROTATE_SYNC_RPY));
+		0.0f, 50.0f, 0.0f, 150.0f, ROTATE_SYNC_RPY));
+	//auto main_camera = reinterpret_cast<Camera*>(m_object_manager->Add_Cam(L"maincamera", L"camera", L"player",
+	//	0.0f, 10.0f, 0.0f, 0.1f, ROTATE_SYNC_RPY));
 	main_camera->Set_Frustum(0.25f * MathHelper::Pi(), d3d_manager->Get_Aspect_Ratio(), 1.0f, 2000.0f);
 	main_camera->Set_Limit_Rotate_Right(true, -RIGHT_ANGLE_RADIAN + 0.01f, RIGHT_ANGLE_RADIAN - 0.01f);
 	//main_camera->Set_Limit_Rotate_Right(true, DirectX::XMConvertToRadians(1.0f), DirectX::XMConvertToRadians(60.0f));
@@ -946,7 +946,7 @@ void TestScene::Build_PSO(D3DManager* d3d_manager) {
 	Throw_If_Failed(device->CreateGraphicsPipelineState(&opaque_PSO_desc, IID_PPV_ARGS(&m_pipeline_state_map[L"silhouette"])));
 
 	//
-	opaque_PSO_desc_copy.RasterizerState.DepthBias = 100000;
+	opaque_PSO_desc_copy.RasterizerState.DepthBias = 10000;
 	opaque_PSO_desc_copy.RasterizerState.DepthBiasClamp = 0.0f;
 	opaque_PSO_desc_copy.RasterizerState.SlopeScaledDepthBias = 1.0f;
 	opaque_PSO_desc_copy.VS = { reinterpret_cast<BYTE*>(m_shader_map[L"shadow_VS"]->GetBufferPointer()), m_shader_map[L"shadow_VS"]->GetBufferSize() };

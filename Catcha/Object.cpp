@@ -126,8 +126,7 @@ void Object::Update(float elapsed_time) {
 		AnimationManager& animation_manager = m_object_manager->Get_Animation_Manager();
 
 		if (m_grounded &&
-			(m_next_state == Object_State::STATE_IDLE || m_next_state == Object_State::STATE_MOVE ||
-			(m_moving == true && m_state == Object_State::STATE_JUMP_END))) {
+			(m_next_state == Object_State::STATE_IDLE || m_next_state == Object_State::STATE_MOVE)) {
 			if (Get_Spd() > 0.05f) {
 				m_next_state = Object_State::STATE_MOVE;
 			}

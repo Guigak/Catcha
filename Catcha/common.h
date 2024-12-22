@@ -2006,6 +2006,7 @@ struct Animation_Info {
 
 struct Animation_Binding_Info {
 	std::wstring binded_animation_name = L"";
+	float multiply_time = 1.0f;
 	float blending_time = 0.0f;
 	bool loop = false;
 	Object_State next_object_state = Object_State::STATE_IDLE;

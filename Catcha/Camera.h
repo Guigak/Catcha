@@ -34,6 +34,10 @@ private:
 	float m_limit_min_look = 0.0f;
 	float m_limit_max_look = 0.0f;
 
+	//
+	DirectX::XMFLOAT3 m_target_position = { 0.0f, 0.0f, 0.0f };
+	float m_lagging_degree = 1.0f;
+
 public:
 	Camera();
 	~Camera() {}
@@ -71,4 +75,10 @@ public:
 	//
 	void Set_Limit_Rotate_Right(bool limit_rotate, float degree_min = -RIGHT_ANGLE_RADIAN, float degree_max = RIGHT_ANGLE_RADIAN);
 	void Set_Limit_Rotate_Look(bool limit_rotate, float degree_min = -RIGHT_ANGLE_RADIAN, float degree_max = RIGHT_ANGLE_RADIAN);
+
+	//
+	void Set_Target_Position(DirectX::XMFLOAT3 target_position);
+	void Set_Target_Position(float target_position_x, float target_position_y, float target_position_z);
+
+	void Set_Lagging_Degree(float lagging_degree) { m_lagging_degree = lagging_degree; }
 };

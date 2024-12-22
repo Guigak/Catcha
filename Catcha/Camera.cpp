@@ -58,7 +58,8 @@ void Camera::Update(float elapsed_time) {
 		m_bind_position = MathHelper::Add(m_bind_position, m_object->Get_Up(), m_bind_offset_up);
 		m_bind_position = MathHelper::Add(m_bind_position, m_object->Get_Right(), m_bind_offset_right);
 
-		m_position = MathHelper::Add(m_bind_position, Get_Look(), -m_distance);
+		m_target_position = MathHelper::Add(m_bind_position, Get_Look(), -m_distance);
+		m_position = MathHelper::Add(m_position, MathHelper::Multiply(MathHelper::Subtract(m_target_position, m_position), 1.0f / m_lagging_degree));
 
 		m_dirty = true;
 	}
@@ -140,4 +141,12 @@ void Camera::Set_Limit_Rotate_Look(bool limit_rotate, float degree_min, float de
 	m_limit_rotate_look = limit_rotate;
 	m_limit_min_look = degree_min;
 	m_limit_max_look = degree_max;
+}
+
+void Camera::Set_Target_Position(DirectX::XMFLOAT3 target_position) {
+	m_target_position = target_position;
+}
+
+void Camera::Set_Target_Position(float target_position_x, float target_position_y, float target_position_z) {
+	m_target_position = DirectX::XMFLOAT3(target_position_x, target_position_y, target_position_z);
 }

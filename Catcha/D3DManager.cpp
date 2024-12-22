@@ -112,7 +112,7 @@ void D3DManager::Crt_RTV_N_DSV_Descriptor_Heap() {
 	Throw_If_Failed(m_device->CreateDescriptorHeap(&RTV_heap_desc, IID_PPV_ARGS(m_RTV_heap.GetAddressOf())));
 
 	D3D12_DESCRIPTOR_HEAP_DESC DSV_heap_desc;
-	DSV_heap_desc.NumDescriptors = 1;
+	DSV_heap_desc.NumDescriptors = 2;
 	DSV_heap_desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
 	DSV_heap_desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 	DSV_heap_desc.NodeMask = 0;
@@ -120,11 +120,17 @@ void D3DManager::Crt_RTV_N_DSV_Descriptor_Heap() {
 	Throw_If_Failed(m_device->CreateDescriptorHeap(&DSV_heap_desc, IID_PPV_ARGS(m_DSV_heap.GetAddressOf())));
 }
 
-void D3DManager::Resize() {
+void D3DManager::Resize(int width, int height) {
+	m_client_width = width;
+	m_client_height = height;
+
 	assert(m_device);
 	assert(m_swapchain);
 	assert(m_command_allocator);
 
+	if (m_scene_manager) {
+		m_scene_manager->Resize();
+	}
 	Flush_Cmd_Q();
 
 	Throw_If_Failed(m_command_list->Reset(m_command_allocator.Get(), nullptr));

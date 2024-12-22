@@ -162,8 +162,7 @@ void Object::Update(float elapsed_time) {
 		if (-1 == Get_Character_Number())
 		{
 			if (m_grounded &&
-				(m_next_state == Object_State::STATE_IDLE || m_next_state == Object_State::STATE_MOVE ||
-				(m_moving == true && m_state == Object_State::STATE_JUMP_END))) {
+				(m_next_state == Object_State::STATE_IDLE || m_next_state == Object_State::STATE_MOVE)) {
 				if (Get_Spd() > 0.05f) {
 					m_next_state = Object_State::STATE_MOVE;
 				}
@@ -177,7 +176,7 @@ void Object::Update(float elapsed_time) {
 
 		// checking animation end
 		if (animation_binding_info.loop == false) {
-			if (animation_manager.Get_Animation(animation_binding_info.binded_animation_name)->animation_time < m_animated_time) {
+			if (animation_manager.Get_Animation(animation_binding_info.binded_animation_name)->animation_time < m_animated_time * animation_binding_info.multiply_time) {
 				m_next_state = animation_binding_info.next_object_state;
 				//m_next_state = m_network_state;				
 			}
@@ -189,7 +188,7 @@ void Object::Update(float elapsed_time) {
 
 			if (next_animation_binding_info.blending_time > 0.0f) {
 				animation_manager.Get_Animated_Transform(
-					animation_binding_info.binded_animation_name, m_animated_time, animation_binding_info.loop, m_blending_source_transform_info_array);
+					animation_binding_info.binded_animation_name, animation_binding_info.multiply_time, m_animated_time, animation_binding_info.loop, m_blending_source_transform_info_array);
 			}
 
 			m_state = m_next_state;
@@ -202,7 +201,7 @@ void Object::Update(float elapsed_time) {
 		animation_binding_info = m_animation_binding_map[m_state];
 		std::array<Transform_Info, MAX_BONE_COUNT> transform_info_array;
 		animation_manager.Get_Animated_Transform(
-			animation_binding_info.binded_animation_name, m_animated_time, animation_binding_info.loop, transform_info_array);
+			animation_binding_info.binded_animation_name, animation_binding_info.multiply_time, m_animated_time, animation_binding_info.loop, transform_info_array);
 
 		// animation blending
 		if (animation_binding_info.blending_time > m_animated_time) {

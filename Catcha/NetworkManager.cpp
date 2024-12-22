@@ -335,11 +335,11 @@ void NetworkManager::ProcessPacket(char* ptr)
 			// 타격시 색 변화 정보
 			if (true == cat_attacked)
 			{
-				m_objects[characters[id].character_id]->Set_Color_Mul(1.0f, 0.0f, 0.0f);
+				m_objects[characters[id].character_id]->Set_Color_Mul(1.0f, 0.0f, 0.0f, 1.0f);
 			}
 			else
 			{
-				m_objects[characters[id].character_id]->Set_Color_Mul(1.0f, 1.0f, 1.0f);
+				m_objects[characters[id].character_id]->Set_Color_Mul(1.0f, 1.0f, 1.0f, 1.0f);
 			}
 
 			// 다른 캐릭터의 받은 회전값

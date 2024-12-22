@@ -49,6 +49,23 @@ int WINAPI WinMain(HINSTANCE hinstance, HINSTANCE prev_hinstance, LPSTR command_
 			}
 			else {
 				g_timer.Tick();
+
+				//
+				static int frame_count = 0;
+				static float time_elapsed = 0.0f;
+
+				frame_count++;
+
+				if ((g_timer.Get_Total_Time() - time_elapsed) >= 1.0f) {
+					float fps = (float)frame_count;
+
+					OutputDebugStringW(std::to_wstring(fps).c_str());
+					OutputDebugStringW(L"\n");
+
+					frame_count = 0;
+					time_elapsed += 1.0f;
+				}
+
 				network_manager.DoRecv();
 				g_scene_manager.Update(g_timer.Get_Elapsed_Time());
 				g_d3d_manager.Draw_Scene_With_FR();

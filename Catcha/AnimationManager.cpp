@@ -13,10 +13,12 @@ Animation_Info* AnimationManager::Get_Animation(std::wstring animation_name) {
 	return m_animation_map[animation_name].get();
 }
 
-void AnimationManager::Get_Animated_Transform(std::wstring animation_name, float animated_time, bool loop,
+void AnimationManager::Get_Animated_Transform(std::wstring animation_name, float multiply_time, float animated_time, bool loop,
 	std::array<Transform_Info, MAX_BONE_COUNT>& transform_info_array
 ) {
 	Animation_Info* animation_info = m_animation_map[animation_name].get();
+
+	animated_time = animated_time * multiply_time;
 
 	if (loop) {
 		animated_time = std::fmod(animated_time, animation_info->animation_time);

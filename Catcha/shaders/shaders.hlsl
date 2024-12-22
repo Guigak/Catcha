@@ -3,11 +3,11 @@
 #endif
 
 #ifndef POINT_LIGHTS_NUMBER
-    #define POINT_LIGHTS_NUMBER 1
+    #define POINT_LIGHTS_NUMBER 0
 #endif
 
 #ifndef SPOT_LIGHTS_NUMBER
-    #define SPOT_LIGHTS_NUMBER 1
+    #define SPOT_LIGHTS_NUMBER 0
 #endif
 
 #define MAX_WEIGHT_BONE_COUNT 4
@@ -34,6 +34,7 @@ cbuffer CB_Pass : register(b2) {
     float4x4 g_inverse_projection;
     float4x4 g_view_projection;
     float4x4 g_inverse_view_projection;
+    float4x4 g_shadow_transform;
     float3 g_camera_position;
     float2 g_render_target_size;
     float2 g_inverse_render_target_size;
@@ -49,6 +50,9 @@ cbuffer CB_Animation : register(b3) {
     float4x4 g_animation_transform_matrix[MAX_BONE_COUNT];
 }
 
+Texture2D g_shadow_map : register(t0);
+SamplerComparisonState g_shadow_sampler : register(s0);
+
 struct Vertex_In {
 	float3 position_local : POSITION;
     float3 normal_local : NORMAL;
@@ -62,17 +66,43 @@ struct Vertex_In {
 
 struct Vertex_Out {
 	float4 position_screen  : SV_POSITION;
-    float3 position_world : POSITION;
+    float4 shadow_position : POSITION0;
+    float3 position_world : POSITION1;
     float3 normal_world : NORMAL;
     uint material_index : MATERIAL;
 };
 
+float Calc_Shadow_Factor(float4 shadow_position) {
+    shadow_position.xyz /= shadow_position.w;
+
+    float depth = shadow_position.z;
+
+    uint width, height, mip_num;
+    g_shadow_map.GetDimensions(0, width, height, mip_num);
+
+    float dx = 1.0f / (float)width;
+
+    float percent = 0.0f;
+    const float2 offsets[9] = {
+        float2(-dx,  -dx), float2(0.0f,  -dx), float2(dx,  -dx),
+        float2(-dx, 0.0f), float2(0.0f, 0.0f), float2(dx, 0.0f),
+        float2(-dx,  +dx), float2(0.0f,  +dx), float2(dx,  +dx)
+    };
+
+    [unroll]
+    for (int i = 0; i < 9; ++i) {
+        percent += g_shadow_map.SampleCmpLevelZero(g_shadow_sampler, shadow_position.xy + offsets[i], depth).r;
+    }
+
+    return percent / 9.0f;
+}
+
 Vertex_Out VS(Vertex_In vertex_in) {
     Vertex_Out vertex_out = (Vertex_Out)0.0f;
 
+    float4 position_world = float4(0.0f, 0.0f, 0.0f, 0.0f);
+    float3 normal_world = float3(0.0f, 0.0f, 0.0f);
     if (g_animated) {
-        float4 position_world = float4(0.0f, 0.0f, 0.0f, 0.0f);
-        float3 normal_world = float3(0.0f, 0.0f, 0.0f);
 
         for (uint i = 0; i < MAX_WEIGHT_BONE_COUNT; ++i) {
             uint bone_index = vertex_in.bone_indices[i];
@@ -95,13 +125,14 @@ Vertex_Out VS(Vertex_In vertex_in) {
         vertex_out.normal_world = normalize(normal_world);
     }
     else {
-        float4 position_world = mul(float4(vertex_in.position_local, 1.0f), g_world);
+        position_world = mul(float4(vertex_in.position_local, 1.0f), g_world);
 
         vertex_out.position_world = position_world.xyz;
         vertex_out.normal_world = mul(vertex_in.normal_local, (float3x3)g_world);
         vertex_out.position_screen = mul(position_world, g_view_projection);
     }
 
+    vertex_out.shadow_position = mul(position_world, g_shadow_transform);
     vertex_out.material_index = vertex_in.material_index;
 
     return vertex_out;
@@ -116,7 +147,7 @@ float4 PS(Vertex_Out pixel_in) : SV_Target {
 
     float4 ambient = g_ambient_light * material.diffuse_albedo;
 
-    float shadow_factor = 1.0f;
+    float shadow_factor = Calc_Shadow_Factor(pixel_in.shadow_position);
     
     float4 direct_light;
     
@@ -142,4 +173,49 @@ float4 Silhouette_PS(Vertex_Out pixel_in) : SV_Target{
     float4 result = float4(1.0, 0.0, 0.0, g_color_multiplier.w);
 
     return result;
+}
+
+
+Vertex_Out Shadow_VS(Vertex_In vertex_in) {
+    //Vertex_Out vertex_out = (Vertex_Out)0.0f;
+
+    //float4 position_world = mul(float4(vertex_in.position_local, 1.0f), g_world);
+
+    //vertex_out.position_world = position_world.xyz;
+    //vertex_out.position_screen = mul(position_world, g_view_projection);
+
+    //
+    Vertex_Out vertex_out = (Vertex_Out)0.0f;
+
+    float4 position_world = float4(0.0f, 0.0f, 0.0f, 0.0f);
+    if (g_animated) {
+
+        for (uint i = 0; i < MAX_WEIGHT_BONE_COUNT; ++i) {
+            uint bone_index = vertex_in.bone_indices[i];
+
+            if (bone_index != -1) {
+                float4x4 bone_matrix = g_animation_transform_matrix[bone_index];
+                float4 weighted_position = mul(float4(vertex_in.position_local, 1.0f), bone_matrix) * vertex_in.bone_weights[i];
+
+                position_world += weighted_position;
+            }
+        }
+
+        position_world = mul(position_world, g_world);
+
+        vertex_out.position_world = position_world.xyz;
+        vertex_out.position_screen = mul(position_world, g_view_projection);
+    }
+    else {
+        position_world = mul(float4(vertex_in.position_local, 1.0f), g_world);
+
+        vertex_out.position_world = position_world.xyz;
+        vertex_out.position_screen = mul(position_world, g_view_projection);
+    }
+
+    return vertex_out;
+}
+
+void Shadow_PS(Vertex_Out pixel_in) {
+    // nothing
 }

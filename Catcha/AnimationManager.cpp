@@ -18,8 +18,10 @@ void AnimationManager::Get_Animated_Transform(std::wstring animation_name, float
 ) {
 	Animation_Info* animation_info = m_animation_map[animation_name].get();
 
+	animated_time = animated_time * multiply_time;
+
 	if (loop) {
-		animated_time = std::fmod(animated_time * multiply_time, animation_info->animation_time);
+		animated_time = std::fmod(animated_time, animation_info->animation_time);
 	}
 
 	float keyframe_time = animation_info->Get_Upper_Keyframe_Time(animated_time);

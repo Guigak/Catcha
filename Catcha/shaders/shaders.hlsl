@@ -53,6 +53,9 @@ cbuffer CB_Animation : register(b3) {
 Texture2D g_shadow_map : register(t0);
 SamplerComparisonState g_shadow_sampler : register(s0);
 
+Texture2D g_texture : register(t1);
+SamplerState g_texture_sampler : register(s1);
+
 struct Vertex_In {
 	float3 position_local : POSITION;
     float3 normal_local : NORMAL;
@@ -165,6 +168,13 @@ float4 PS(Vertex_Out pixel_in) : SV_Target {
     //result = lerp(0.2, 1.0, result);
 
     result = result * g_color_multiplier;
+
+    //
+    float4 test_tex_color;
+    test_tex_color = g_texture.Sample(g_texture_sampler, float2(0.5, 0.5));
+
+    result += test_tex_color;
+    result -= test_tex_color;
 
     return result;
 }

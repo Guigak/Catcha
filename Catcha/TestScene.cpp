@@ -23,6 +23,7 @@ void TestScene::Enter(D3DManager* d3d_manager) {
 	//
 	m_shadow_map = std::make_unique<Shadowmap>(device, 8192, 8192);
 
+	Load_Texture(device, command_list);
 	Build_RS(device);
 	Build_S_N_L();
 	Build_Material();
@@ -363,6 +364,11 @@ void TestScene::Draw(D3DManager* d3d_manager, ID3D12CommandList** command_lists)
 	}
 
 	//
+	D3D12_GPU_DESCRIPTOR_HANDLE_EX texture_descriptor_handle(m_CBV_heap->GetGPUDescriptorHandleForHeapStart());
+	texture_descriptor_handle.Get_By_Offset(m_texture_SRV_offset, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size());
+	command_list->SetGraphicsRootDescriptorTable(5, texture_descriptor_handle);
+
+	//
 	D3D12_GPU_DESCRIPTOR_HANDLE_EX shadow_map_descriptor_handle(m_CBV_heap->GetGPUDescriptorHandleForHeapStart());
 	shadow_map_descriptor_handle.Get_By_Offset(m_shadow_map_SRV_offset, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size());
 	command_list->SetGraphicsRootDescriptorTable(4, shadow_map_descriptor_handle);
@@ -562,6 +568,17 @@ void TestScene::Prcs_Input_Msg(HWND hwnd, UINT message, WPARAM wparam, LPARAM lp
 	m_input_manager->Prcs_Input_Msg(hwnd, message, wparam, lparam);
 }
 
+void TestScene::Load_Texture(ID3D12Device* device, ID3D12GraphicsCommandList* command_list) {
+	auto ui_texture = std::make_unique<Texture_Info>();
+	ui_texture->name = L"ui_texture";
+	ui_texture->file_name = L"test_texture.dds";
+	Throw_If_Failed(TextureLoader::Create_DDS_Texture_From_File(
+		device, command_list,
+		ui_texture->file_name.c_str(), ui_texture->resource, ui_texture->upload_heap));
+
+	m_texture_map[ui_texture->name] = std::move(ui_texture);
+}
+
 void TestScene::Build_RS(ID3D12Device* device) {
 	D3D12_DESCRIPTOR_RANGE_EX desriptor_range_0;
 	desriptor_range_0.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);
@@ -578,15 +595,19 @@ void TestScene::Build_RS(ID3D12Device* device) {
 	D3D12_DESCRIPTOR_RANGE_EX desriptor_range_4;
 	desriptor_range_4.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
 
-	D3D12_ROOT_PARAMETER_EX root_parameters[5];
+	D3D12_DESCRIPTOR_RANGE_EX desriptor_range_5;
+	desriptor_range_5.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1);
+
+	D3D12_ROOT_PARAMETER_EX root_parameters[6];
 
 	root_parameters[0].Init_As_DT(1, &desriptor_range_0);
 	root_parameters[1].Init_As_DT(1, &desriptor_range_1);
 	root_parameters[2].Init_As_DT(1, &desriptor_range_2);
 	root_parameters[3].Init_As_DT(1, &desriptor_range_3);
 	root_parameters[4].Init_As_DT(1, &desriptor_range_4, D3D12_SHADER_VISIBILITY_PIXEL);
+	root_parameters[5].Init_As_DT(1, &desriptor_range_5, D3D12_SHADER_VISIBILITY_PIXEL);
 
-	std::array<D3D12_STATIC_SAMPLER_DESC_EX, 1> sampler_desc;
+	std::array<D3D12_STATIC_SAMPLER_DESC_EX, 2> sampler_desc;
 	sampler_desc[0] = D3D12_STATIC_SAMPLER_DESC_EX(
 		0,
 		D3D12_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT,
@@ -597,8 +618,16 @@ void TestScene::Build_RS(ID3D12Device* device) {
 		16,
 		D3D12_COMPARISON_FUNC_LESS_EQUAL,
 		D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK);
+	sampler_desc[1] = D3D12_STATIC_SAMPLER_DESC_EX(
+		1,
+		D3D12_FILTER_ANISOTROPIC,
+		D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+		D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+		D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+		0.0f,
+		8);
 
-	D3D12_ROOT_SIGNATURE_DESC_EX root_signature_desc(5, root_parameters,
+	D3D12_ROOT_SIGNATURE_DESC_EX root_signature_desc(6, root_parameters,
 		(UINT)sampler_desc.size(), sampler_desc.data(), D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
 	Microsoft::WRL::ComPtr<ID3DBlob> serialized_root_signature = nullptr;
@@ -683,10 +712,10 @@ void TestScene::Build_Material() {
 }
 
 void TestScene::Build_O() {
-	//m_object_manager->Add_Obj(L"player", L"mouse_mesh_edit.fbx");
-	//m_object_manager->Set_Sklt_2_Obj(L"player", L"mouse_mesh_edit.fbx");
-	m_object_manager->Add_Obj(L"player", L"cat_mesh_edit.fbx");
-	m_object_manager->Set_Sklt_2_Obj(L"player", L"cat_mesh_edit.fbx");
+	m_object_manager->Add_Obj(L"player", L"mouse_mesh_edit.fbx");
+	m_object_manager->Set_Sklt_2_Obj(L"player", L"mouse_mesh_edit.fbx");
+	//m_object_manager->Add_Obj(L"player", L"cat_mesh_edit.fbx");
+	//m_object_manager->Set_Sklt_2_Obj(L"player", L"cat_mesh_edit.fbx");
 
 	m_object_manager->Add_Obj(L"cat_test", L"cat_mesh_edit.fbx");
 	m_object_manager->Set_Sklt_2_Obj(L"cat_test", L"cat_mesh_edit.fbx");
@@ -694,23 +723,23 @@ void TestScene::Build_O() {
 	m_object_manager->Add_Obj(L"mouse_test", L"mouse_mesh_edit.fbx");
 	m_object_manager->Set_Sklt_2_Obj(L"mouse_test", L"mouse_mesh_edit.fbx");
 
-	//m_object_manager->Get_Obj(L"player")->Set_Visiable(false);
+	m_object_manager->Get_Obj(L"player")->Set_Visiable(false);
 	//m_object_manager->Get_Obj(L"cat_test")->Set_Visiable(false);
 	m_object_manager->Get_Obj(L"mouse_test")->Set_Visiable(false);
 
 	Object* object = m_object_manager->Get_Obj(L"player");
-	//object->Bind_Anim_2_State(Object_State::STATE_IDLE, Animation_Binding_Info(L"mouse_idle.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
-	//object->Bind_Anim_2_State(Object_State::STATE_MOVE, Animation_Binding_Info(L"mouse_walk.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
-	//object->Bind_Anim_2_State(Object_State::STATE_JUMP_START, Animation_Binding_Info(L"mouse_jump_start.fbx", 1.0f, 0.2f, ONCE_ANIMATION, Object_State::STATE_JUMP_IDLE));
-	//object->Bind_Anim_2_State(Object_State::STATE_JUMP_IDLE, Animation_Binding_Info(L"mouse_jump_idle.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
-	//object->Bind_Anim_2_State(Object_State::STATE_JUMP_END, Animation_Binding_Info(L"mouse_jump_end.fbx", 1.0f, 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE));
-	//object->Bind_Anim_2_State(Object_State::STATE_ACTION_ONE, Animation_Binding_Info(L"mouse_hit.fbx", 1.0f, 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE, NOT_MOVABLE));
-	object->Bind_Anim_2_State(Object_State::STATE_IDLE, Animation_Binding_Info(L"cat_idle.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
-	object->Bind_Anim_2_State(Object_State::STATE_MOVE, Animation_Binding_Info(L"cat_walk.fbx", 2.0f, 0.2f, LOOP_ANIMATION));
-	object->Bind_Anim_2_State(Object_State::STATE_JUMP_START, Animation_Binding_Info(L"cat_jump_test_start.fbx", 1.0f, 0.2f, ONCE_ANIMATION, Object_State::STATE_JUMP_IDLE));
-	object->Bind_Anim_2_State(Object_State::STATE_JUMP_IDLE, Animation_Binding_Info(L"cat_jump_test_idle.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
-	object->Bind_Anim_2_State(Object_State::STATE_JUMP_END, Animation_Binding_Info(L"cat_jump_test_end.fbx", 1.0f, 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE));
-	object->Bind_Anim_2_State(Object_State::STATE_ACTION_ONE, Animation_Binding_Info(L"cat_paw.fbx", 0.5f, 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE, NOT_MOVABLE));
+	object->Bind_Anim_2_State(Object_State::STATE_IDLE, Animation_Binding_Info(L"mouse_idle.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
+	object->Bind_Anim_2_State(Object_State::STATE_MOVE, Animation_Binding_Info(L"mouse_walk.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
+	object->Bind_Anim_2_State(Object_State::STATE_JUMP_START, Animation_Binding_Info(L"mouse_jump_start.fbx", 1.0f, 0.2f, ONCE_ANIMATION, Object_State::STATE_JUMP_IDLE));
+	object->Bind_Anim_2_State(Object_State::STATE_JUMP_IDLE, Animation_Binding_Info(L"mouse_jump_idle.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
+	object->Bind_Anim_2_State(Object_State::STATE_JUMP_END, Animation_Binding_Info(L"mouse_jump_end.fbx", 1.0f, 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE));
+	object->Bind_Anim_2_State(Object_State::STATE_ACTION_ONE, Animation_Binding_Info(L"mouse_hit.fbx", 1.0f, 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE, NOT_MOVABLE));
+	//object->Bind_Anim_2_State(Object_State::STATE_IDLE, Animation_Binding_Info(L"cat_idle.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
+	//object->Bind_Anim_2_State(Object_State::STATE_MOVE, Animation_Binding_Info(L"cat_walk.fbx", 2.0f, 0.2f, LOOP_ANIMATION));
+	//object->Bind_Anim_2_State(Object_State::STATE_JUMP_START, Animation_Binding_Info(L"cat_jump_test_start.fbx", 1.0f, 0.2f, ONCE_ANIMATION, Object_State::STATE_JUMP_IDLE));
+	//object->Bind_Anim_2_State(Object_State::STATE_JUMP_IDLE, Animation_Binding_Info(L"cat_jump_test_idle.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
+	//object->Bind_Anim_2_State(Object_State::STATE_JUMP_END, Animation_Binding_Info(L"cat_jump_test_end.fbx", 1.0f, 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE));
+	//object->Bind_Anim_2_State(Object_State::STATE_ACTION_ONE, Animation_Binding_Info(L"cat_paw.fbx", 0.5f, 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE, NOT_MOVABLE));
 	object->Set_Animated(true);
 	object->Set_Phys(true);
 	//object->Set_Color_Mul(1.0f, 0.0f, 0.0f);
@@ -749,14 +778,14 @@ void TestScene::Build_O() {
 }
 
 void TestScene::Build_C(D3DManager* d3d_manager) {
-	auto main_camera = reinterpret_cast<Camera*>(m_object_manager->Add_Cam(L"maincamera", L"camera", L"player",
-		0.0f, 50.0f, 0.0f, 150.0f, ROTATE_SYNC_RPY));
 	//auto main_camera = reinterpret_cast<Camera*>(m_object_manager->Add_Cam(L"maincamera", L"camera", L"player",
-	//	0.0f, 10.0f, 0.0f, 0.1f, ROTATE_SYNC_RPY));
+	//	0.0f, 50.0f, 0.0f, 150.0f, ROTATE_SYNC_RPY));
+	auto main_camera = reinterpret_cast<Camera*>(m_object_manager->Add_Cam(L"maincamera", L"camera", L"player",
+		0.0f, 10.0f, 0.0f, 0.1f, ROTATE_SYNC_RPY));
 	main_camera->Set_Frustum(0.25f * MathHelper::Pi(), d3d_manager->Get_Aspect_Ratio(), 1.0f, 2000.0f);
 	main_camera->Set_Limit_Rotate_Right(true, -RIGHT_ANGLE_RADIAN + 0.01f, RIGHT_ANGLE_RADIAN - 0.01f);
 	//main_camera->Set_Limit_Rotate_Right(true, DirectX::XMConvertToRadians(1.0f), DirectX::XMConvertToRadians(60.0f));
-	main_camera->Set_Lagging_Degree(2.0f);
+	main_camera->Set_Lagging_Degree(1.0f);
 
 	m_main_camera = main_camera;
 }
@@ -771,13 +800,15 @@ void TestScene::Build_FR(ID3D12Device* device) {
 void TestScene::Build_DH(ID3D12Device* device) {
 	UINT object_count = (UINT)m_object_manager->Get_Obj_Count();
 	UINT material_count = (UINT)m_object_manager->Get_Material_Manager().Get_Material_Count();
+	UINT texture_count = (UINT)m_texture_map.size();
 
-	UINT descriptors_number = (object_count * 2 + material_count + PASS_NUMBER) * FRAME_RESOURCES_NUMBER + 1;	// object also has animation
+	UINT descriptors_number = (object_count * 2 + material_count + PASS_NUMBER) * FRAME_RESOURCES_NUMBER + texture_count + 1;	// object also has animation
 
 	m_material_CBV_offset = object_count * FRAME_RESOURCES_NUMBER;
 	m_pass_CBV_offset = m_material_CBV_offset + material_count * FRAME_RESOURCES_NUMBER;
 	m_animation_CBV_offset = m_pass_CBV_offset + PASS_NUMBER * FRAME_RESOURCES_NUMBER;
-	m_shadow_map_SRV_offset = m_animation_CBV_offset + object_count * FRAME_RESOURCES_NUMBER;
+	m_texture_SRV_offset = m_animation_CBV_offset + object_count * FRAME_RESOURCES_NUMBER;
+	m_shadow_map_SRV_offset = m_texture_SRV_offset + texture_count;
 
 	D3D12_DESCRIPTOR_HEAP_DESC CBV_heap_desc;
 	CBV_heap_desc.NumDescriptors = descriptors_number;
@@ -880,6 +911,27 @@ void TestScene::Build_CBV(D3DManager* d3d_manager) {
 
 			device->CreateConstantBufferView(&constant_buffer_view_desc, cpu_descriptor_handle);
 		}
+	}
+
+	std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> texture_list;
+
+	for (auto& t : m_texture_map) {
+		texture_list.emplace_back(t.second->resource);
+	}
+
+	D3D12_SHADER_RESOURCE_VIEW_DESC SRV_desc = {};
+	SRV_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	SRV_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	SRV_desc.Texture2D.MostDetailedMip = 0;
+	SRV_desc.Texture2D.ResourceMinLODClamp = 0.0f;
+
+	for (UINT i = 0; i < (UINT)texture_list.size(); ++i) {
+		D3D12_CPU_DESCRIPTOR_HANDLE_EX cpu_descriptor_handle(m_CBV_heap->GetCPUDescriptorHandleForHeapStart());
+		cpu_descriptor_handle.Get_By_Offset(m_texture_SRV_offset + i, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size());
+
+		SRV_desc.Format = texture_list[i]->GetDesc().Format;
+		SRV_desc.Texture2D.MipLevels = texture_list[i]->GetDesc().MipLevels;
+		device->CreateShaderResourceView(texture_list[i].Get(), &SRV_desc, cpu_descriptor_handle);
 	}
 
 	//

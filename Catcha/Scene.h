@@ -46,6 +46,9 @@ protected:
 
 	UINT m_shadow_map_SRV_offset = 0;
 
+	//
+	UINT m_texture_SRV_offset = 0;
+
 	bool m_wireframe = false;
 	bool m_render_boundingbox = false;
 
@@ -75,6 +78,9 @@ protected:
 	DirectX::XMFLOAT4X4 m_light_projection_matrix = MathHelper::Identity_4x4();
 	DirectX::XMFLOAT4X4 m_shadow_transform_matrix = MathHelper::Identity_4x4();
 
+	//
+	std::unordered_map<std::wstring, std::unique_ptr<Texture_Info>> m_texture_map;
+
 public:
 	Scene(std::wstring name, Scene* back_scene = nullptr) : m_name(name), m_back_scene(back_scene) {}
 
@@ -90,6 +96,8 @@ public:
 	virtual void Prcs_Input_Msg(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam) {}	// Process Message
 
 	virtual std::wstring Get_Name() { return m_name; }
+
+	virtual void Load_Texture(ID3D12Device* device, ID3D12GraphicsCommandList* command_list) {}
 
 	virtual void Build_RS(ID3D12Device* device) {}	// Build Root Signature
 	virtual void Build_S_N_L() {}	// Build Shaders And Layouts

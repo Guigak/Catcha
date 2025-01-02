@@ -2096,8 +2096,8 @@ enum DDS_MISC_FLAGS {
 struct DDS_HEADER {
 	uint32_t size;
 	uint32_t flags;
-	uint32_t width;
 	uint32_t height;
+	uint32_t width;
 	uint32_t pitch_or_linear_size;
 	uint32_t depth;
 	uint32_t mipmap_count;

@@ -747,10 +747,10 @@ void TestScene::Build_O() {
 
 	object = m_object_manager->Get_Obj(L"cat");
 	object->Bind_Anim_2_State(Object_State::STATE_IDLE, Animation_Binding_Info(L"cat_idle.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
-	object->Bind_Anim_2_State(Object_State::STATE_MOVE, Animation_Binding_Info(L"cat_walk.fbx", 2.0f, 0.2f, LOOP_ANIMATION));
-	object->Bind_Anim_2_State(Object_State::STATE_JUMP_START, Animation_Binding_Info(L"cat_jump_test_start.fbx", 1.0f, 0.2f, ONCE_ANIMATION, Object_State::STATE_JUMP_IDLE));
-	object->Bind_Anim_2_State(Object_State::STATE_JUMP_IDLE, Animation_Binding_Info(L"cat_jump_test_idle.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
-	object->Bind_Anim_2_State(Object_State::STATE_JUMP_END, Animation_Binding_Info(L"cat_jump_test_end.fbx", 1.0f, 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE));
+	object->Bind_Anim_2_State(Object_State::STATE_MOVE, Animation_Binding_Info(L"cat_walk.fbx", 1.5f, 0.2f, LOOP_ANIMATION));
+	object->Bind_Anim_2_State(Object_State::STATE_JUMP_START, Animation_Binding_Info(L"cat_jump_test_start.fbx", 0.5f, 0.2f, ONCE_ANIMATION, Object_State::STATE_JUMP_IDLE));
+	object->Bind_Anim_2_State(Object_State::STATE_JUMP_IDLE, Animation_Binding_Info(L"cat_jump_test_idle.fbx", 0.5f, 0.2f, LOOP_ANIMATION));
+	object->Bind_Anim_2_State(Object_State::STATE_JUMP_END, Animation_Binding_Info(L"cat_jump_test_end.fbx", 0.5f, 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE));
 	object->Bind_Anim_2_State(Object_State::STATE_ACTION_ONE, Animation_Binding_Info(L"cat_paw.fbx", 0.5f, 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE, NOT_MOVABLE));
 	object->Set_Animated(true);
 	object->Set_Phys(true);
@@ -771,6 +771,7 @@ void TestScene::Build_O() {
 
 	Crt_Voxel_Cheese(DirectX::XMFLOAT3(169.475f, 10.049f, 230.732f), 1.0f, 0);
 	Crt_Voxel_Cheese(DirectX::XMFLOAT3(254.871f, 10.049f, 311.188f), 1.0f, 0);
+	Crt_Voxel_Cheese(DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f), 1.0f, 0);
 	
 	// test
 	/*m_object_manager->Add_Col_OBB_Obj(L"test_obb",
@@ -1064,7 +1065,7 @@ void TestScene::Pairing_Collision_Set() {
 void TestScene::Custom_Function_One() {
 	m_render_silhouette = !m_render_silhouette;
 }
-
+// 1048 * 8 ^ detail_level
 void TestScene::Crt_Voxel(DirectX::XMFLOAT3 position, float scale, UINT detail_level) {
 	if (detail_level == 0) {
 		Object* object = m_object_manager->Add_Obj(L"voxel_" + std::to_wstring(m_voxel_count++), L"cheese", L"Object",
@@ -1089,7 +1090,7 @@ void TestScene::Crt_Voxel(DirectX::XMFLOAT3 position, float scale, UINT detail_l
 		}
 	}
 }
-
+// y * z * x = 1048
 void TestScene::Crt_Voxel_Cheese(DirectX::XMFLOAT3 position, float scale, UINT detail_level) {
 	int m_random_value = 10;
 	int y_value = 8;
@@ -1110,11 +1111,11 @@ void TestScene::Crt_Voxel_Cheese(DirectX::XMFLOAT3 position, float scale, UINT d
 			position.x = pivot_position.x - scale * (float)(x_value / 2);
 
 			for (int k = 0; k <= j / 2; ++k) {
-				if ((i == y_value - 1 || j == z_value || k == 0 || k == j / 2) &&
+				/*if ((i == y_value - 1 || j == z_value || k == 0 || k == j / 2) &&
 					!(uid(rd) % m_random_value)) {
 					position.x += scale;
 					continue;
-				}
+				}*/
 
 				Crt_Voxel(position, scale, detail_level);
 				position.x += scale;
@@ -1129,17 +1130,21 @@ void TestScene::Crt_Voxel_Cheese(DirectX::XMFLOAT3 position, float scale, UINT d
 
 void TestScene::CharacterChange(bool is_cat, const std::wstring& key1, const std::wstring& key2)
 {
+	Camera* main_camera = reinterpret_cast<Camera*>(m_object_manager->Get_Obj(L"maincamera"));
 	if (true == is_cat)
 	{
 		m_object_manager->Swap_Object(key1, key2);
 		m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"player", 0.0f, 50.0f, 0.0f, 150.0f, ROTATE_SYNC_RPY);
 		m_object_manager->Set_Camera_4_Server(L"maincamera", true);
+		main_camera->Set_Lagging_Degree(4.0f);
 	}
 	else
 	{
 		m_object_manager->Swap_Object(key1, key2);
-		m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"player", 0.0f, 2.5f, 0.0f, 0.1f);
+		m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"player", 0.0f, 2.5f, 0.0f, 0.1f, ROTATE_SYNC_RPY);
 		m_object_manager->Set_Camera_4_Server(L"maincamera", true);
+		main_camera->Set_Lagging_Degree(1.0f);
+
 	}
 }
 

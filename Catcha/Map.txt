@@ -722,7 +722,7 @@ Object Name: ground_up-0_OBB
 Position: -44.24279, 232.3298, -22.25344
 Rotation: -1.569582E-07, 0, 0, 1
 Extents: 1157.78, 82.56802, 1117.791
-Tag: 
+Tag: SpringArm
 
 Object Name: desk_leg_1-0_OBB
 Position: -315.9792, -32.53601, 108.7565
@@ -824,7 +824,7 @@ Object Name: Ground-0_OBB
 Position: -45.78715, -78.64875, -21.97372
 Rotation: -1.569582E-07, 0, 0, 1
 Extents: 1157.78, 34.1126, 1117.791
-Tag: 
+Tag: SpringArm
 
 Object Name: Bath_Carpet-0_OBB
 Position: 250.2756, -59.04922, -395.393

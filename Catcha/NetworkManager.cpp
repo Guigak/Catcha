@@ -305,23 +305,16 @@ void NetworkManager::ProcessPacket(char* ptr)
 		DirectX::XMFLOAT3 coord = { static_cast<float>(p->x), static_cast<float>(p->y), static_cast<float>(p->z) };
 		characters[id].Location = coord;
 		characters[id].pitch = p->player_pitch;
-		Object_State state = static_cast<Object_State>(p->state >> 3);
-		bool on_ground = (p->state & (1 << 2)) != 0;
-		bool need_blending = (p->state & (1 << 1)) != 0;
+		Object_State state = static_cast<Object_State>(p->state >> 1);
 		bool cat_attacked = (p->state & 1) != 0;
 
 		// 공통 동기화
 		m_objects[characters[id].character_id]->SetTargetPosition(coord);
-		m_objects[characters[id].character_id]->Set_Grounded(on_ground);
 
 		// 애니메이션 동기화 정보
-		if (true == need_blending)
+		if (m_objects[characters[id].character_id]->Get_State() != state)
 		{
 			m_objects[characters[id].character_id]->Set_Next_State(state);
-		}
-		else
-		{
-			m_objects[characters[id].character_id]->Set_Network_State(state);
 		}
 
 		// 내 캐릭터

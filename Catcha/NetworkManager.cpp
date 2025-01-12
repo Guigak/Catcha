@@ -132,6 +132,17 @@ void NetworkManager::SendRotate(float& pitch)
 	DoSend(&p);
 }
 
+void NetworkManager::SendActionOne(const DirectX::XMFLOAT3& look)
+{
+	CS_VOXEL_LOOK_PACKET p;
+	p.size = sizeof(p);
+	p.type = CS_VOXEL_LOOK;
+	p.look_x = look.x;
+	p.look_y = look.y;
+	p.look_z = look.z;
+	DoSend(&p);
+}
+
 void NetworkManager::ChooseCharacter(bool IsCat)
 {
 	CS_CHOOSE_CHARACTER_PACKET p;

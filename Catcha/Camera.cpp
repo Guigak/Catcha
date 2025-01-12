@@ -35,7 +35,7 @@ void Camera::Look_At(DirectX::FXMVECTOR position, DirectX::FXMVECTOR target, Dir
 
 void Camera::Look_At(const DirectX::XMFLOAT3 position, const DirectX::XMFLOAT3 target, const DirectX::XMFLOAT3 up_vector) {
 	DirectX::XMVECTOR position_ = DirectX::XMLoadFloat3(&position);
-	DirectX::XMVectorSetY(position_, position.y - 39.3701f / 2.0f);
+	DirectX::XMVectorSetY(position_, position.y/* - 39.3701f / 2.0f*/);
 	DirectX::XMVECTOR target_ = DirectX::XMLoadFloat3(&target);
 	DirectX::XMVECTOR up_ = DirectX::XMLoadFloat3(&up_vector);
 

@@ -163,7 +163,8 @@ void InputManager::Prcs_Binding_Info(BindingInfo binding_info) {
 		case Action::MOVE_UP:
 		case Action::MOVE_DOWN:
 			m_object_manager->Move(binding_info.object_name, binding_info.action, std::get<BYTE>(binding_info.value));
-
+			input_key_ = (static_cast<uint8_t>(binding_info.action) << 1) | true;
+			network_manager.SendInput(input_key_);
 			break;
 
 		// [CS] 서버로 정한 캐릭터 전송
@@ -201,8 +202,6 @@ void InputManager::Prcs_Binding_Info(BindingInfo binding_info) {
 			break;
 		default:
 			m_object_manager->Actions(binding_info.object_name, binding_info.action);
-			input_key_ = (static_cast<uint8_t>(binding_info.action) << 1) | true;
-			network_manager.SendInput(input_key_);
 			break;
 		}
 	}

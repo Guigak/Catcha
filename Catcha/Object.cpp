@@ -1,6 +1,7 @@
 #include "Object.h"
 #include "Camera.h"
 #include "ObjectManager.h"
+#include "InputManager.h"
 
 Object::Object(ObjectManager* object_manager, std::wstring object_name, Mesh_Info* mesh, DirectX::XMMATRIX world_matrix, UINT constant_buffer_index, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, bool physics, bool visiable) {
 	Set_Object_Manager(object_manager);
@@ -635,10 +636,36 @@ void Object::Rotate_Look(float degree) {
 void Object::Jump() {
 	//m_next_state = Object_State::STATE_JUMP_START;
 	m_velocity.y = m_jump_power;
+
+	Action action = Action::ACTION_JUMP;
+	NetworkManager& network_manager = NetworkManager::GetInstance();
+	uint8_t input_key_ = (static_cast<uint8_t>(action) << 1) | true;
+	network_manager.SendInput(input_key_);
 }
 
 void Object::Act_One() {
 	//m_next_state = Object_State::STATE_ACTION_ONE;
+	if (false == m_camera->Get_Camera_Need_Send())
+	{
+		return;
+	}
+
+	NetworkManager& network_manager = NetworkManager::GetInstance();
+
+	if (m_camera)
+	{
+		if (m_character_number == NUM_CAT)	// 고양이 일때
+		{
+			Action action = Action::ACTION_ONE;
+			uint8_t input_key_ = (static_cast<uint8_t>(action) << 1) | true;
+			network_manager.SendInput(input_key_);
+		}
+		// 생쥐일때
+		else
+		{
+			network_manager.SendActionOne(m_camera->Get_Look());
+		}
+	}
 }
 
 void Object::Act_Two() {

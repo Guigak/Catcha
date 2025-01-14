@@ -53,6 +53,18 @@ void TestScene::Exit(D3DManager* d3d_manager) {
 }
 
 void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
+	// test
+	static int time_count = 0;
+
+	if (time_count++ == 20) {
+		std::random_device rd;
+		std::uniform_int_distribution<int> uid(0, CHEESE_VOXEL_COUNT);
+
+		Del_Voxel(0, uid(rd));
+
+		time_count = 0;
+	}
+
 	Object* cat_object = m_object_manager->Get_Obj(L"cat_test");
 	cat_object->Set_Color_Alpha(
 		MathHelper::Min(1.0f, 1.0f - MathHelper::Length(MathHelper::Subtract(cat_object->Get_Position_3f(), m_object_manager->Get_Obj(L"player")->Get_Position_3f())) / 500.0f));
@@ -824,7 +836,7 @@ void TestScene::Build_O() {
 	object->Set_Animated(true);
 
 	int cheese_count = 0;
-	m_object_manager->Add_Voxel_Cheese(L"cheese" + std::to_wstring(cheese_count++),
+	m_object_manager->Add_Voxel_Cheese(L"cheese_" + std::to_wstring(cheese_count++),
 		DirectX::XMFLOAT3(50.0f, -59.0f, 100.0f), 1.0f);
 }
 
@@ -1197,4 +1209,10 @@ void TestScene::Crt_Voxel_Cheese(DirectX::XMFLOAT3 position, float scale, UINT d
 
 		position.y += scale;
 	}
+}
+
+void TestScene::Del_Voxel(int cheese_index, int voxel_index) {
+	VoxelCheese* voxel_cheese_pointer = (VoxelCheese*)m_object_manager->Get_Obj(L"cheese_" + std::to_wstring(cheese_index));
+
+	voxel_cheese_pointer->Remove_Voxel(voxel_index);
 }

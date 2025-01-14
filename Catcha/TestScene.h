@@ -39,5 +39,8 @@ public:
 	//
 	void Crt_Voxel(DirectX::XMFLOAT3 position, float scale, UINT detail_level);
 	void Crt_Voxel_Cheese(DirectX::XMFLOAT3 position, float scale, UINT detail_level);
+
+	//
+	void Del_Voxel(int cheese_index, int voxel_index);
 };
 

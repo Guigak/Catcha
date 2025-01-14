@@ -1,6 +1,7 @@
 #include "TestScene.h"
 #include "D3DManager.h"
-#include "MeshCreater.h"
+//#include "MeshCreater.h"
+#include "VoxelCheese.h"
 
 #define PASS_NUMBER 2
 
@@ -78,6 +79,11 @@ void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
 
 	for (auto& object : m_object_manager->Get_Obj_Arr()) {
 		if (object->Get_Dirty_Count()) {
+			// test
+			if (object->Get_Name().find(L"cheese") != std::wstring::npos) {
+				continue;
+			}
+
 			DirectX::XMMATRIX world_matrix = DirectX::XMLoadFloat4x4(&object->Get_WM_4x4f());
 
 			ObjectConstants object_constants;
@@ -112,6 +118,25 @@ void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
 		}
 
 		m_object_manager->Get_Material_Manager().Sub_Dirty_Count();
+	}
+
+	// instance data
+	{
+		for (auto& o : m_object_manager->Get_Instc_Obj_Arr()) {
+			if (o->Get_Dirty_Count()) {
+				VoxelCheese* voxel_cheese = (VoxelCheese*)o;
+
+				auto instance_data_buffer = m_current_frameresource->instance_data_buffer_array[voxel_cheese->Get_Instance_Index()].get();
+				std::vector<InstanceDatas> instance_data_array;
+				voxel_cheese->Get_Instance_Data(instance_data_array);
+
+				for (UINT i = 0; i < voxel_cheese->Get_Instance_Count(); ++i) {
+					instance_data_buffer->Copy_Data(i, instance_data_array[i]);
+				}
+
+				o->Sub_Dirty_Count();
+			}
+		}
 	}
 
 	// shadow transform matrix
@@ -324,23 +349,22 @@ void TestScene::Draw(D3DManager* d3d_manager, ID3D12CommandList** command_lists)
 					continue;
 				}
 
-				//if (m.mesh_info->material == nullptr) {
-				//	material_CBV_index = m_material_CBV_offset +
-				//		m_current_frameresource_index * (UINT)m_object_manager->Get_Material_Manager().Get_Material_Count() + 0;
-				//}
-				//else {
-				//	material_CBV_index = m_material_CBV_offset +
-				//		m_current_frameresource_index * (UINT)m_object_manager->Get_Material_Manager().Get_Material_Count() +
-				//		m.mesh_info->material->constant_buffer_index;
-				//}
-
-				//auto material_CBV_gpu_descriptor_handle = D3D12_GPU_DESCRIPTOR_HANDLE_EX(m_CBV_heap->GetGPUDescriptorHandleForHeapStart());
-				//material_CBV_gpu_descriptor_handle.Get_By_Offset(material_CBV_index, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size());
-
-				//command_list->SetGraphicsRootDescriptorTable(1, material_CBV_gpu_descriptor_handle);
-
 				m.mesh_info->Draw(command_list);
 			}
+		}
+
+		command_list->SetPipelineState(m_pipeline_state_map[L"instance_shadow"].Get());
+
+		for (auto& object : m_object_manager->Get_Instc_Obj_Arr()) {
+			VoxelCheese* voxel_cheese_pointer = (VoxelCheese*)object;
+
+			UINT instance_data_SRV_index = m_instance_SRV_offset + m_current_frameresource_index * (UINT)m_object_manager->Get_Instc_Obj_Arr().size() + voxel_cheese_pointer->Get_Instance_Index();
+			auto instance_data_SRV_gpu_descriptor_handle = D3D12_GPU_DESCRIPTOR_HANDLE_EX(m_CBV_heap->GetGPUDescriptorHandleForHeapStart());
+			instance_data_SRV_gpu_descriptor_handle.Get_By_Offset(instance_data_SRV_index, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size());
+
+			command_list->SetGraphicsRootDescriptorTable(6, instance_data_SRV_gpu_descriptor_handle);
+
+			object->Draw(command_list);
 		}
 
 		command_list->ResourceBarrier(1, &D3D12_RESOURCE_BARRIER_EX::Transition(m_shadow_map->Get_Resource(),
@@ -485,6 +509,41 @@ void TestScene::Draw(D3DManager* d3d_manager, ID3D12CommandList** command_lists)
 		}
 	}
 
+	// draw instance
+	command_list->SetPipelineState(m_pipeline_state_map[L"instance"].Get());
+
+	for (auto& object : m_object_manager->Get_Instc_Obj_Arr()) {
+		VoxelCheese* voxel_cheese_pointer = (VoxelCheese*)object;
+
+		UINT instance_data_SRV_index = m_instance_SRV_offset + m_current_frameresource_index * (UINT)m_object_manager->Get_Instc_Obj_Arr().size() + voxel_cheese_pointer->Get_Instance_Index();
+		auto instance_data_SRV_gpu_descriptor_handle = D3D12_GPU_DESCRIPTOR_HANDLE_EX(m_CBV_heap->GetGPUDescriptorHandleForHeapStart());
+		instance_data_SRV_gpu_descriptor_handle.Get_By_Offset(instance_data_SRV_index, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size());
+
+		command_list->SetGraphicsRootDescriptorTable(6, instance_data_SRV_gpu_descriptor_handle);
+
+		//
+		Mesh& mesh = object->Get_Mesh_Array()[0];
+		UINT material_CBV_index;
+
+		if (mesh.mesh_info->material == nullptr) {
+			material_CBV_index = m_material_CBV_offset +
+				m_current_frameresource_index * (UINT)m_object_manager->Get_Material_Manager().Get_Material_Count() + 0;
+		}
+		else {
+			material_CBV_index = m_material_CBV_offset +
+				m_current_frameresource_index * (UINT)m_object_manager->Get_Material_Manager().Get_Material_Count() +
+				mesh.mesh_info->material->constant_buffer_index;
+		}
+
+		auto material_CBV_gpu_descriptor_handle = D3D12_GPU_DESCRIPTOR_HANDLE_EX(m_CBV_heap->GetGPUDescriptorHandleForHeapStart());
+		material_CBV_gpu_descriptor_handle.Get_By_Offset(material_CBV_index, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size());
+
+		command_list->SetGraphicsRootDescriptorTable(1, material_CBV_gpu_descriptor_handle);
+
+		//
+		object->Draw(command_list);
+	}
+
 	// draw transparent objects
 
 	// draw siluet
@@ -593,12 +652,15 @@ void TestScene::Build_RS(ID3D12Device* device) {
 	desriptor_range_3.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 3);
 
 	D3D12_DESCRIPTOR_RANGE_EX desriptor_range_4;
-	desriptor_range_4.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
+	desriptor_range_4.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);	// shadow map
 
 	D3D12_DESCRIPTOR_RANGE_EX desriptor_range_5;
-	desriptor_range_5.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1);
+	desriptor_range_5.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1);	// texture
 
-	D3D12_ROOT_PARAMETER_EX root_parameters[6];
+	D3D12_DESCRIPTOR_RANGE_EX desriptor_range_6;
+	desriptor_range_6.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 1);	// instance
+
+	D3D12_ROOT_PARAMETER_EX root_parameters[7];
 
 	root_parameters[0].Init_As_DT(1, &desriptor_range_0);
 	root_parameters[1].Init_As_DT(1, &desriptor_range_1);
@@ -606,6 +668,7 @@ void TestScene::Build_RS(ID3D12Device* device) {
 	root_parameters[3].Init_As_DT(1, &desriptor_range_3);
 	root_parameters[4].Init_As_DT(1, &desriptor_range_4, D3D12_SHADER_VISIBILITY_PIXEL);
 	root_parameters[5].Init_As_DT(1, &desriptor_range_5, D3D12_SHADER_VISIBILITY_PIXEL);
+	root_parameters[6].Init_As_DT(1, &desriptor_range_6, D3D12_SHADER_VISIBILITY_VERTEX);
 
 	std::array<D3D12_STATIC_SAMPLER_DESC_EX, 2> sampler_desc;
 	sampler_desc[0] = D3D12_STATIC_SAMPLER_DESC_EX(
@@ -627,7 +690,7 @@ void TestScene::Build_RS(ID3D12Device* device) {
 		0.0f,
 		8);
 
-	D3D12_ROOT_SIGNATURE_DESC_EX root_signature_desc(6, root_parameters,
+	D3D12_ROOT_SIGNATURE_DESC_EX root_signature_desc(7, root_parameters,
 		(UINT)sampler_desc.size(), sampler_desc.data(), D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
 	Microsoft::WRL::ComPtr<ID3DBlob> serialized_root_signature = nullptr;
@@ -656,6 +719,10 @@ void TestScene::Build_S_N_L() {
 
 	m_shader_map[L"shadow_VS"] = Compile_Shader(L"shaders\\shaders.hlsl", nullptr, "Shadow_VS", "vs_5_1");
 	m_shader_map[L"shadow_PS"] = Compile_Shader(L"shaders\\shaders.hlsl", nullptr, "Shadow_PS", "ps_5_1");
+
+	m_shader_map[L"instance_VS"] = Compile_Shader(L"shaders\\shaders.hlsl", nullptr, "Instance_VS", "vs_5_1");
+
+	m_shader_map[L"instance_shadow_VS"] = Compile_Shader(L"shaders\\shaders.hlsl", nullptr, "Instance_Shadow_VS", "vs_5_1");
 
 	m_input_layouts = {
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
@@ -756,25 +823,9 @@ void TestScene::Build_O() {
 	object->Bind_Anim_2_State(Object_State::STATE_MOVE, Animation_Binding_Info(L"cat_walk.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
 	object->Set_Animated(true);
 
-	//Crt_Voxel_Cheese(DirectX::XMFLOAT3(169.475f, 10.049f, 230.732f), 1.0f, 0);
-	//Crt_Voxel_Cheese(DirectX::XMFLOAT3(254.871f, 10.049f, 311.188f), 1.0f, 0);
-	Crt_Voxel_Cheese(DirectX::XMFLOAT3(0.0f, -50.0f, 100.0f), 1.0f, 0);
-
-	//
-	DirectX::BoundingOrientedBox obj_obb;
-
-	obj_obb.Center = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
-	obj_obb.Extents = DirectX::XMFLOAT3(1300.0, 300.0f, 1300.0f);
-	m_object_manager->Add_Col_OBB_Obj(L"scene_obb", obj_obb);
-
-	//int count = 0;
-	//for (auto& o : m_object_manager->Get_Opaque_Obj_Arr()) {
-	//	for (auto& m : o->Get_Mesh_Array()) {
-	//		m.mesh_info->Get_OBB().Transform(obj_obb, o->Get_WM_M());
-
-	//		m_object_manager->Add_Col_OBB_Obj(L"obb_" + std::to_wstring(count++), obj_obb);
-	//	}
-	//}
+	int cheese_count = 0;
+	m_object_manager->Add_Voxel_Cheese(L"cheese" + std::to_wstring(cheese_count++),
+		DirectX::XMFLOAT3(50.0f, -59.0f, 100.0f), 1.0f);
 }
 
 void TestScene::Build_C(D3DManager* d3d_manager) {
@@ -793,21 +844,24 @@ void TestScene::Build_C(D3DManager* d3d_manager) {
 void TestScene::Build_FR(ID3D12Device* device) {
 	for (int i = 0; i < FRAME_RESOURCES_NUMBER; ++i) {
 		m_frameresources.emplace_back(std::make_unique<FrameResorce>(device, PASS_NUMBER,
-			(UINT)m_object_manager->Get_Obj_Count(), (UINT)m_object_manager->Get_Material_Manager().Get_Material_Count()));
+			(UINT)m_object_manager->Get_Obj_Count(), (UINT)m_object_manager->Get_Material_Manager().Get_Material_Count(),
+			(UINT)m_object_manager->Get_Instc_Obj_Arr().size(), CHEESE_VOXEL_COUNT));
 	}
 }
 
 void TestScene::Build_DH(ID3D12Device* device) {
 	UINT object_count = (UINT)m_object_manager->Get_Obj_Count();
 	UINT material_count = (UINT)m_object_manager->Get_Material_Manager().Get_Material_Count();
+	UINT instance_object_count = (UINT)m_object_manager->Get_Instc_Obj_Arr().size();
 	UINT texture_count = (UINT)m_texture_map.size();
 
-	UINT descriptors_number = (object_count * 2 + material_count + PASS_NUMBER) * FRAME_RESOURCES_NUMBER + texture_count + 1;	// object also has animation
+	UINT descriptors_number = (object_count * 2 + material_count + PASS_NUMBER + instance_object_count) * FRAME_RESOURCES_NUMBER + texture_count + 1;	// object also has animation
 
 	m_material_CBV_offset = object_count * FRAME_RESOURCES_NUMBER;
 	m_pass_CBV_offset = m_material_CBV_offset + material_count * FRAME_RESOURCES_NUMBER;
 	m_animation_CBV_offset = m_pass_CBV_offset + PASS_NUMBER * FRAME_RESOURCES_NUMBER;
-	m_texture_SRV_offset = m_animation_CBV_offset + object_count * FRAME_RESOURCES_NUMBER;
+	m_instance_SRV_offset = m_animation_CBV_offset + object_count * FRAME_RESOURCES_NUMBER;
+	m_texture_SRV_offset = m_instance_SRV_offset + instance_object_count * FRAME_RESOURCES_NUMBER;
 	m_shadow_map_SRV_offset = m_texture_SRV_offset + texture_count;
 
 	D3D12_DESCRIPTOR_HEAP_DESC CBV_heap_desc;
@@ -913,6 +967,29 @@ void TestScene::Build_CBV(D3DManager* d3d_manager) {
 		}
 	}
 
+	UINT instance_data_buffer_size = (UINT)sizeof(InstanceDatas);
+	object_count = (UINT)m_object_manager->Get_Instc_Obj_Arr().size();
+
+	for (int frameresource_index = 0; frameresource_index < FRAME_RESOURCES_NUMBER; ++frameresource_index) {
+		for (UINT i = 0; i < object_count; ++i) {
+			auto instance_data_buffer = m_frameresources[frameresource_index]->instance_data_buffer_array[i]->Get_Resource();
+
+			int descriptor_heap_index = m_instance_SRV_offset + frameresource_index * object_count + i;
+			auto cpu_descriptor_handle = D3D12_CPU_DESCRIPTOR_HANDLE_EX(m_CBV_heap->GetCPUDescriptorHandleForHeapStart());
+			cpu_descriptor_handle.Get_By_Offset(descriptor_heap_index, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size());
+
+			D3D12_SHADER_RESOURCE_VIEW_DESC shader_resource_view_desc = {};
+			shader_resource_view_desc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+			shader_resource_view_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+			shader_resource_view_desc.Buffer.FirstElement = 0;
+			shader_resource_view_desc.Buffer.NumElements = CHEESE_VOXEL_COUNT;
+			shader_resource_view_desc.Buffer.StructureByteStride = instance_data_buffer_size;
+			shader_resource_view_desc.Format = DXGI_FORMAT_UNKNOWN;
+
+			device->CreateShaderResourceView(instance_data_buffer, &shader_resource_view_desc, cpu_descriptor_handle);
+		}
+	}
+
 	std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> texture_list;
 
 	for (auto& t : m_texture_map) {
@@ -971,6 +1048,12 @@ void TestScene::Build_PSO(D3DManager* d3d_manager) {
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC opaque_PSO_desc_copy = opaque_PSO_desc;
 
 	//
+	opaque_PSO_desc.VS = { reinterpret_cast<BYTE*>(m_shader_map[L"instance_VS"]->GetBufferPointer()), m_shader_map[L"instance_VS"]->GetBufferSize() };
+
+	Throw_If_Failed(device->CreateGraphicsPipelineState(&opaque_PSO_desc, IID_PPV_ARGS(&m_pipeline_state_map[L"instance"])));
+	opaque_PSO_desc.VS = { reinterpret_cast<BYTE*>(m_shader_map[L"standard_VS"]->GetBufferPointer()), m_shader_map[L"standard_VS"]->GetBufferSize() };
+
+	//
 	opaque_PSO_desc.RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME;
 
 	Throw_If_Failed(device->CreateGraphicsPipelineState(&opaque_PSO_desc, IID_PPV_ARGS(&m_pipeline_state_map[L"opaque_wireframe"])));
@@ -1008,6 +1091,11 @@ void TestScene::Build_PSO(D3DManager* d3d_manager) {
 	opaque_PSO_desc_copy.NumRenderTargets = 0;
 
 	Throw_If_Failed(device->CreateGraphicsPipelineState(&opaque_PSO_desc_copy, IID_PPV_ARGS(&m_pipeline_state_map[L"shadow"])));
+
+	//
+	opaque_PSO_desc_copy.VS = { reinterpret_cast<BYTE*>(m_shader_map[L"instance_shadow_VS"]->GetBufferPointer()), m_shader_map[L"instance_shadow_VS"]->GetBufferSize() };
+
+	Throw_If_Failed(device->CreateGraphicsPipelineState(&opaque_PSO_desc_copy, IID_PPV_ARGS(&m_pipeline_state_map[L"instance_shadow"])));
 }
 
 void TestScene::Binding_Key() {
@@ -1075,6 +1163,9 @@ void TestScene::Crt_Voxel_Cheese(DirectX::XMFLOAT3 position, float scale, UINT d
 	int z_value = 21;
 	int x_value = z_value / 2;
 
+	//
+	int count = 0;
+
 	std::random_device rd;
 	std::uniform_int_distribution<int> uid(1, m_random_value);
 
@@ -1082,10 +1173,10 @@ void TestScene::Crt_Voxel_Cheese(DirectX::XMFLOAT3 position, float scale, UINT d
 
 	position.y += scale / 2.0f;
 
-	for (int i = 0; i < y_value; ++i) {
+	for (int i = 0; i < VOXEL_CHEESE_HEIGHT; ++i) {
 		position.z = pivot_position.z - scale * (float)(z_value / 2);
 
-		for (int j = 1; j <= z_value; ++j) {
+		for (int j = 1; j <= VOXEL_CHEESE_DEPTH; ++j) {
 			position.x = pivot_position.x - scale * (float)(x_value / 2);
 
 			for (int k = 0; k <= j / 2; ++k) {
@@ -1097,6 +1188,8 @@ void TestScene::Crt_Voxel_Cheese(DirectX::XMFLOAT3 position, float scale, UINT d
 
 				Crt_Voxel(position, scale, detail_level);
 				position.x += scale;
+
+				++count;
 			}
 
 			position.z += scale;

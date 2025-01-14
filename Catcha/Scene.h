@@ -49,6 +49,9 @@ protected:
 	//
 	UINT m_texture_SRV_offset = 0;
 
+	//
+	UINT m_instance_SRV_offset = 0;
+
 	bool m_wireframe = false;
 	bool m_render_boundingbox = false;
 

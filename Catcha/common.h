@@ -83,6 +83,17 @@ constexpr bool ONCE_ANIMATION = false;
 constexpr bool MOVABLE = true;
 constexpr bool NOT_MOVABLE = false;
 
+//
+constexpr int VOXEL_CHEESE_COUNT = 4;
+
+constexpr int VOXEL_CHEESE_HEIGHT = 8;
+constexpr int VOXEL_CHEESE_DEPTH = 21;
+constexpr int VOXEL_CHEESE_WIDTH = VOXEL_CHEESE_DEPTH / 2;
+constexpr int CHEESE_VOXEL_COUNT = VOXEL_CHEESE_HEIGHT *
+									(VOXEL_CHEESE_DEPTH +
+									(VOXEL_CHEESE_DEPTH / 2) * ((VOXEL_CHEESE_DEPTH / 2) + 1) / 2 +
+									((VOXEL_CHEESE_DEPTH + 1) / 2) * ((VOXEL_CHEESE_DEPTH + 1) / 2 - 1) / 2);
+
 // virtual key
 #define VK_NUM0 0x30
 #define VK_NUM1 0x31
@@ -3112,4 +3123,9 @@ struct TextureLoader {
 
 		return hresult;
 	}
+};
+
+//
+struct InstanceDatas {
+	DirectX::XMFLOAT4X4 world_matrix = MathHelper::Identity_4x4();
 };

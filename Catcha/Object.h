@@ -261,7 +261,7 @@ public:
 	std::vector<Mesh>& Get_Mesh_Array() { return m_meshes; }
 
 	void Set_WM(DirectX::XMMATRIX world_matrix);
-	void Draw(ID3D12GraphicsCommandList* command_list);
+	virtual void Draw(ID3D12GraphicsCommandList* command_list);
 
 	//
 	void Set_Skeleton(Skeleton_Info* skeleton_info) { m_skeleton_info = skeleton_info; }

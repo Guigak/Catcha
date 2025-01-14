@@ -69,6 +69,10 @@ extern void print_error(const char* msg, int err_no);
 
 #include <variant>
 
+//
+#include <assert.h>
+
+
 // fbx sdk
 #include "fbxsdk.h"
 
@@ -97,6 +101,17 @@ constexpr bool ONCE_ANIMATION = false;
 
 constexpr bool MOVABLE = true;
 constexpr bool NOT_MOVABLE = false;
+
+//
+constexpr int VOXEL_CHEESE_COUNT = 4;
+
+constexpr int VOXEL_CHEESE_HEIGHT = 8;
+constexpr int VOXEL_CHEESE_DEPTH = 21;
+constexpr int VOXEL_CHEESE_WIDTH = VOXEL_CHEESE_DEPTH / 2;
+constexpr int CHEESE_VOXEL_COUNT = VOXEL_CHEESE_HEIGHT *
+									(VOXEL_CHEESE_DEPTH +
+									(VOXEL_CHEESE_DEPTH / 2) * ((VOXEL_CHEESE_DEPTH / 2) + 1) / 2 +
+									((VOXEL_CHEESE_DEPTH + 1) / 2) * ((VOXEL_CHEESE_DEPTH + 1) / 2 - 1) / 2);
 
 // virtual key
 #define VK_NUM0 0x30
@@ -1550,6 +1565,22 @@ inline void Memcpy_Subresource(
 	}
 }
 
+inline UINT64 Get_Required_Intermediate_Size(
+	_In_ ID3D12Resource* destination_resource,
+	_In_range_(0, D3D12_REQ_SUBRESOURCES) UINT first_subresource,
+	_In_range_(0, D3D12_REQ_SUBRESOURCES - first_subresource) UINT number_subresources
+) {
+	D3D12_RESOURCE_DESC resource_desc = destination_resource->GetDesc();
+	UINT64 required_size = 0;
+
+	ID3D12Device* device;
+	destination_resource->GetDevice(__uuidof(*device), reinterpret_cast<void**>(&device));
+	device->GetCopyableFootprints(&resource_desc, first_subresource, number_subresources, 0, nullptr, nullptr, nullptr, &required_size);
+	device->Release();
+
+	return required_size;
+}
+
 inline UINT64 Udt_Subresource(
 	_In_ ID3D12GraphicsCommandList* command_list,
 	_In_ ID3D12Resource* destination_resource,
@@ -2069,4 +2100,1090 @@ struct Animation_Binding_Info {
 	bool loop = false;
 	Object_State next_object_state = Object_State::STATE_IDLE;
 	bool movable = true;
+};
+
+struct Texture_Info {
+	std::wstring name;
+
+	std::wstring file_name;
+
+	Microsoft::WRL::ComPtr<ID3D12Resource> resource = nullptr;
+	Microsoft::WRL::ComPtr<ID3D12Resource> upload_heap = nullptr;
+};
+
+// texture
+enum DDS_ALPHA_MODE {
+	DDS_ALPHA_MODE_UNKNOWN = 0,
+	DDS_ALPHA_MODE_STRAIGHT = 1,
+	DDS_ALPHA_MODE_PREMULTIPLIED = 2,
+	DDS_ALPHA_MODE_OPAQUE = 3,
+	DDS_ALPHA_MODE_CUSTOM = 4
+};
+
+#pragma pack(push, 1)
+
+const uint32_t DDS_MAGIC = 0x20534444;
+
+struct DDS_PIXEL_FORMAT {
+	uint32_t size;
+	uint32_t flags;
+	uint32_t fourCC;
+	uint32_t RGB_bit_count;
+	uint32_t R_bit_mask;
+	uint32_t G_bit_mask;
+	uint32_t B_bit_mask;
+	uint32_t A_bit_mask;
+};
+
+#define DDS_FOURCC      0x00000004
+#define DDS_RGB         0x00000040
+#define DDS_LUMINANCE   0x00020000
+#define DDS_ALPHA       0x00000002
+
+#define DDS_HEADER_FLAGS_VOLUME         0x00800000
+
+#define DDS_HEIGHT 0x00000002
+#define DDS_WIDTH  0x00000004
+
+#define DDS_CUBEMAP_POSITIVEX 0x00000600
+#define DDS_CUBEMAP_NEGATIVEX 0x00000a00
+#define DDS_CUBEMAP_POSITIVEY 0x00001200
+#define DDS_CUBEMAP_NEGATIVEY 0x00002200
+#define DDS_CUBEMAP_POSITIVEZ 0x00004200
+#define DDS_CUBEMAP_NEGATIVEZ 0x00008200
+
+#define DDS_CUBEMAP_ALLFACES ( DDS_CUBEMAP_POSITIVEX | DDS_CUBEMAP_NEGATIVEX |\
+                               DDS_CUBEMAP_POSITIVEY | DDS_CUBEMAP_NEGATIVEY |\
+                               DDS_CUBEMAP_POSITIVEZ | DDS_CUBEMAP_NEGATIVEZ )
+
+#define DDS_CUBEMAP 0x00000200
+
+enum DDS_MISC_FLAGS {
+	DDS_MISC_FLAGS_ALPHA_MODE_MASK = 0x7L
+};
+
+struct DDS_HEADER {
+	uint32_t size;
+	uint32_t flags;
+	uint32_t height;
+	uint32_t width;
+	uint32_t pitch_or_linear_size;
+	uint32_t depth;
+	uint32_t mipmap_count;
+	uint32_t reserved_1[11];
+	DDS_PIXEL_FORMAT pixel_format;
+	uint32_t caps_1;
+	uint32_t caps_2;
+	uint32_t caps_3;
+	uint32_t caps_4;
+	uint32_t reserved_2;
+};
+
+struct DDS_HEADER_DXT10 {
+	DXGI_FORMAT dxgi_format;
+	uint32_t resource_dimension;
+	uint32_t misc_flag;
+	uint32_t array_size;
+	uint32_t misc_flags;
+};
+
+#pragma pack(pop)
+
+struct Handle_Closer { void operator()(HANDLE handle) { if (handle) CloseHandle(handle); } };
+
+typedef public std::unique_ptr<void, Handle_Closer> Scoped_Handle;
+
+inline HANDLE Safe_Handle(HANDLE handle) { return (handle == INVALID_HANDLE_VALUE) ? 0 : handle; }
+
+struct TextureLoader {
+	static HRESULT Load_Texture_Data_From_File(
+		_In_z_ const wchar_t* file_name,
+		std::unique_ptr<uint8_t[]>& dds_data,
+		DDS_HEADER** header,
+		uint8_t** bit_data,
+		size_t* bit_size
+	) {
+		if (!header || !bit_data || !bit_size) {
+			return E_POINTER;
+		}
+
+#if (_WIN32_WINNT >= _WIM32_WINNT_WIN8)
+		Scoped_Handle file_handle(Safe_Handle(CreateFile2(
+			file_name, GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING, nullptr)));
+#else
+		Scoped_Handle file_handle(Safe_Handle(CreateFileW(
+			file_name, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr)));
+#endif
+
+		if (!file_handle) {
+			return HRESULT_FROM_WIN32(GetLastError());
+		}
+
+		LARGE_INTEGER file_size = { 0 };
+
+#if (_WIN32_WINNT >= _WIN32_WINNT_VISTA)
+		FILE_STANDARD_INFO file_info;
+
+		if (!GetFileInformationByHandleEx(file_handle.get(), FileStandardInfo, &file_info, sizeof(file_info))) {
+			return HRESULT_FROM_WIN32(GetLastError());
+		}
+
+		file_size = file_info.EndOfFile;
+#else
+		GetFileSizeEx(file_handle.get(), &file_size);
+#endif
+
+		if (file_size.HighPart > 0) {
+			return E_FAIL;
+		}
+
+		if (file_size.LowPart < (sizeof(DDS_HEADER) + sizeof(uint32_t))) {
+			return E_FAIL;
+		}
+
+		dds_data.reset(new(std::nothrow)uint8_t[file_size.LowPart]);
+
+		if (!dds_data) {
+			return E_OUTOFMEMORY;
+		}
+
+		DWORD bytes_read = 0;
+
+		if (!ReadFile(file_handle.get(), dds_data.get(), file_size.LowPart, &bytes_read, nullptr)) {
+			return HRESULT_FROM_WIN32(GetLastError());
+		}
+
+		if (bytes_read < file_size.LowPart) {
+			return E_FAIL;
+		}
+
+		uint32_t magic_number = *(const uint32_t*)(dds_data.get());
+
+		if (magic_number != DDS_MAGIC) {
+			return E_FAIL;
+		}
+
+		auto dds_header = reinterpret_cast<DDS_HEADER*>(dds_data.get() + sizeof(uint32_t));
+
+		if (dds_header->size != sizeof(DDS_HEADER) ||
+			dds_header->pixel_format.size != sizeof(DDS_PIXEL_FORMAT)) {
+			return E_FAIL;
+		}
+
+		bool DXT10_header = false;
+
+		if ((dds_header->pixel_format.flags & DDS_FOURCC) &&
+			(MAKEFOURCC('D', 'X', '1', '0') == dds_header->pixel_format.fourCC)) {
+			if (file_size.LowPart < (sizeof(DDS_HEADER) + sizeof(uint32_t) + sizeof(DDS_HEADER_DXT10))) {
+				return E_FAIL;
+			}
+
+			DXT10_header = true;
+		}
+
+		*header = dds_header;
+		ptrdiff_t offset = sizeof(uint32_t) + sizeof(DDS_HEADER) + (DXT10_header ? sizeof(DDS_HEADER_DXT10) : 0);
+		*bit_data = dds_data.get() + offset;
+		*bit_size = file_size.LowPart - offset;
+
+		return S_OK;
+	}
+
+	static size_t Bits_Per_Pixel(_In_ DXGI_FORMAT format) {
+		switch (format) {
+		case DXGI_FORMAT_R32G32B32A32_TYPELESS:
+		case DXGI_FORMAT_R32G32B32A32_FLOAT:
+		case DXGI_FORMAT_R32G32B32A32_UINT:
+		case DXGI_FORMAT_R32G32B32A32_SINT:
+			return 128;
+
+		case DXGI_FORMAT_R32G32B32_TYPELESS:
+		case DXGI_FORMAT_R32G32B32_FLOAT:
+		case DXGI_FORMAT_R32G32B32_UINT:
+		case DXGI_FORMAT_R32G32B32_SINT:
+			return 96;
+
+		case DXGI_FORMAT_R16G16B16A16_TYPELESS:
+		case DXGI_FORMAT_R16G16B16A16_FLOAT:
+		case DXGI_FORMAT_R16G16B16A16_UNORM:
+		case DXGI_FORMAT_R16G16B16A16_UINT:
+		case DXGI_FORMAT_R16G16B16A16_SNORM:
+		case DXGI_FORMAT_R16G16B16A16_SINT:
+		case DXGI_FORMAT_R32G32_TYPELESS:
+		case DXGI_FORMAT_R32G32_FLOAT:
+		case DXGI_FORMAT_R32G32_UINT:
+		case DXGI_FORMAT_R32G32_SINT:
+		case DXGI_FORMAT_R32G8X24_TYPELESS:
+		case DXGI_FORMAT_D32_FLOAT_S8X24_UINT:
+		case DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS:
+		case DXGI_FORMAT_X32_TYPELESS_G8X24_UINT:
+		case DXGI_FORMAT_Y416:
+		case DXGI_FORMAT_Y210:
+		case DXGI_FORMAT_Y216:
+			return 64;
+
+		case DXGI_FORMAT_R10G10B10A2_TYPELESS:
+		case DXGI_FORMAT_R10G10B10A2_UNORM:
+		case DXGI_FORMAT_R10G10B10A2_UINT:
+		case DXGI_FORMAT_R11G11B10_FLOAT:
+		case DXGI_FORMAT_R8G8B8A8_TYPELESS:
+		case DXGI_FORMAT_R8G8B8A8_UNORM:
+		case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
+		case DXGI_FORMAT_R8G8B8A8_UINT:
+		case DXGI_FORMAT_R8G8B8A8_SNORM:
+		case DXGI_FORMAT_R8G8B8A8_SINT:
+		case DXGI_FORMAT_R16G16_TYPELESS:
+		case DXGI_FORMAT_R16G16_FLOAT:
+		case DXGI_FORMAT_R16G16_UNORM:
+		case DXGI_FORMAT_R16G16_UINT:
+		case DXGI_FORMAT_R16G16_SNORM:
+		case DXGI_FORMAT_R16G16_SINT:
+		case DXGI_FORMAT_R32_TYPELESS:
+		case DXGI_FORMAT_D32_FLOAT:
+		case DXGI_FORMAT_R32_FLOAT:
+		case DXGI_FORMAT_R32_UINT:
+		case DXGI_FORMAT_R32_SINT:
+		case DXGI_FORMAT_R24G8_TYPELESS:
+		case DXGI_FORMAT_D24_UNORM_S8_UINT:
+		case DXGI_FORMAT_R24_UNORM_X8_TYPELESS:
+		case DXGI_FORMAT_X24_TYPELESS_G8_UINT:
+		case DXGI_FORMAT_R9G9B9E5_SHAREDEXP:
+		case DXGI_FORMAT_R8G8_B8G8_UNORM:
+		case DXGI_FORMAT_G8R8_G8B8_UNORM:
+		case DXGI_FORMAT_B8G8R8A8_UNORM:
+		case DXGI_FORMAT_B8G8R8X8_UNORM:
+		case DXGI_FORMAT_R10G10B10_XR_BIAS_A2_UNORM:
+		case DXGI_FORMAT_B8G8R8A8_TYPELESS:
+		case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
+		case DXGI_FORMAT_B8G8R8X8_TYPELESS:
+		case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
+		case DXGI_FORMAT_AYUV:
+		case DXGI_FORMAT_Y410:
+		case DXGI_FORMAT_YUY2:
+			return 32;
+
+		case DXGI_FORMAT_P010:
+		case DXGI_FORMAT_P016:
+			return 24;
+
+		case DXGI_FORMAT_R8G8_TYPELESS:
+		case DXGI_FORMAT_R8G8_UNORM:
+		case DXGI_FORMAT_R8G8_UINT:
+		case DXGI_FORMAT_R8G8_SNORM:
+		case DXGI_FORMAT_R8G8_SINT:
+		case DXGI_FORMAT_R16_TYPELESS:
+		case DXGI_FORMAT_R16_FLOAT:
+		case DXGI_FORMAT_D16_UNORM:
+		case DXGI_FORMAT_R16_UNORM:
+		case DXGI_FORMAT_R16_UINT:
+		case DXGI_FORMAT_R16_SNORM:
+		case DXGI_FORMAT_R16_SINT:
+		case DXGI_FORMAT_B5G6R5_UNORM:
+		case DXGI_FORMAT_B5G5R5A1_UNORM:
+		case DXGI_FORMAT_A8P8:
+		case DXGI_FORMAT_B4G4R4A4_UNORM:
+			return 16;
+
+		case DXGI_FORMAT_NV12:
+		case DXGI_FORMAT_420_OPAQUE:
+		case DXGI_FORMAT_NV11:
+			return 12;
+
+		case DXGI_FORMAT_R8_TYPELESS:
+		case DXGI_FORMAT_R8_UNORM:
+		case DXGI_FORMAT_R8_UINT:
+		case DXGI_FORMAT_R8_SNORM:
+		case DXGI_FORMAT_R8_SINT:
+		case DXGI_FORMAT_A8_UNORM:
+		case DXGI_FORMAT_AI44:
+		case DXGI_FORMAT_IA44:
+		case DXGI_FORMAT_P8:
+			return 8;
+
+		case DXGI_FORMAT_R1_UNORM:
+			return 1;
+
+		case DXGI_FORMAT_BC1_TYPELESS:
+		case DXGI_FORMAT_BC1_UNORM:
+		case DXGI_FORMAT_BC1_UNORM_SRGB:
+		case DXGI_FORMAT_BC4_TYPELESS:
+		case DXGI_FORMAT_BC4_UNORM:
+		case DXGI_FORMAT_BC4_SNORM:
+			return 4;
+
+		case DXGI_FORMAT_BC2_TYPELESS:
+		case DXGI_FORMAT_BC2_UNORM:
+		case DXGI_FORMAT_BC2_UNORM_SRGB:
+		case DXGI_FORMAT_BC3_TYPELESS:
+		case DXGI_FORMAT_BC3_UNORM:
+		case DXGI_FORMAT_BC3_UNORM_SRGB:
+		case DXGI_FORMAT_BC5_TYPELESS:
+		case DXGI_FORMAT_BC5_UNORM:
+		case DXGI_FORMAT_BC5_SNORM:
+		case DXGI_FORMAT_BC6H_TYPELESS:
+		case DXGI_FORMAT_BC6H_UF16:
+		case DXGI_FORMAT_BC6H_SF16:
+		case DXGI_FORMAT_BC7_TYPELESS:
+		case DXGI_FORMAT_BC7_UNORM:
+		case DXGI_FORMAT_BC7_UNORM_SRGB:
+			return 8;
+
+		default:
+			return 0;
+		}
+	}
+
+	static void Get_Surface_Info(
+		_In_ size_t width,
+		_In_ size_t height,
+		_In_ DXGI_FORMAT format,
+		_Out_opt_ size_t* out_number_bytes,
+		_Out_opt_ size_t* out_row_bytes,
+		_Out_opt_ size_t* out_number_rows
+	) {
+		size_t number_bytes = 0;
+		size_t row_bytes = 0;
+		size_t number_rows = 0;
+
+		bool bc = false;
+		bool packed = false;
+		bool planar = false;
+		size_t bpe = 0;
+
+		switch (format) {
+		case DXGI_FORMAT_BC1_TYPELESS:
+		case DXGI_FORMAT_BC1_UNORM:
+		case DXGI_FORMAT_BC1_UNORM_SRGB:
+		case DXGI_FORMAT_BC4_TYPELESS:
+		case DXGI_FORMAT_BC4_UNORM:
+		case DXGI_FORMAT_BC4_SNORM:
+			bc = true;
+			bpe = 8;
+			break;
+
+		case DXGI_FORMAT_BC2_TYPELESS:
+		case DXGI_FORMAT_BC2_UNORM:
+		case DXGI_FORMAT_BC2_UNORM_SRGB:
+		case DXGI_FORMAT_BC3_TYPELESS:
+		case DXGI_FORMAT_BC3_UNORM:
+		case DXGI_FORMAT_BC3_UNORM_SRGB:
+		case DXGI_FORMAT_BC5_TYPELESS:
+		case DXGI_FORMAT_BC5_UNORM:
+		case DXGI_FORMAT_BC5_SNORM:
+		case DXGI_FORMAT_BC6H_TYPELESS:
+		case DXGI_FORMAT_BC6H_UF16:
+		case DXGI_FORMAT_BC6H_SF16:
+		case DXGI_FORMAT_BC7_TYPELESS:
+		case DXGI_FORMAT_BC7_UNORM:
+		case DXGI_FORMAT_BC7_UNORM_SRGB:
+			bc = true;
+			bpe = 16;
+			break;
+
+		case DXGI_FORMAT_R8G8_B8G8_UNORM:
+		case DXGI_FORMAT_G8R8_G8B8_UNORM:
+		case DXGI_FORMAT_YUY2:
+			packed = true;
+			bpe = 4;
+			break;
+
+		case DXGI_FORMAT_Y210:
+		case DXGI_FORMAT_Y216:
+			packed = true;
+			bpe = 8;
+			break;
+
+		case DXGI_FORMAT_NV12:
+		case DXGI_FORMAT_420_OPAQUE:
+			planar = true;
+			bpe = 2;
+			break;
+
+		case DXGI_FORMAT_P010:
+		case DXGI_FORMAT_P016:
+			planar = true;
+			bpe = 4;
+			break;
+		}
+
+		if (bc) {
+			size_t number_blocks_wide = 0;
+
+			if (width > 0) {
+				number_blocks_wide = std::max<size_t>(1, (width + 3) / 4);
+			}
+
+			size_t number_blocks_high = 0;
+
+			if (height > 0) {
+				number_blocks_high = std::max<size_t>(1, (height + 3) / 4);
+			}
+
+			row_bytes = number_blocks_wide * bpe;
+			number_rows = number_blocks_high;
+			number_bytes = row_bytes * number_blocks_high;
+		}
+		else if (packed) {
+			row_bytes = ((width + 1) >> 1) * bpe;
+			number_rows = height;
+			number_bytes = row_bytes * height;
+		}
+		else if (format == DXGI_FORMAT_NV11) {
+			row_bytes = ((width + 3) >> 2) * 4;
+			number_rows = height * 2;
+			number_bytes = row_bytes * number_rows;
+		}
+		else if (planar) {
+			row_bytes = ((width + 1) >> 1) * bpe;
+			number_rows = (row_bytes * height) + ((row_bytes * height + 1) >> 1);
+			number_bytes = height + ((height + 1) >> 1);
+		}
+		else {
+			size_t bpp = Bits_Per_Pixel(format);
+			row_bytes = (width * bpp + 7) / 8;
+			number_rows = height;
+			number_bytes = row_bytes * height;
+		}
+
+		if (out_number_bytes) {
+			*out_number_bytes = number_bytes;
+		}
+		if (out_row_bytes) {
+			*out_row_bytes = row_bytes;
+		}
+		if (out_number_rows) {
+			*out_number_rows = number_rows;
+		}
+	}
+
+#define IS_BIT_MASK(r, g, b, a) (pixel_format.R_bit_mask == r && pixel_format.G_bit_mask == g && pixel_format.B_bit_mask == b && pixel_format.A_bit_mask == a)
+
+	static DXGI_FORMAT Get_DXGI_Format(const DDS_PIXEL_FORMAT& pixel_format) {
+		if (pixel_format.flags & DDS_RGB) {
+			switch (pixel_format.RGB_bit_count) {
+			case 32:
+				if (IS_BIT_MASK(0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000)) {
+					return DXGI_FORMAT_R8G8B8A8_UNORM;
+				}
+
+				if (IS_BIT_MASK(0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000)) {
+					return DXGI_FORMAT_B8G8R8A8_UNORM;
+				}
+
+				if (IS_BIT_MASK(0x00ff0000, 0x0000ff00, 0x000000ff, 0x00000000)) {
+					return DXGI_FORMAT_B8G8R8X8_UNORM;
+				}
+
+				if (IS_BIT_MASK(0x3ff00000, 0x000ffc00, 0x000003ff, 0xc0000000)) {
+					return DXGI_FORMAT_R10G10B10A2_UNORM;
+				}
+
+				if (IS_BIT_MASK(0x0000ffff, 0xffff0000, 0x00000000, 0x00000000)) {
+					return DXGI_FORMAT_R16G16_UNORM;
+				}
+
+				if (IS_BIT_MASK(0xffffffff, 0x00000000, 0x00000000, 0x00000000)) {
+					return DXGI_FORMAT_R32_FLOAT;
+				}
+
+				break;
+
+			case 24:
+				break;
+
+			case 16:
+				if (IS_BIT_MASK(0x7c00, 0x03e0, 0x001f, 0x8000)) {
+					return DXGI_FORMAT_B5G5R5A1_UNORM;
+				}
+
+				if (IS_BIT_MASK(0xf800, 0x07e0, 0x001f, 0x0000)) {
+					return DXGI_FORMAT_B5G6R5_UNORM;
+				}
+
+				if (IS_BIT_MASK(0x0f00, 0x00f0, 0x000f, 0xf000)) {
+					return DXGI_FORMAT_B4G4R4A4_UNORM;
+				}
+
+				break;
+			}
+		}
+		else if (pixel_format.flags & DDS_LUMINANCE) {
+			if (pixel_format.RGB_bit_count == 8) {
+				if (IS_BIT_MASK(0x000000ff, 0x00000000, 0x00000000, 0x00000000)) {
+					return DXGI_FORMAT_R8_UNORM;
+				}
+			}
+
+			if (pixel_format.RGB_bit_count == 16) {
+				if (IS_BIT_MASK(0x0000ffff, 0x00000000, 0x00000000, 0x00000000)) {
+					return DXGI_FORMAT_R16_UNORM;
+				}
+				if (IS_BIT_MASK(0x000000ff, 0x00000000, 0x00000000, 0x0000ff00)) {
+					return DXGI_FORMAT_R8G8_UNORM;
+				}
+			}
+		}
+		else if (pixel_format.flags & DDS_ALPHA) {
+			if (pixel_format.RGB_bit_count == 8) {
+				return DXGI_FORMAT_A8_UNORM;
+			}
+		}
+		else if (pixel_format.flags & DDS_FOURCC) {
+			if (MAKEFOURCC('D', 'X', 'T', '1') == pixel_format.fourCC) {
+				return DXGI_FORMAT_BC1_UNORM;
+			}
+
+			if (MAKEFOURCC('D', 'X', 'T', '3') == pixel_format.fourCC) {
+				return DXGI_FORMAT_BC2_UNORM;
+			}
+
+			if (MAKEFOURCC('D', 'X', 'T', '5') == pixel_format.fourCC) {
+				return DXGI_FORMAT_BC3_UNORM;
+			}
+
+			if (MAKEFOURCC('D', 'X', 'T', '2') == pixel_format.fourCC) {
+				return DXGI_FORMAT_BC2_UNORM;
+			}
+
+			if (MAKEFOURCC('D', 'X', 'T', '4') == pixel_format.fourCC) {
+				return DXGI_FORMAT_BC3_UNORM;
+			}
+
+			if (MAKEFOURCC('A', 'T', 'I', '1') == pixel_format.fourCC) {
+				return DXGI_FORMAT_BC4_UNORM;
+			}
+
+			if (MAKEFOURCC('B', 'C', '4', 'U') == pixel_format.fourCC) {
+				return DXGI_FORMAT_BC4_UNORM;
+			}
+
+			if (MAKEFOURCC('B', 'C', '4', 'S') == pixel_format.fourCC) {
+				return DXGI_FORMAT_BC4_SNORM;
+			}
+
+			if (MAKEFOURCC('A', 'T', 'I', '2') == pixel_format.fourCC) {
+				return DXGI_FORMAT_BC5_UNORM;
+			}
+
+			if (MAKEFOURCC('B', 'C', '5', 'U') == pixel_format.fourCC) {
+				return DXGI_FORMAT_BC5_UNORM;
+			}
+
+			if (MAKEFOURCC('B', 'C', '5', 'S') == pixel_format.fourCC) {
+				return DXGI_FORMAT_BC5_SNORM;
+			}
+
+			if (MAKEFOURCC('R', 'G', 'B', 'G') == pixel_format.fourCC) {
+				return DXGI_FORMAT_R8G8_B8G8_UNORM;
+			}
+
+			if (MAKEFOURCC('G', 'R', 'G', 'B') == pixel_format.fourCC) {
+				return DXGI_FORMAT_G8R8_G8B8_UNORM;
+			}
+
+			if (MAKEFOURCC('Y', 'U', 'Y', '2') == pixel_format.fourCC) {
+				return DXGI_FORMAT_YUY2;
+			}
+
+			switch (pixel_format.fourCC) {
+			case 36:
+				return DXGI_FORMAT_R16G16B16A16_UNORM;
+
+			case 110:
+				return DXGI_FORMAT_R16G16B16A16_SNORM;
+
+			case 111:
+				return DXGI_FORMAT_R16_FLOAT;
+
+			case 112:
+				return DXGI_FORMAT_R16G16_FLOAT;
+
+			case 113:
+				return DXGI_FORMAT_R16G16B16A16_FLOAT;
+
+			case 114:
+				return DXGI_FORMAT_R32_FLOAT;
+
+			case 115:
+				return DXGI_FORMAT_R32G32_FLOAT;
+
+			case 116:
+				return DXGI_FORMAT_R32G32B32A32_FLOAT;
+			}
+		}
+
+		return DXGI_FORMAT_UNKNOWN;
+	}
+
+	static DXGI_FORMAT Make_SRGB(_In_ DXGI_FORMAT format) {
+		switch (format) {
+		case DXGI_FORMAT_R8G8B8A8_UNORM:
+			return DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+
+		case DXGI_FORMAT_BC1_UNORM:
+			return DXGI_FORMAT_BC1_UNORM_SRGB;
+
+		case DXGI_FORMAT_BC2_UNORM:
+			return DXGI_FORMAT_BC2_UNORM_SRGB;
+
+		case DXGI_FORMAT_BC3_UNORM:
+			return DXGI_FORMAT_BC3_UNORM_SRGB;
+
+		case DXGI_FORMAT_B8G8R8A8_UNORM:
+			return DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
+
+		case DXGI_FORMAT_B8G8R8X8_UNORM:
+			return DXGI_FORMAT_B8G8R8X8_UNORM_SRGB;
+
+		case DXGI_FORMAT_BC7_UNORM:
+			return DXGI_FORMAT_BC7_UNORM_SRGB;
+
+		default:
+			return format;
+		}
+	}
+
+	static HRESULT Fill_Init_Data(
+		_In_ size_t in_width,
+		_In_ size_t in_height,
+		_In_ size_t in_depth,
+		_In_ size_t mip_count,
+		_In_ size_t array_size,
+		_In_ DXGI_FORMAT format,
+		_In_ size_t max_size,
+		_In_ size_t bit_size,
+		_In_reads_bytes_(bit_size) const uint8_t* bit_data,
+		_Out_ size_t& out_width,
+		_Out_ size_t& out_height,
+		_Out_ size_t& out_depth,
+		_Out_ size_t& skip_mip,
+		_Out_writes_(mip_count* array_size) D3D12_SUBRESOURCE_DATA* init_data
+	) {
+		if (!bit_data || !init_data) {
+			return E_POINTER;
+		}
+
+		skip_mip = 0;
+		out_width = 0;
+		out_height = 0;
+		out_depth = 0;
+
+		size_t number_bytes = 0;
+		size_t row_bytes = 0;
+		const uint8_t* source_bits = bit_data;
+		const uint8_t* end_bits = bit_data + bit_size;
+
+		size_t index = 0;
+
+		for (size_t i = 0; i < array_size; ++i) {
+			size_t width = in_width;
+			size_t height = in_height;
+			size_t depth = in_depth;
+
+			for (size_t j = 0; j < mip_count; ++j) {
+				Get_Surface_Info(width, height, format, &number_bytes, &row_bytes, nullptr);
+
+				if ((mip_count <= 1) || !max_size || (width <= max_size && height <= max_size && depth <= max_size)) {
+					if (!out_width) {
+						out_width = width;
+						out_height = height;
+						out_depth = depth;
+					}
+
+					assert(index < mip_count * array_size);
+					_Analysis_assume_(index < mip_count * array_size);
+					init_data[index].pData = (const void*)source_bits;
+					init_data[index].RowPitch = static_cast<UINT>(row_bytes);
+					init_data[index].SlicePitch = static_cast<UINT>(number_bytes);
+					++index;
+				}
+				else if (!i) {
+					++skip_mip;
+				}
+
+				if (source_bits + (number_bytes * depth) > end_bits) {
+					return HRESULT_FROM_WIN32(ERROR_HANDLE_EOF);
+				}
+
+				source_bits += number_bytes * depth;
+
+				width = width >> 1;
+				height = height >> 1;
+				depth = depth >> 1;
+
+				if (width == 0) {
+					width = 1;
+				}
+				if (height == 0) {
+					height = 1;
+				}
+				if (depth == 0) {
+					depth = 1;
+				}
+			}
+		}
+
+		return (index > 0) ? S_OK : E_FAIL;
+	}
+
+	static HRESULT Create_D3D_Resources(
+		ID3D12Device* device,
+		ID3D12GraphicsCommandList* command_list,
+		_In_ uint32_t resource_dimension,
+		_In_ size_t width,
+		_In_ size_t height,
+		_In_ size_t depth,
+		_In_ size_t mip_count,
+		_In_ size_t array_size,
+		_In_ DXGI_FORMAT format,
+		_In_ bool force_SRGB,
+		_In_ bool cube_map,
+		_In_reads_opt_(mip_count* array_size) D3D12_SUBRESOURCE_DATA* init_data,
+		Microsoft::WRL::ComPtr<ID3D12Resource>& texture,
+		Microsoft::WRL::ComPtr<ID3D12Resource>& texture_upload_heap
+	) {
+		if (device == nullptr) {
+			return E_POINTER;
+		}
+
+		if (force_SRGB) {
+			format = Make_SRGB(format);
+		}
+
+		HRESULT hresult = E_FAIL;
+
+		switch (resource_dimension) {
+		case D3D12_RESOURCE_DIMENSION_TEXTURE2D:
+		{
+			D3D12_RESOURCE_DESC resource_desc;
+			ZeroMemory(&resource_desc, sizeof(D3D12_RESOURCE_DESC));
+			resource_desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+			resource_desc.Alignment = 0;
+			resource_desc.Width = width;
+			resource_desc.Height = (uint32_t)height;
+			resource_desc.DepthOrArraySize = (depth > 1) ? (uint16_t)depth : (uint16_t)array_size;
+			resource_desc.MipLevels = (uint16_t)mip_count;
+			resource_desc.Format = format;
+			resource_desc.SampleDesc.Count = 1;
+			resource_desc.SampleDesc.Quality = 0;
+			resource_desc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+			resource_desc.Flags = D3D12_RESOURCE_FLAG_NONE;
+
+			hresult = device->CreateCommittedResource(
+				&D3D12_HEAP_PROPERTIES_EX(D3D12_HEAP_TYPE_DEFAULT),
+				D3D12_HEAP_FLAG_NONE,
+				&resource_desc,
+				D3D12_RESOURCE_STATE_COMMON,
+				nullptr,
+				IID_PPV_ARGS(&texture));
+
+			if (FAILED(hresult)) {
+				texture = nullptr;
+
+				return hresult;
+			}
+			else {
+				const UINT number_2D_subresources = resource_desc.DepthOrArraySize * resource_desc.MipLevels;
+				const UINT64 upload_buffer_size = Get_Required_Intermediate_Size(texture.Get(), 0, number_2D_subresources);
+
+				hresult = device->CreateCommittedResource(
+					&D3D12_HEAP_PROPERTIES_EX(D3D12_HEAP_TYPE_UPLOAD),
+					D3D12_HEAP_FLAG_NONE,
+					&D3D12_RESOURCE_DESC_EX::Buffer(upload_buffer_size),
+					D3D12_RESOURCE_STATE_GENERIC_READ,
+					nullptr,
+					IID_PPV_ARGS(&texture_upload_heap));
+
+				if (FAILED(hresult)) {
+					texture = nullptr;
+
+					return hresult;
+				}
+				else {
+					command_list->ResourceBarrier(1, &D3D12_RESOURCE_BARRIER_EX::Transition(texture.Get(),
+						D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST));
+
+					Udt_Subresource(command_list, texture.Get(), texture_upload_heap.Get(), 0, 0, number_2D_subresources, init_data);
+
+					command_list->ResourceBarrier(1, &D3D12_RESOURCE_BARRIER_EX::Transition(texture.Get(),
+						D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
+				}
+			}
+		}
+		break;
+		default:
+			break;
+		}
+
+		return hresult;
+	}
+
+	static HRESULT Create_Texture_From_DDS(
+		_In_ ID3D12Device* device,
+		_In_opt_ ID3D12GraphicsCommandList* command_list,
+		_In_ const DDS_HEADER* dds_header,
+		_In_reads_bytes_(bitSize) const uint8_t* bit_data,
+		_In_ size_t bit_size,
+		_In_ size_t max_size,
+		_In_ bool force_SRGB,
+		Microsoft::WRL::ComPtr<ID3D12Resource>& texture,
+		Microsoft::WRL::ComPtr<ID3D12Resource>& texture_upload_heap
+	) {
+		HRESULT hresult = S_OK;
+
+		UINT width = dds_header->width;
+		UINT height = dds_header->height;
+		UINT depth = dds_header->depth;
+
+		uint32_t resource_dimension = D3D12_RESOURCE_DIMENSION_UNKNOWN;
+		UINT array_size = 1;
+		DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN;
+		bool cube_map = false;
+
+		size_t mip_count = dds_header->mipmap_count;
+
+		if (mip_count == 0) {
+			mip_count = 1;
+		}
+
+		if ((dds_header->pixel_format.flags & DDS_FOURCC) &&
+			(MAKEFOURCC('D', 'X', '1', '0') == dds_header->pixel_format.fourCC)
+			) {
+			auto d3d10_ext = reinterpret_cast<const DDS_HEADER_DXT10*>((const char*)dds_header + sizeof(DDS_HEADER));
+
+			array_size = d3d10_ext->array_size;
+
+			if (array_size == 0) {
+				return HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
+			}
+
+			switch (d3d10_ext->dxgi_format) {
+			case DXGI_FORMAT_AI44:
+			case DXGI_FORMAT_IA44:
+			case DXGI_FORMAT_P8:
+			case DXGI_FORMAT_A8P8:
+				return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+
+			default:
+				if (Bits_Per_Pixel(d3d10_ext->dxgi_format) == 0)
+					return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+			}
+
+			format = d3d10_ext->dxgi_format;
+
+			switch (d3d10_ext->resource_dimension) {
+			case D3D12_RESOURCE_DIMENSION_TEXTURE1D:
+				if ((dds_header->flags & DDS_HEIGHT) && height != 1) {
+					return HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
+				}
+
+				height = depth = 1;
+				break;
+
+			case D3D12_RESOURCE_DIMENSION_TEXTURE2D:
+				if (d3d10_ext->misc_flag & 0x4) {
+					array_size *= 6;
+					cube_map = true;
+				}
+
+				depth = 1;
+				break;
+
+			case D3D12_RESOURCE_DIMENSION_TEXTURE3D:
+				if (!(dds_header->flags & DDS_HEADER_FLAGS_VOLUME)) {
+					return HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
+				}
+
+				if (array_size > 1) {
+					return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+				}
+				break;
+
+			default:
+				return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+			}
+
+			resource_dimension = static_cast<D3D12_RESOURCE_DIMENSION>(d3d10_ext->resource_dimension);
+		}
+		else {
+			format = Get_DXGI_Format(dds_header->pixel_format);
+
+			if (format == DXGI_FORMAT_UNKNOWN) {
+				return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+			}
+
+			if (dds_header->flags & DDS_HEADER_FLAGS_VOLUME) {
+				resource_dimension = D3D12_RESOURCE_DIMENSION_TEXTURE3D;
+			}
+			else {
+				if (dds_header->caps_2 & DDS_CUBEMAP) {
+					if ((dds_header->caps_2 & DDS_CUBEMAP_ALLFACES) != DDS_CUBEMAP_ALLFACES) {
+						return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+					}
+
+					array_size = 6;
+					cube_map = true;
+				}
+
+				depth = 1;
+				resource_dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+			}
+
+			assert(Bits_Per_Pixel(format) != 0);
+		}
+
+		if (mip_count > D3D12_REQ_MIP_LEVELS) {
+			return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+		}
+
+		switch (resource_dimension) {
+		case D3D12_RESOURCE_DIMENSION_TEXTURE1D:
+			if ((array_size > D3D12_REQ_TEXTURE1D_ARRAY_AXIS_DIMENSION) ||
+				(width > D3D12_REQ_TEXTURE1D_U_DIMENSION)
+				) {
+				return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+			}
+			break;
+
+		case D3D12_RESOURCE_DIMENSION_TEXTURE2D:
+			if (cube_map) {
+				if ((array_size > D3D12_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION) ||
+					(width > D3D12_REQ_TEXTURECUBE_DIMENSION) ||
+					(height > D3D12_REQ_TEXTURECUBE_DIMENSION)
+					) {
+					return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+				}
+			}
+			else if ((array_size > D3D12_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION) ||
+				(width > D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION) ||
+				(height > D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION)
+				) {
+				return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+			}
+			break;
+
+		case D3D12_RESOURCE_DIMENSION_TEXTURE3D:
+			if ((array_size > 1) ||
+				(width > D3D12_REQ_TEXTURE3D_U_V_OR_W_DIMENSION) ||
+				(height > D3D12_REQ_TEXTURE3D_U_V_OR_W_DIMENSION) ||
+				(depth > D3D12_REQ_TEXTURE3D_U_V_OR_W_DIMENSION)
+				) {
+				return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+			}
+			break;
+
+		default:
+			return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+		}
+
+		std::unique_ptr<D3D12_SUBRESOURCE_DATA[]> init_data(
+			new (std::nothrow) D3D12_SUBRESOURCE_DATA[mip_count * array_size]);
+
+		if (!init_data) {
+			return E_OUTOFMEMORY;
+		}
+
+		size_t skip_mip = 0;
+		size_t texture_width = 0;
+		size_t texture_height = 0;
+		size_t texture_depth = 0;
+
+		hresult = Fill_Init_Data(
+			width, height, depth, mip_count, array_size, format, max_size, bit_size, bit_data,
+			texture_width, texture_height, texture_depth, skip_mip, init_data.get());
+
+		if (SUCCEEDED(hresult)) {
+			hresult = Create_D3D_Resources(
+				device, command_list,
+				resource_dimension, texture_width, texture_height, texture_depth,
+				mip_count - skip_mip,
+				array_size,
+				format,
+				false,
+				cube_map,
+				init_data.get(),
+				texture,
+				texture_upload_heap);
+		}
+
+		return hresult;
+	}
+
+	static DDS_ALPHA_MODE Get_Alpha_Mode(_In_ const DDS_HEADER* dds_header) {
+		if (dds_header->pixel_format.flags & DDS_FOURCC) {
+			if (MAKEFOURCC('D', 'X', '1', '0') == dds_header->pixel_format.fourCC) {
+				auto d3d10_ext = reinterpret_cast<const DDS_HEADER_DXT10*>((const char*)dds_header + sizeof(DDS_HEADER));
+				auto mode = static_cast<DDS_ALPHA_MODE>(d3d10_ext->misc_flags & DDS_MISC_FLAGS_ALPHA_MODE_MASK);
+
+				switch (mode) {
+				case DDS_ALPHA_MODE_STRAIGHT:
+				case DDS_ALPHA_MODE_PREMULTIPLIED:
+				case DDS_ALPHA_MODE_OPAQUE:
+				case DDS_ALPHA_MODE_CUSTOM:
+					return mode;
+				}
+			}
+			else if ((MAKEFOURCC('D', 'X', 'T', '2') == dds_header->pixel_format.fourCC) ||
+				(MAKEFOURCC('D', 'X', 'T', '4') == dds_header->pixel_format.fourCC)
+				) {
+				return DDS_ALPHA_MODE_PREMULTIPLIED;
+			}
+		}
+
+		return DDS_ALPHA_MODE_UNKNOWN;
+	}
+
+	static HRESULT Create_DDS_Texture_From_File(
+		_In_ ID3D12Device* device,
+		_In_ ID3D12GraphicsCommandList* command_list,
+		_In_z_ const wchar_t* file_name,
+		_Out_ Microsoft::WRL::ComPtr<ID3D12Resource>& texture,
+		_Out_ Microsoft::WRL::ComPtr<ID3D12Resource>& texture_upload_heap,
+		_In_ size_t max_size = 0,
+		_Out_opt_ DDS_ALPHA_MODE* alpha_mode = nullptr
+	) {
+		if (texture) {
+			texture = nullptr;
+		}
+
+		if (texture_upload_heap) {
+			texture_upload_heap = nullptr;
+		}
+
+		if (alpha_mode) {
+			*alpha_mode = DDS_ALPHA_MODE_UNKNOWN;
+		}
+
+		if (!device || !file_name) {
+			return E_INVALIDARG;
+		}
+
+		DDS_HEADER* dds_header = nullptr;
+		uint8_t* bit_data = nullptr;
+		size_t bit_size = 0;
+
+		std::unique_ptr<uint8_t[]> dds_data;
+
+		HRESULT hresult = Load_Texture_Data_From_File(file_name, dds_data, &dds_header, &bit_data, &bit_size);
+
+		if (FAILED(hresult)) {
+			return hresult;
+		}
+
+		hresult = Create_Texture_From_DDS(device, command_list,
+			dds_header, bit_data, bit_size, max_size, false, texture, texture_upload_heap);
+
+		if (SUCCEEDED(hresult)) {
+			if (alpha_mode) {
+				*alpha_mode = Get_Alpha_Mode(dds_header);
+			}
+		}
+
+		return hresult;
+	}
+};
+
+//
+struct InstanceDatas {
+	DirectX::XMFLOAT4X4 world_matrix = MathHelper::Identity_4x4();
 };

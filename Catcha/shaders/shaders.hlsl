@@ -53,6 +53,15 @@ cbuffer CB_Animation : register(b3) {
 Texture2D g_shadow_map : register(t0);
 SamplerComparisonState g_shadow_sampler : register(s0);
 
+Texture2D g_texture : register(t1);
+SamplerState g_texture_sampler : register(s1);
+
+struct Instance_Data {
+    float4x4 instc_world_matrix;
+};
+
+StructuredBuffer<Instance_Data> g_instance_data : register(t0, space1);
+
 struct Vertex_In {
 	float3 position_local : POSITION;
     float3 normal_local : NORMAL;
@@ -166,6 +175,13 @@ float4 PS(Vertex_Out pixel_in) : SV_Target {
 
     result = result * g_color_multiplier;
 
+    //
+    float4 test_tex_color;
+    test_tex_color = g_texture.Sample(g_texture_sampler, float2(0.5, 0.5));
+
+    result += test_tex_color;
+    result -= test_tex_color;
+
     return result;
 }
 
@@ -218,4 +234,36 @@ Vertex_Out Shadow_VS(Vertex_In vertex_in) {
 
 void Shadow_PS(Vertex_Out pixel_in) {
     // nothing
+}
+
+//
+Vertex_Out Instance_VS(Vertex_In vertex_in, uint instance_id : SV_InstanceID) {
+    Vertex_Out vertex_out = (Vertex_Out)0.0f;
+
+    float4 position_world = float4(0.0f, 0.0f, 0.0f, 0.0f);
+    float3 normal_world = float3(0.0f, 0.0f, 0.0f);
+
+    position_world = mul(float4(vertex_in.position_local, 1.0f), g_instance_data[instance_id].instc_world_matrix);
+
+    vertex_out.position_world = position_world.xyz;
+    vertex_out.normal_world = mul(vertex_in.normal_local, (float3x3)g_instance_data[instance_id].instc_world_matrix);
+    vertex_out.position_screen = mul(position_world, g_view_projection);
+
+    vertex_out.shadow_position = mul(position_world, g_shadow_transform);
+    vertex_out.material_index = vertex_in.material_index;
+
+    return vertex_out;
+}
+
+Vertex_Out Instance_Shadow_VS(Vertex_In vertex_in, uint instance_id : SV_InstanceID) {
+    Vertex_Out vertex_out = (Vertex_Out)0.0f;
+
+    float4 position_world = float4(0.0f, 0.0f, 0.0f, 0.0f);
+
+    position_world = mul(float4(vertex_in.position_local, 1.0f), g_instance_data[instance_id].instc_world_matrix);
+
+    vertex_out.position_world = position_world.xyz;
+    vertex_out.position_screen = mul(position_world, g_view_projection);
+
+    return vertex_out;
 }

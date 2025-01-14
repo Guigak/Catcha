@@ -2,6 +2,8 @@
 #include "InputManager.h"
 #include "Camera.h"
 
+#include "VoxelCheese.h"
+
 Object* ObjectManager::Get_Obj(std::wstring object_name) {
     return m_object_map[object_name].get();
 }
@@ -181,6 +183,10 @@ void ObjectManager::Update(float elapsed_time) {
         o->Update(elapsed_time);
     }
 
+    for (auto& o : m_instance_objects) {
+        o->Update(elapsed_time);
+    }
+
     //
     int i = 0;
     for (auto& o : m_collision_obb_objects) {
@@ -347,6 +353,28 @@ Object* ObjectManager::Add_Col_OBB_Obj(std::wstring obb_object_name, DirectX::Bo
     m_object_set_map[L"BoundingBox"].emplace_back(object_pointer);
 
     return m_object_map[obb_object_name].get();
+}
+
+Object* ObjectManager::Add_Voxel_Cheese(std::wstring object_name, DirectX::XMFLOAT3 object_position, float scale) {
+    std::unique_ptr<Object> object;
+    object = std::make_unique<VoxelCheese>(object_position.x, object_position.y, object_position.z, scale);
+
+    object->Set_Name(object_name);
+    object->Add_Mesh(m_mesh_manager.Get_Mesh(L"cheese"));
+    object->Set_PT(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    object->Set_CB_Index(m_object_count++);
+    
+    ((VoxelCheese*)object.get())->Set_Instance_Index((UINT)m_instance_objects.size());
+
+    m_object_map[object_name] = std::move(object);
+
+    Object* object_pointer = m_object_map[object_name].get();
+    m_objects.emplace_back(object_pointer);
+    m_instance_objects.emplace_back(object_pointer);
+
+    m_object_set_map[L"Object"].emplace_back(object_pointer);
+
+    return m_object_map[object_name].get();
 }
 
 

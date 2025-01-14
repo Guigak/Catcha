@@ -12,7 +12,22 @@ bool D3DManager::Initialize(HWND hwnd, int width, int height) {
 
 	Throw_If_Failed(CreateDXGIFactory1(IID_PPV_ARGS(&m_factory)));
 
-	HRESULT hresult = D3D12CreateDevice(nullptr, D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&m_device));
+	// test
+	Microsoft::WRL::ComPtr<IDXGIAdapter> selected_adapter;
+	Microsoft::WRL::ComPtr<IDXGIAdapter> best_adapter;
+	SIZE_T max_dedicated_video_memory_size = 0;
+
+	for (UINT adapter_index = 0; m_factory->EnumAdapters(adapter_index, &selected_adapter) != DXGI_ERROR_NOT_FOUND; ++adapter_index) {
+		DXGI_ADAPTER_DESC adapter_desc;
+		selected_adapter->GetDesc(&adapter_desc);
+
+		if (adapter_desc.DedicatedVideoMemory > max_dedicated_video_memory_size) {
+			max_dedicated_video_memory_size = adapter_desc.DedicatedVideoMemory;
+			best_adapter = selected_adapter;
+		}
+	}
+
+	HRESULT hresult = D3D12CreateDevice(best_adapter.Get(), D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&m_device));
 
 	if (FAILED(hresult)) {
 		Microsoft::WRL::ComPtr<IDXGIAdapter> warp_adapter;

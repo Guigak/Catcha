@@ -56,9 +56,11 @@ struct FrameResorce {
 	std::unique_ptr<UploadBuffer<PassConstants>> pass_constant_buffer = nullptr;
 	std::unique_ptr<UploadBuffer<AnimationConstants>> animation_constant_buffer = nullptr;
 
+	std::vector<std::unique_ptr<UploadBuffer<InstanceDatas>>> instance_data_buffer_array;
+
 	UINT64 fence = 0;
 
-	FrameResorce(ID3D12Device* device, UINT pass_count, UINT object_count, UINT material_count) {
+	FrameResorce(ID3D12Device* device, UINT pass_count, UINT object_count, UINT material_count, UINT instance_object_count, UINT max_instance_count) {
 		Throw_If_Failed(device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(command_allocator.GetAddressOf())));
 
 		Throw_If_Failed(device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, command_allocator.Get(), nullptr, IID_PPV_ARGS(command_list.GetAddressOf())));
@@ -69,5 +71,9 @@ struct FrameResorce {
 		material_constant_buffer = std::make_unique<UploadBuffer<MaterialConstants>>(device, material_count, true);
 		pass_constant_buffer = std::make_unique<UploadBuffer<PassConstants>>(device, pass_count, true);
 		animation_constant_buffer = std::make_unique<UploadBuffer<AnimationConstants>>(device, object_count, true);
+
+		for (UINT i = 0; i < instance_object_count; ++i) {
+			instance_data_buffer_array.emplace_back(std::make_unique<UploadBuffer<InstanceDatas>>(device, max_instance_count, false));
+		}
 	}
 };

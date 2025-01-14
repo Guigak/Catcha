@@ -31,7 +31,10 @@ private:
 
 	std::vector<Object*> m_camera_objects;
 
+	std::vector<Object*> m_instance_objects;
+
 	UINT m_object_count = 0;
+	UINT m_instance_object_count = 0;
 
 	//
 	std::vector<Object*> m_optimization_obb_objects;
@@ -61,6 +64,7 @@ public:
 	std::vector<Object*>& Get_Opaque_Obj_Arr() { return m_opaque_objects; }
 	std::vector<Object*>& Get_Transparent_Obj_Arr() { return m_transparent_objects; }
 	std::vector<Object*>& Get_Cam_Obj_Arr() { return m_camera_objects; }
+	std::vector<Object*>& Get_Instc_Obj_Arr() { return m_instance_objects; }	// Get Instance Object Array
 	std::vector<Object*>& Get_Optmz_OBB_Obj_Arr() { return m_optimization_obb_objects; }	// Get Optimization OBB Object Array
 	std::vector<Object*>& Get_Col_OBB_Obj_Arr() { return m_collision_obb_objects; }	// Get Collision OBB Object Array
 
@@ -123,6 +127,9 @@ public:
 
 	//
 	Object* Add_Col_OBB_Obj(std::wstring obb_object_name, DirectX::BoundingOrientedBox obb, std::wstring object_name = L"");
+
+	//
+	Object* Add_Voxel_Cheese(std::wstring object_name, DirectX::XMFLOAT3 object_position, float scale);
 
 	// player 전환을 위한 object swap
 	void Swap_Object(const std::wstring& key1, const std::wstring& key2);

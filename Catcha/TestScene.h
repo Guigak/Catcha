@@ -15,6 +15,8 @@ public:
 
 	virtual void Prcs_Input_Msg(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam);	// Process Message
 
+	virtual void Load_Texture(ID3D12Device* device, ID3D12GraphicsCommandList* command_list);
+
 	virtual void Build_RS(ID3D12Device* device);	// Build Root Signature
 	virtual void Build_S_N_L();	// Build Shaders And Layouts
 	virtual void Build_Mesh(ID3D12Device* device, ID3D12GraphicsCommandList* command_list);	// Build Meshs

@@ -5,7 +5,7 @@ VoxelCheese::VoxelCheese(float position_x, float position_y, float position_z, f
 	m_instance_max_count = CHEESE_VOXEL_COUNT * (m_detail_level * 8 ? m_detail_level * 8 : 1);
 
 	Rst_Voxel(position_x, position_y, position_z, scale, m_detail_level);
-	Remove_Random_Voxel();
+	//Remove_Random_Voxel();
 }
 
 void VoxelCheese::Get_Instance_Data(std::vector<InstanceDatas>& instance_data_array) {
@@ -18,6 +18,7 @@ void VoxelCheese::Get_Instance_Data(std::vector<InstanceDatas>& instance_data_ar
 
 void VoxelCheese::Rst_Voxel(float position_x, float position_y, float position_z, float scale, UINT detail_level) {
 	m_instance_data_array.clear();
+	m_instance_data_array.shrink_to_fit();
 
 	DirectX::XMFLOAT3 position = DirectX::XMFLOAT3(position_x, position_y, position_z);
 	DirectX::XMFLOAT3 pivot_position = position;

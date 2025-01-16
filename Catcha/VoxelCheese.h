@@ -8,7 +8,7 @@ private:
 
 public:
 	VoxelCheese(float position_x, float position_y, float position_z, float scale, UINT detail_level);
-	~VoxelCheese() {}
+	virtual ~VoxelCheese() {}
 
 	virtual void Get_Instance_Data(std::vector<InstanceDatas>& instance_data_array);
 

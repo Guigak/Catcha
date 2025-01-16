@@ -101,7 +101,7 @@ public:
 	Object() {}
 	Object(ObjectManager* object_manager, std::wstring object_name, Mesh_Info* mesh, DirectX::XMMATRIX world_matrix, UINT constant_buffer_index, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, bool physics, bool visiable);
 	Object(ObjectManager* object_manager, std::wstring object_name, std::vector<Mesh>& mesh_array, UINT constant_buffer_index, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, bool physics, bool visiable);
-	~Object() {}
+	virtual ~Object() {}
 
 	void Set_Object_Manager(ObjectManager* object_manager) { m_object_manager = object_manager; }
 	void Set_Name(std::wstring object_name) { m_name = object_name; }

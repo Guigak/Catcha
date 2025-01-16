@@ -40,7 +40,7 @@ private:
 
 public:
 	Camera();
-	~Camera() {}
+	virtual ~Camera() {}
 
 	float Get_Near_Z() { return m_near_z; }
 	float Get_Far_Z() { return m_far_z; }

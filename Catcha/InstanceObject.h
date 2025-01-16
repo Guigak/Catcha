@@ -12,7 +12,7 @@ protected:
 
 public:
 	InstanceObject() {}
-	~InstanceObject() {}
+	virtual ~InstanceObject() {}
 
 	virtual void Update(float elapsed_time);
 	virtual void Draw(ID3D12GraphicsCommandList* command_list);

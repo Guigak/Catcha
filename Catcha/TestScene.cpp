@@ -896,8 +896,8 @@ void TestScene::Build_O() {
 	int cheese_count = 0;
 	m_object_manager->Add_Voxel_Cheese(L"cheese" + std::to_wstring(cheese_count++),
 		DirectX::XMFLOAT3(169.475f, 10.049f, 230.732f), 1.0f);
-	m_object_manager->Add_Voxel_Cheese(L"cheese" + std::to_wstring(cheese_count++),
-		DirectX::XMFLOAT3(254.871f, 10.049f, 311.188f), 1.0f);
+	/*m_object_manager->Add_Voxel_Cheese(L"cheese" + std::to_wstring(cheese_count++),
+		DirectX::XMFLOAT3(254.871f, 10.049f, 311.188f), 1.0f);*/
 }
 
 void TestScene::Build_C(D3DManager* d3d_manager) {
@@ -1282,6 +1282,12 @@ void TestScene::Crt_Voxel_Cheese(DirectX::XMFLOAT3 position, float scale, UINT d
 
 		position.y += scale;
 	}
+}
+
+void TestScene::Del_Voxel(int cheese_index, int voxel_index) {
+	VoxelCheese* voxel_cheese_pointer = (VoxelCheese*)m_object_manager->Get_Obj(L"cheese_" + std::to_wstring(cheese_index));
+
+	voxel_cheese_pointer->Remove_Voxel(voxel_index);
 }
 
 void TestScene::CharacterChange(bool is_cat, const std::wstring& key1, const std::wstring& key2)

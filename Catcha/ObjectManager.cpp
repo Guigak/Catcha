@@ -372,6 +372,9 @@ Object* ObjectManager::Add_Voxel_Cheese(std::wstring object_name, DirectX::XMFLO
     m_objects.emplace_back(object_pointer);
     m_instance_objects.emplace_back(object_pointer);
 
+    // [CS] 치즈 등록
+    NetworkManager::GetInstance().AddCheese(*(VoxelCheese*)object_pointer);
+
     m_object_set_map[L"Object"].emplace_back(object_pointer);
 
     return m_object_map[object_name].get();

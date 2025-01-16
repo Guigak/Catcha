@@ -40,6 +40,9 @@ public:
 	void Crt_Voxel(DirectX::XMFLOAT3 position, float scale, UINT detail_level);
 	void Crt_Voxel_Cheese(DirectX::XMFLOAT3 position, float scale, UINT detail_level);
 
+	//
+	void Del_Voxel(int cheese_index, int voxel_index);
+
 	void CharacterChange(bool is_cat, const std::wstring& key1, const std::wstring& key2) override;		// 옵저버를 이용한 캐릭터 변경
 	void InitCamera() override;	// 접속시 카메라 값 초기화
 };

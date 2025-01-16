@@ -15,6 +15,7 @@ struct Client
 };
 
 class Object;
+class VoxelCheese;
 
 class NetworkManager {
 private:
@@ -31,6 +32,7 @@ private:
 	std::string m_name;
 
 	std::vector<Object*> m_objects;
+	std::vector<VoxelCheese*> m_cheeses;
 
 
 	// 카메라 바인딩을 위한 오브젝트 매니져
@@ -43,6 +45,7 @@ private:
 public:
 	int m_myid;											// 자신의 서버 아이디 번호
 	std::unordered_map<int, Client> characters;			// [key] 서버 아이디 번호 / [value]캐릭터 정보
+
 
 	bool Choose = false;								// 캐릭터 선택 여부 확인
 
@@ -69,6 +72,10 @@ public:
 
 	void AddCharacter(Object& object) {
 		m_objects.emplace_back(&object);
+	}
+
+	void AddCheese(VoxelCheese& cheese) {
+		m_cheeses.emplace_back(&cheese);
 	}
 
 	// 옵저버 등록 함수

@@ -51,9 +51,9 @@ void Object::Calc_Delta(float elapsed_time) {
 		m_dirty = true;
 
 		// m_position.y 값을 출력
-		wchar_t debugMessage[256];
+		/*wchar_t debugMessage[256];
 		swprintf_s(debugMessage, L"position : %f, %f, %f\n", m_position.x, m_position.y, m_position.z);
-		OutputDebugStringW(debugMessage);
+		OutputDebugStringW(debugMessage);*/
 		return;
 	}
 

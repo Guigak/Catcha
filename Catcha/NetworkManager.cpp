@@ -1,4 +1,5 @@
 #include "NetworkManager.h"
+#include "VoxelCheese.h"
 
 void print_error(const char* msg, int err_no)
 {
@@ -421,6 +422,16 @@ void NetworkManager::ProcessPacket(char* ptr)
 		SC_TIME_PACKET* time = reinterpret_cast<SC_TIME_PACKET*>(ptr);
 		unsigned short game_time = time->time;
 		DoSend(time);
+		break;
+	}
+	case SC_REMOVE_VOXEL_SPHERE:
+	{
+		SC_REMOVE_VOXEL_SPHERE_PACKET* p = reinterpret_cast<SC_REMOVE_VOXEL_SPHERE_PACKET*>(ptr);
+		int cheese_num = p->cheese_num;
+		DirectX::XMFLOAT3 sphere_center {p->center_x, p->center_y, p->center_z};
+		float radius = 5.0f;
+		m_cheeses[cheese_num]->Remove_Sphere_Voxel(sphere_center, radius);
+		
 		break;
 	}
 	default:

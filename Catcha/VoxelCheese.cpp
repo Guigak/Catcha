@@ -4,7 +4,7 @@ VoxelCheese::VoxelCheese(float position_x, float position_y, float position_z, f
 	m_instance_count = CHEESE_VOXEL_COUNT;
 
 	Rst_Voxel(position_x, position_y, position_z, scale);
-	Remove_Random_Voxel();
+	//Remove_Random_Voxel();
 }
 
 void VoxelCheese::Update(float elapsed_time) {
@@ -122,3 +122,27 @@ void VoxelCheese::Remove_Random_Voxel() {
 		}
 	}
 }
+
+void VoxelCheese::Remove_Sphere_Voxel(const DirectX::XMFLOAT3& center, float radius)
+{
+	DirectX::BoundingSphere sphere(center, radius);
+	for(auto& voxel : m_voxel_info_array)
+	{
+		if (true == voxel.draw)
+		{
+			if(sphere.Contains(
+				DirectX::XMLoadFloat3(
+					&DirectX::XMFLOAT3(
+						voxel.world_matrix._14, 
+						voxel.world_matrix._24, 
+						voxel.world_matrix._34)
+				)))
+			{
+				voxel.draw = false;
+				--m_instance_count;
+				Rst_Dirty_Count();
+			}
+		}
+	}
+}
+

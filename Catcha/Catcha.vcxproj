@@ -150,6 +150,7 @@
     <ClCompile Include="AnimationManager.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="InputManager.cpp" />
+    <ClCompile Include="InstanceObject.cpp" />
     <ClCompile Include="MapData.cpp" />
     <ClCompile Include="MaterialManager.cpp" />
     <ClCompile Include="MeshManager.cpp" />
@@ -174,6 +175,7 @@
     <ClInclude Include="AnimationManager.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="InputManager.h" />
+    <ClInclude Include="InstanceObject.h" />
     <ClInclude Include="MapData.h" />
     <ClInclude Include="MaterialManager.h" />
     <ClInclude Include="MeshManager.h" />

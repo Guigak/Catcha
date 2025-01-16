@@ -87,6 +87,9 @@
     <ClCompile Include="VoxelCheese.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="InstanceObject.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common.h">
@@ -153,6 +156,9 @@
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="VoxelCheese.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="InstanceObject.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="NetworkManager.h">

@@ -1,7 +1,7 @@
 #include "ObjectManager.h"
 #include "InputManager.h"
 #include "Camera.h"
-
+#include "InstanceObject.h"
 #include "VoxelCheese.h"
 
 Object* ObjectManager::Get_Obj(std::wstring object_name) {
@@ -355,9 +355,9 @@ Object* ObjectManager::Add_Col_OBB_Obj(std::wstring obb_object_name, DirectX::Bo
     return m_object_map[obb_object_name].get();
 }
 
-Object* ObjectManager::Add_Voxel_Cheese(std::wstring object_name, DirectX::XMFLOAT3 object_position, float scale) {
+Object* ObjectManager::Add_Voxel_Cheese(std::wstring object_name, DirectX::XMFLOAT3 object_position, float scale, UINT detail_level) {
     std::unique_ptr<Object> object;
-    object = std::make_unique<VoxelCheese>(object_position.x, object_position.y, object_position.z, scale);
+    object = std::make_unique<VoxelCheese>(object_position.x, object_position.y, object_position.z, scale, detail_level);
 
     object->Set_Name(object_name);
     object->Add_Mesh(m_mesh_manager.Get_Mesh(L"cheese"));
@@ -379,6 +379,17 @@ Object* ObjectManager::Add_Voxel_Cheese(std::wstring object_name, DirectX::XMFLO
 
     return m_object_map[object_name].get();
 }
+
+UINT ObjectManager::Get_Max_Instc_Count() {
+    UINT max_count = 0;
+
+    for (auto& o : m_instance_objects) {
+        max_count = MathHelper::Max(max_count, ((InstanceObject*)o)->Get_Instance_Max_Count());
+    }
+
+    return max_count;
+}
+
 
 
 void ObjectManager::Swap_Object(const std::wstring& key1, const std::wstring& key2)

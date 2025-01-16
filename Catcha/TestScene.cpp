@@ -527,7 +527,12 @@ void TestScene::Draw(D3DManager* d3d_manager, ID3D12CommandList** command_lists)
 	}
 
 	// draw instance
-	command_list->SetPipelineState(m_pipeline_state_map[L"instance"].Get());
+	if (m_wireframe) {
+		command_list->SetPipelineState(m_pipeline_state_map[L"instance_wireframe"].Get());
+	}
+	else {
+		command_list->SetPipelineState(m_pipeline_state_map[L"instance"].Get());
+	}
 
 	for (auto& object : m_object_manager->Get_Instc_Obj_Arr()) {
 		VoxelCheese* voxel_cheese_pointer = (VoxelCheese*)object;
@@ -895,7 +900,7 @@ void TestScene::Build_O() {
 
 	int cheese_count = 0;
 	m_object_manager->Add_Voxel_Cheese(L"cheese" + std::to_wstring(cheese_count++),
-		DirectX::XMFLOAT3(169.475f, 10.049f, 230.732f), 1.0f);
+		DirectX::XMFLOAT3(169.475f, 10.049f, 230.732f), 1.0f, 1);
 	/*m_object_manager->Add_Voxel_Cheese(L"cheese" + std::to_wstring(cheese_count++),
 		DirectX::XMFLOAT3(254.871f, 10.049f, 311.188f), 1.0f);*/
 }
@@ -917,7 +922,7 @@ void TestScene::Build_FR(ID3D12Device* device) {
 	for (int i = 0; i < FRAME_RESOURCES_NUMBER; ++i) {
 		m_frameresources.emplace_back(std::make_unique<FrameResorce>(device, PASS_NUMBER,
 			(UINT)m_object_manager->Get_Obj_Count(), (UINT)m_object_manager->Get_Material_Manager().Get_Material_Count(),
-			(UINT)m_object_manager->Get_Instc_Obj_Arr().size(), CHEESE_VOXEL_COUNT));
+			(UINT)m_object_manager->Get_Instc_Obj_Arr().size(), m_object_manager->Get_Max_Instc_Count()));
 	}
 }
 
@@ -1041,6 +1046,7 @@ void TestScene::Build_CBV(D3DManager* d3d_manager) {
 
 	UINT instance_data_buffer_size = (UINT)sizeof(InstanceDatas);
 	object_count = (UINT)m_object_manager->Get_Instc_Obj_Arr().size();
+	UINT max_instance_count = m_object_manager->Get_Max_Instc_Count();
 
 	for (int frameresource_index = 0; frameresource_index < FRAME_RESOURCES_NUMBER; ++frameresource_index) {
 		for (UINT i = 0; i < object_count; ++i) {
@@ -1054,7 +1060,7 @@ void TestScene::Build_CBV(D3DManager* d3d_manager) {
 			shader_resource_view_desc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
 			shader_resource_view_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 			shader_resource_view_desc.Buffer.FirstElement = 0;
-			shader_resource_view_desc.Buffer.NumElements = CHEESE_VOXEL_COUNT;
+			shader_resource_view_desc.Buffer.NumElements = max_instance_count;
 			shader_resource_view_desc.Buffer.StructureByteStride = instance_data_buffer_size;
 			shader_resource_view_desc.Format = DXGI_FORMAT_UNKNOWN;
 
@@ -1123,11 +1129,13 @@ void TestScene::Build_PSO(D3DManager* d3d_manager) {
 	opaque_PSO_desc.VS = { reinterpret_cast<BYTE*>(m_shader_map[L"instance_VS"]->GetBufferPointer()), m_shader_map[L"instance_VS"]->GetBufferSize() };
 
 	Throw_If_Failed(device->CreateGraphicsPipelineState(&opaque_PSO_desc, IID_PPV_ARGS(&m_pipeline_state_map[L"instance"])));
+
+	opaque_PSO_desc.RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME;
+	Throw_If_Failed(device->CreateGraphicsPipelineState(&opaque_PSO_desc, IID_PPV_ARGS(&m_pipeline_state_map[L"instance_wireframe"])));
+
 	opaque_PSO_desc.VS = { reinterpret_cast<BYTE*>(m_shader_map[L"standard_VS"]->GetBufferPointer()), m_shader_map[L"standard_VS"]->GetBufferSize() };
 
 	//
-	opaque_PSO_desc.RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME;
-
 	Throw_If_Failed(device->CreateGraphicsPipelineState(&opaque_PSO_desc, IID_PPV_ARGS(&m_pipeline_state_map[L"opaque_wireframe"])));
 
 	//

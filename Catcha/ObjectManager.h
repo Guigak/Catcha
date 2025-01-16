@@ -129,7 +129,9 @@ public:
 	Object* Add_Col_OBB_Obj(std::wstring obb_object_name, DirectX::BoundingOrientedBox obb, std::wstring object_name = L"");
 
 	//
-	Object* Add_Voxel_Cheese(std::wstring object_name, DirectX::XMFLOAT3 object_position, float scale);
+	Object* Add_Voxel_Cheese(std::wstring object_name, DirectX::XMFLOAT3 object_position, float scale, UINT detail_level);
+
+	UINT Get_Max_Instc_Count();
 
 	// player 전환을 위한 object swap
 	void Swap_Object(const std::wstring& key1, const std::wstring& key2);

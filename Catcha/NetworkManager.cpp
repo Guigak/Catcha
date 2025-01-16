@@ -424,6 +424,17 @@ void NetworkManager::ProcessPacket(char* ptr)
 		DoSend(time);
 		break;
 	}
+	case SC_RANDOM_VOXEL_SEED:
+	{
+		SC_RANDOM_VOXEL_SEED_PACKET* p = reinterpret_cast<SC_RANDOM_VOXEL_SEED_PACKET*>(ptr);
+		int i = 0;
+		for(auto& cheese : m_cheeses)
+		{
+			int random_seed = p->random_seeds[i++];
+			cheese->Remove_Random_Voxel(random_seed);
+		}
+		break;
+	}
 	case SC_REMOVE_VOXEL_SPHERE:
 	{
 		SC_REMOVE_VOXEL_SPHERE_PACKET* p = reinterpret_cast<SC_REMOVE_VOXEL_SPHERE_PACKET*>(ptr);

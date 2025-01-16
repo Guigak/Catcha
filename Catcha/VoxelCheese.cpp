@@ -1,66 +1,23 @@
 #include "VoxelCheese.h"
 
-VoxelCheese::VoxelCheese(float position_x, float position_y, float position_z, float scale) {
-	m_instance_count = CHEESE_VOXEL_COUNT;
+VoxelCheese::VoxelCheese(float position_x, float position_y, float position_z, float scale, UINT detail_level) {
+	m_detail_level = detail_level;
+	m_instance_max_count = CHEESE_VOXEL_COUNT * (m_detail_level * 8 ? m_detail_level * 8 : 1);
 
-	Rst_Voxel(position_x, position_y, position_z, scale);
+	Rst_Voxel(position_x, position_y, position_z, scale, m_detail_level);
 	Remove_Random_Voxel();
 }
 
-void VoxelCheese::Update(float elapsed_time) {
-	// nothing?
-}
-
-void VoxelCheese::Draw(ID3D12GraphicsCommandList* command_list) {
-	for (auto& m : m_meshes) {
-		Mesh_Info* mesh_info = m.mesh_info;
-
-		command_list->IASetVertexBuffers(0, 1, &mesh_info->Get_VBV());
-		command_list->IASetIndexBuffer(&mesh_info->Get_IBV());
-		command_list->IASetPrimitiveTopology(mesh_info->primitive_topology);
-
-		command_list->DrawIndexedInstanced(mesh_info->index_count, m_instance_count, 0, 0, 0);
-	}
-}
-
-//std::array<InstanceDatas, CHEESE_VOXEL_COUNT>& VoxelCheese::Get_Instance_Data() {
-//	std::array<InstanceDatas, CHEESE_VOXEL_COUNT> instance_data;
-//
-//	int count = 0;
-//
-//	for (int i = 0; i < CHEESE_VOXEL_COUNT; ++i) {
-//		if (m_voxel_info_array[i].draw) {
-//			instance_data[count++].world_matrix = m_voxel_info_array[i].world_matrix;
-//		}
-//	}
-//
-//	return instance_data;
-//}
-
-void VoxelCheese::Get_Instance_Data(InstanceDatas* instance_data_pointer) {
-	instance_data_pointer = new InstanceDatas[CHEESE_VOXEL_COUNT];
-
-	int count = 0;
-
-	for (int i = 0; i < CHEESE_VOXEL_COUNT; ++i) {
-		if (m_voxel_info_array[i].draw) {
-			instance_data_pointer[count++].world_matrix = m_voxel_info_array[i].world_matrix;
-		}
-	}
-}
-
 void VoxelCheese::Get_Instance_Data(std::vector<InstanceDatas>& instance_data_array) {
-	int count = 0;
-
-	for (int i = 0; i < CHEESE_VOXEL_COUNT; ++i) {
-		if (m_voxel_info_array[i].draw) {
-			instance_data_array.emplace_back(InstanceDatas(m_voxel_info_array[i].world_matrix));
+	for (UINT i = 0; i < m_instance_max_count; ++i) {
+		if (m_instance_data_array[i].additional_info.x) {
+			instance_data_array.emplace_back(m_instance_data_array[i]);
 		}
 	}
 }
 
-void VoxelCheese::Rst_Voxel(float position_x, float position_y, float position_z, float scale) {
-	int count = 0;
+void VoxelCheese::Rst_Voxel(float position_x, float position_y, float position_z, float scale, UINT detail_level) {
+	m_instance_data_array.clear();
 
 	DirectX::XMFLOAT3 position = DirectX::XMFLOAT3(position_x, position_y, position_z);
 	DirectX::XMFLOAT3 pivot_position = position;
@@ -74,12 +31,9 @@ void VoxelCheese::Rst_Voxel(float position_x, float position_y, float position_z
 			position.x = pivot_position.x - scale * (float)(VOXEL_CHEESE_WIDTH / 2);
 
 			for (int k = 0; k <= j / 2; ++k) {
-				m_voxel_info_array[count].world_matrix = XMMATRIX_2_XMFLOAT4X4(
-					DirectX::XMMatrixTranspose(
-					DirectX::XMMatrixScaling(scale, scale, scale) * DirectX::XMMatrixTranslation(position.x, position.y, position.z)));
-				position.x += scale;
+				Add_Voxel(position.x, position.y, position.z, scale, detail_level);
 
-				++count;
+				position.x += scale;
 			}
 
 			position.z += scale;
@@ -88,13 +42,39 @@ void VoxelCheese::Rst_Voxel(float position_x, float position_y, float position_z
 		position.y += scale;
 	}
 
-	m_index_count = count;	// == CHEESE_VOXEL_COUNT
+	m_instance_count = CHEESE_VOXEL_COUNT * (m_detail_level * 8 ? m_detail_level * 8 : 1);	// == CHEESE_VOXEL_COUNT
 
 	Rst_Dirty_Count();
 }
 
+void VoxelCheese::Add_Voxel(float position_x, float position_y, float position_z, float scale, UINT detail_level) {
+	if (detail_level == 0) {
+		Add_Instance_Data(InstanceDatas(
+			DirectX::XMFLOAT4X4(
+				scale, 0.0f, 0.0f, position_x,
+				0.0f, scale, 0.0f, position_y,
+				0.0f, 0.0f, scale, position_z,
+				0.0f, 0.0f, 0.0f, 1.0f),
+			DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 0.0f)));
+	}
+	else {
+		float half = scale / 2.0f;
+		float quarter = scale / 4.0f;
+
+		for (int i = -1; i < 2; ++++i) {
+			for (int j = -1; j < 2; ++++j) {
+				for (int k = -1; k < 2; ++++k) {
+					Add_Voxel(
+						position_x + quarter * k, position_y + quarter * i, position_z + quarter * j,
+						half, detail_level - 1);
+				}
+			}
+		}
+	}
+}
+
 void VoxelCheese::Remove_Voxel(int voxel_index) {
-	m_voxel_info_array[voxel_index].draw = false;
+	m_instance_data_array[voxel_index].additional_info.x = 0.0f;
 
 	--m_instance_count;
 
@@ -114,7 +94,9 @@ void VoxelCheese::Remove_Random_Voxel() {
 			for (int k = 0; k <= j / 2; ++k) {
 				if ((i == VOXEL_CHEESE_HEIGHT - 1 || j == VOXEL_CHEESE_DEPTH || k == 0 || k == j / 2) &&
 					!(uid(rd) % m_random_value)) {
-					Remove_Voxel(count);
+					for (UINT l = 0; l <= (m_detail_level * 8 ? m_detail_level * 8 - 1 : 0); ++l) {
+						Remove_Voxel(count * (m_detail_level * 8 ? m_detail_level * 8 : 1) + l);
+					}
 				}
 
 				++count;

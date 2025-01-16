@@ -53,18 +53,6 @@ void TestScene::Exit(D3DManager* d3d_manager) {
 }
 
 void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
-	// test
-	static int time_count = 0;
-
-	if (time_count++ == 20) {
-		std::random_device rd;
-		std::uniform_int_distribution<int> uid(0, CHEESE_VOXEL_COUNT);
-
-		Del_Voxel(0, uid(rd));
-
-		time_count = 0;
-	}
-
 	Object* cat_object = m_object_manager->Get_Obj(L"cat_test");
 	cat_object->Set_Color_Alpha(
 		MathHelper::Min(1.0f, 1.0f - MathHelper::Length(MathHelper::Subtract(cat_object->Get_Position_3f(), m_object_manager->Get_Obj(L"player")->Get_Position_3f())) / 500.0f));
@@ -791,10 +779,10 @@ void TestScene::Build_Material() {
 }
 
 void TestScene::Build_O() {
-	m_object_manager->Add_Obj(L"player", L"mouse_mesh_edit.fbx");
-	m_object_manager->Set_Sklt_2_Obj(L"player", L"mouse_mesh_edit.fbx");
-	//m_object_manager->Add_Obj(L"player", L"cat_mesh_edit.fbx");
-	//m_object_manager->Set_Sklt_2_Obj(L"player", L"cat_mesh_edit.fbx");
+	//m_object_manager->Add_Obj(L"player", L"mouse_mesh_edit.fbx");
+	//m_object_manager->Set_Sklt_2_Obj(L"player", L"mouse_mesh_edit.fbx");
+	m_object_manager->Add_Obj(L"player", L"cat_mesh_edit.fbx");
+	m_object_manager->Set_Sklt_2_Obj(L"player", L"cat_mesh_edit.fbx");
 
 	m_object_manager->Add_Obj(L"cat_test", L"cat_mesh_edit.fbx");
 	m_object_manager->Set_Sklt_2_Obj(L"cat_test", L"cat_mesh_edit.fbx");
@@ -802,23 +790,23 @@ void TestScene::Build_O() {
 	m_object_manager->Add_Obj(L"mouse_test", L"mouse_mesh_edit.fbx");
 	m_object_manager->Set_Sklt_2_Obj(L"mouse_test", L"mouse_mesh_edit.fbx");
 
-	m_object_manager->Get_Obj(L"player")->Set_Visiable(false);
+	//m_object_manager->Get_Obj(L"player")->Set_Visiable(false);
 	//m_object_manager->Get_Obj(L"cat_test")->Set_Visiable(false);
 	m_object_manager->Get_Obj(L"mouse_test")->Set_Visiable(false);
 
 	Object* object = m_object_manager->Get_Obj(L"player");
-	object->Bind_Anim_2_State(Object_State::STATE_IDLE, Animation_Binding_Info(L"mouse_idle.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
-	object->Bind_Anim_2_State(Object_State::STATE_MOVE, Animation_Binding_Info(L"mouse_walk.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
-	object->Bind_Anim_2_State(Object_State::STATE_JUMP_START, Animation_Binding_Info(L"mouse_jump_start.fbx", 1.0f, 0.2f, ONCE_ANIMATION, Object_State::STATE_JUMP_IDLE));
-	object->Bind_Anim_2_State(Object_State::STATE_JUMP_IDLE, Animation_Binding_Info(L"mouse_jump_idle.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
-	object->Bind_Anim_2_State(Object_State::STATE_JUMP_END, Animation_Binding_Info(L"mouse_jump_end.fbx", 1.0f, 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE));
-	object->Bind_Anim_2_State(Object_State::STATE_ACTION_ONE, Animation_Binding_Info(L"mouse_hit.fbx", 1.0f, 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE, NOT_MOVABLE));
-	//object->Bind_Anim_2_State(Object_State::STATE_IDLE, Animation_Binding_Info(L"cat_idle.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
-	//object->Bind_Anim_2_State(Object_State::STATE_MOVE, Animation_Binding_Info(L"cat_walk.fbx", 2.0f, 0.2f, LOOP_ANIMATION));
-	//object->Bind_Anim_2_State(Object_State::STATE_JUMP_START, Animation_Binding_Info(L"cat_jump_test_start.fbx", 1.0f, 0.2f, ONCE_ANIMATION, Object_State::STATE_JUMP_IDLE));
-	//object->Bind_Anim_2_State(Object_State::STATE_JUMP_IDLE, Animation_Binding_Info(L"cat_jump_test_idle.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
-	//object->Bind_Anim_2_State(Object_State::STATE_JUMP_END, Animation_Binding_Info(L"cat_jump_test_end.fbx", 1.0f, 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE));
-	//object->Bind_Anim_2_State(Object_State::STATE_ACTION_ONE, Animation_Binding_Info(L"cat_paw.fbx", 0.5f, 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE, NOT_MOVABLE));
+	//object->Bind_Anim_2_State(Object_State::STATE_IDLE, Animation_Binding_Info(L"mouse_idle.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
+	//object->Bind_Anim_2_State(Object_State::STATE_MOVE, Animation_Binding_Info(L"mouse_walk.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
+	//object->Bind_Anim_2_State(Object_State::STATE_JUMP_START, Animation_Binding_Info(L"mouse_jump_start.fbx", 1.0f, 0.2f, ONCE_ANIMATION, Object_State::STATE_JUMP_IDLE));
+	//object->Bind_Anim_2_State(Object_State::STATE_JUMP_IDLE, Animation_Binding_Info(L"mouse_jump_idle.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
+	//object->Bind_Anim_2_State(Object_State::STATE_JUMP_END, Animation_Binding_Info(L"mouse_jump_end.fbx", 1.0f, 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE));
+	//object->Bind_Anim_2_State(Object_State::STATE_ACTION_ONE, Animation_Binding_Info(L"mouse_hit.fbx", 1.0f, 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE, NOT_MOVABLE));
+	object->Bind_Anim_2_State(Object_State::STATE_IDLE, Animation_Binding_Info(L"cat_idle.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
+	object->Bind_Anim_2_State(Object_State::STATE_MOVE, Animation_Binding_Info(L"cat_walk.fbx", 2.0f, 0.2f, LOOP_ANIMATION));
+	object->Bind_Anim_2_State(Object_State::STATE_JUMP_START, Animation_Binding_Info(L"cat_jump_test_start.fbx", 1.0f, 0.2f, ONCE_ANIMATION, Object_State::STATE_JUMP_IDLE));
+	object->Bind_Anim_2_State(Object_State::STATE_JUMP_IDLE, Animation_Binding_Info(L"cat_jump_test_idle.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
+	object->Bind_Anim_2_State(Object_State::STATE_JUMP_END, Animation_Binding_Info(L"cat_jump_test_end.fbx", 1.0f, 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE));
+	object->Bind_Anim_2_State(Object_State::STATE_ACTION_ONE, Animation_Binding_Info(L"cat_paw.fbx", 0.5f, 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE, NOT_MOVABLE));
 	object->Set_Animated(true);
 	object->Set_Phys(true);
 	//object->Set_Color_Mul(1.0f, 0.0f, 0.0f);
@@ -837,14 +825,14 @@ void TestScene::Build_O() {
 
 	int cheese_count = 0;
 	m_object_manager->Add_Voxel_Cheese(L"cheese_" + std::to_wstring(cheese_count++),
-		DirectX::XMFLOAT3(50.0f, -59.0f, 100.0f), 1.0f);
+		DirectX::XMFLOAT3(50.0f, -59.0f, 100.0f), 1.0f, 1);
 }
 
 void TestScene::Build_C(D3DManager* d3d_manager) {
-	//auto main_camera = reinterpret_cast<Camera*>(m_object_manager->Add_Cam(L"maincamera", L"camera", L"player",
-	//	0.0f, 50.0f, 0.0f, 150.0f, ROTATE_SYNC_RPY));
 	auto main_camera = reinterpret_cast<Camera*>(m_object_manager->Add_Cam(L"maincamera", L"camera", L"player",
-		0.0f, 10.0f, 0.0f, 0.1f, ROTATE_SYNC_RPY));
+		0.0f, 50.0f, 0.0f, 150.0f, ROTATE_SYNC_RPY));
+	//auto main_camera = reinterpret_cast<Camera*>(m_object_manager->Add_Cam(L"maincamera", L"camera", L"player",
+	//	0.0f, 10.0f, 0.0f, 0.1f, ROTATE_SYNC_RPY));
 	main_camera->Set_Frustum(0.25f * MathHelper::Pi(), d3d_manager->Get_Aspect_Ratio(), 1.0f, 2000.0f);
 	main_camera->Set_Limit_Rotate_Right(true, -RIGHT_ANGLE_RADIAN + 0.01f, RIGHT_ANGLE_RADIAN - 0.01f);
 	//main_camera->Set_Limit_Rotate_Right(true, DirectX::XMConvertToRadians(1.0f), DirectX::XMConvertToRadians(60.0f));
@@ -857,7 +845,7 @@ void TestScene::Build_FR(ID3D12Device* device) {
 	for (int i = 0; i < FRAME_RESOURCES_NUMBER; ++i) {
 		m_frameresources.emplace_back(std::make_unique<FrameResorce>(device, PASS_NUMBER,
 			(UINT)m_object_manager->Get_Obj_Count(), (UINT)m_object_manager->Get_Material_Manager().Get_Material_Count(),
-			(UINT)m_object_manager->Get_Instc_Obj_Arr().size(), CHEESE_VOXEL_COUNT));
+			(UINT)m_object_manager->Get_Instc_Obj_Arr().size(), m_object_manager->Get_Max_Instc_Count()));
 	}
 }
 
@@ -981,6 +969,7 @@ void TestScene::Build_CBV(D3DManager* d3d_manager) {
 
 	UINT instance_data_buffer_size = (UINT)sizeof(InstanceDatas);
 	object_count = (UINT)m_object_manager->Get_Instc_Obj_Arr().size();
+	UINT max_instance_count = m_object_manager->Get_Max_Instc_Count();
 
 	for (int frameresource_index = 0; frameresource_index < FRAME_RESOURCES_NUMBER; ++frameresource_index) {
 		for (UINT i = 0; i < object_count; ++i) {
@@ -994,7 +983,7 @@ void TestScene::Build_CBV(D3DManager* d3d_manager) {
 			shader_resource_view_desc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
 			shader_resource_view_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 			shader_resource_view_desc.Buffer.FirstElement = 0;
-			shader_resource_view_desc.Buffer.NumElements = CHEESE_VOXEL_COUNT;
+			shader_resource_view_desc.Buffer.NumElements = max_instance_count;
 			shader_resource_view_desc.Buffer.StructureByteStride = instance_data_buffer_size;
 			shader_resource_view_desc.Format = DXGI_FORMAT_UNKNOWN;
 

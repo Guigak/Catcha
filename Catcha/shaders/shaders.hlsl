@@ -58,6 +58,7 @@ SamplerState g_texture_sampler : register(s1);
 
 struct Instance_Data {
     float4x4 instc_world_matrix;
+    float4 additional_info;
 };
 
 StructuredBuffer<Instance_Data> g_instance_data : register(t0, space1);

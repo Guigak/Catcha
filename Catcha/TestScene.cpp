@@ -510,7 +510,12 @@ void TestScene::Draw(D3DManager* d3d_manager, ID3D12CommandList** command_lists)
 	}
 
 	// draw instance
-	command_list->SetPipelineState(m_pipeline_state_map[L"instance"].Get());
+	if (m_wireframe) {
+		command_list->SetPipelineState(m_pipeline_state_map[L"instance_wireframe"].Get());
+	}
+	else {
+		command_list->SetPipelineState(m_pipeline_state_map[L"instance"].Get());
+	}
 
 	for (auto& object : m_object_manager->Get_Instc_Obj_Arr()) {
 		VoxelCheese* voxel_cheese_pointer = (VoxelCheese*)object;
@@ -1052,11 +1057,13 @@ void TestScene::Build_PSO(D3DManager* d3d_manager) {
 	opaque_PSO_desc.VS = { reinterpret_cast<BYTE*>(m_shader_map[L"instance_VS"]->GetBufferPointer()), m_shader_map[L"instance_VS"]->GetBufferSize() };
 
 	Throw_If_Failed(device->CreateGraphicsPipelineState(&opaque_PSO_desc, IID_PPV_ARGS(&m_pipeline_state_map[L"instance"])));
+
+	opaque_PSO_desc.RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME;
+	Throw_If_Failed(device->CreateGraphicsPipelineState(&opaque_PSO_desc, IID_PPV_ARGS(&m_pipeline_state_map[L"instance_wireframe"])));
+
 	opaque_PSO_desc.VS = { reinterpret_cast<BYTE*>(m_shader_map[L"standard_VS"]->GetBufferPointer()), m_shader_map[L"standard_VS"]->GetBufferSize() };
 
 	//
-	opaque_PSO_desc.RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME;
-
 	Throw_If_Failed(device->CreateGraphicsPipelineState(&opaque_PSO_desc, IID_PPV_ARGS(&m_pipeline_state_map[L"opaque_wireframe"])));
 
 	//

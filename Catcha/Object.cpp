@@ -639,7 +639,7 @@ void Object::Set_OBB(DirectX::BoundingOrientedBox obb) {
 
 	Set_Position(obb.Center);
 	Set_Rotate(obb.Orientation);
-	Set_Scale(obb.Extents);
+	Set_Scale(MathHelper::Multiply(obb.Extents, 2.0f));
 
 	m_dirty = true;
 }

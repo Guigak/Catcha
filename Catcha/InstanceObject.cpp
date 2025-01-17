@@ -5,6 +5,10 @@ void InstanceObject::Update(float elapsed_time) {
 }
 
 void InstanceObject::Draw(ID3D12GraphicsCommandList* command_list) {
+	if (m_instance_count == 0) {
+		return;
+	}
+
 	for (auto& m : m_meshes) {
 		Mesh_Info* mesh_info = m.mesh_info;
 

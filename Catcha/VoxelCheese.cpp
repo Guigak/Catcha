@@ -3,6 +3,7 @@
 VoxelCheese::VoxelCheese(float position_x, float position_y, float position_z, float scale, UINT detail_level) {
 	m_detail_level = detail_level;
 	m_instance_max_count = CHEESE_VOXEL_COUNT * (UINT)std::pow(8, m_detail_level);
+	m_instance_count = 0;
 
 	Rst_Voxel(position_x, position_y, position_z, scale, m_detail_level);
 	Remove_Random_Voxel();

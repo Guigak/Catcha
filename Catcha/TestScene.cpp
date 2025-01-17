@@ -966,13 +966,13 @@ void TestScene::Build_O() {
 
 	int cheese_count = 0;
 	m_object_manager->Add_Voxel_Cheese(L"cheese" + std::to_wstring(cheese_count++),
-		DirectX::XMFLOAT3(169.475f, 10.049f, 230.732f), 1.0f, 2);
-	m_object_manager->Add_Voxel_Cheese(L"cheese" + std::to_wstring(cheese_count++),
-		DirectX::XMFLOAT3(169.475f, 10.049f, 270.732f), 1.0f, 2);
-	m_object_manager->Add_Voxel_Cheese(L"cheese" + std::to_wstring(cheese_count++),
-		DirectX::XMFLOAT3(169.475f, 10.049f, 300.732f), 1.0f, 2);
-	m_object_manager->Add_Voxel_Cheese(L"cheese" + std::to_wstring(cheese_count++),
-		DirectX::XMFLOAT3(169.475f, 10.049f, 330.732f), 1.0f, 2);
+		DirectX::XMFLOAT3(169.475f, 10.049f, 230.732f), 1.0f, 1);
+	//m_object_manager->Add_Voxel_Cheese(L"cheese" + std::to_wstring(cheese_count++),
+	//	DirectX::XMFLOAT3(169.475f, 10.049f, 270.732f), 1.0f, 1);
+	//m_object_manager->Add_Voxel_Cheese(L"cheese" + std::to_wstring(cheese_count++),
+	//	DirectX::XMFLOAT3(169.475f, 10.049f, 300.732f), 1.0f, 1);
+	//m_object_manager->Add_Voxel_Cheese(L"cheese" + std::to_wstring(cheese_count++),
+	//	DirectX::XMFLOAT3(169.475f, 10.049f, 330.732f), 1.0f, 1);
 	/*m_object_manager->Add_Voxel_Cheese(L"cheese" + std::to_wstring(cheese_count++),
 		DirectX::XMFLOAT3(254.871f, 10.049f, 311.188f), 1.0f);*/
 
@@ -1347,7 +1347,7 @@ void TestScene::Crt_Voxel_Cheese(DirectX::XMFLOAT3 position, float scale, UINT d
 	//
 	int count = 0;
 
-	std::random_device rd;
+	//std::random_device rd;
 	std::uniform_int_distribution<int> uid(1, m_random_value);
 
 	DirectX::XMFLOAT3 pivot_position = position;

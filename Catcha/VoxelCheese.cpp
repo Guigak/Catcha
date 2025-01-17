@@ -3,9 +3,10 @@
 VoxelCheese::VoxelCheese(float position_x, float position_y, float position_z, float scale, UINT detail_level) {
 	m_detail_level = detail_level;
 	m_instance_max_count = CHEESE_VOXEL_COUNT * (UINT)std::pow(8, m_detail_level);
+	m_instance_count = 0;
 
 	Rst_Voxel(position_x, position_y, position_z, scale, m_detail_level);
-	Remove_Random_Voxel();
+	//Remove_Random_Voxel();
 }
 
 void VoxelCheese::Get_Instance_Data(std::vector<InstanceData>& instance_data_array) {
@@ -18,7 +19,6 @@ void VoxelCheese::Get_Instance_Data(std::vector<InstanceData>& instance_data_arr
 
 void VoxelCheese::Rst_Voxel(float position_x, float position_y, float position_z, float scale, UINT detail_level) {
 	m_instance_data_array.clear();
-	m_instance_data_array.shrink_to_fit();
 
 	DirectX::XMFLOAT3 position = DirectX::XMFLOAT3(position_x, position_y, position_z);
 	DirectX::XMFLOAT3 pivot_position = position;
@@ -98,8 +98,8 @@ void VoxelCheese::Remove_Random_Voxel(int random_seed) {
 					/*wchar_t debugMessage[256];
 					swprintf_s(debugMessage, L"random value : %d\n", uid(generator));
 					OutputDebugStringW(debugMessage);*/
-					for (UINT l = 0; l <= (m_detail_level * 8 ? m_detail_level * 8 - 1 : 0); ++l) {
-						Remove_Voxel(count * (m_detail_level * 8 ? m_detail_level * 8 : 1) + l);
+					for (UINT l = 0; l <= std::pow(8, m_detail_level) - 1; ++l) {
+						Remove_Voxel(count * (int)std::pow(8, m_detail_level) + l);
 					}
 				}
 
@@ -114,7 +114,7 @@ void VoxelCheese::Remove_Sphere_Voxel(const DirectX::XMFLOAT3& center, float rad
 	DirectX::BoundingSphere sphere(center, radius);
 	for(auto& voxel : m_instance_data_array)
 	{
-		if (0.0f != voxel.additional_info.x)
+		if (0.0001f < voxel.additional_info.x)
 		{
 			if(sphere.Contains(
 				DirectX::XMLoadFloat3(
@@ -126,7 +126,7 @@ void VoxelCheese::Remove_Sphere_Voxel(const DirectX::XMFLOAT3& center, float rad
 			{
 				voxel.additional_info.x = 0.0f;
 				--m_instance_count;
-				Rst_Dirty_Count();
+				Rst_Instc_Dirty_Cnt();
 			}
 		}
 	}

@@ -3,6 +3,7 @@
 #include "Camera.h"
 #include "InstanceObject.h"
 #include "VoxelCheese.h"
+#include "TextUIObject.h"
 
 Object* ObjectManager::Get_Obj(std::wstring object_name) {
     return m_object_map[object_name].get();
@@ -187,6 +188,10 @@ void ObjectManager::Update(float elapsed_time) {
         o->Update(elapsed_time);
     }
 
+    for (auto& o : m_text_UI_objects) {
+        o->Update(elapsed_time);
+    }
+
     //
     int i = 0;
     for (auto& o : m_collision_obb_objects) {
@@ -364,13 +369,14 @@ Object* ObjectManager::Add_Voxel_Cheese(std::wstring object_name, DirectX::XMFLO
     object->Set_PT(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     object->Set_CB_Index(m_object_count++);
     
-    ((VoxelCheese*)object.get())->Set_Instance_Index((UINT)m_instance_objects.size());
+    ((InstanceObject*)object.get())->Set_Instance_Index((UINT)m_instance_objects.size());
 
     m_object_map[object_name] = std::move(object);
 
     Object* object_pointer = m_object_map[object_name].get();
     m_objects.emplace_back(object_pointer);
     m_instance_objects.emplace_back(object_pointer);
+    m_voxel_cheese_objects.emplace_back(object_pointer);
 
     // [CS] 치즈 등록
     NetworkManager::GetInstance().AddCheese(*(VoxelCheese*)object_pointer);
@@ -389,6 +395,31 @@ UINT ObjectManager::Get_Max_Instc_Count() {
 
     return max_count;
 }
+
+Object* ObjectManager::Add_Text_UI_Obj(std::wstring object_name, float position_x, float position_y, float scale_x, float scale_y) {
+    std::unique_ptr<Object> object;
+    object = std::make_unique<TextUIObject>(position_x, position_y, scale_x, scale_y);
+
+    object->Set_Name(object_name);
+    object->Add_Mesh(m_mesh_manager.Get_Mesh(L"text"));
+    object->Set_PT(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    object->Set_CB_Index(m_object_count++);
+
+    ((InstanceObject*)object.get())->Set_Instance_Index((UINT)(m_instance_objects.size()));
+
+    m_object_map[object_name] = std::move(object);
+
+    Object* object_pointer = m_object_map[object_name].get();
+    m_objects.emplace_back(object_pointer);
+    m_instance_objects.emplace_back(object_pointer);
+    m_text_UI_objects.emplace_back(object_pointer);
+
+    m_object_set_map[L"UI"].emplace_back(object_pointer);
+
+    return m_object_map[object_name].get();
+
+}
+
 
 
 

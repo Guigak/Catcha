@@ -53,8 +53,10 @@ cbuffer CB_Animation : register(b3) {
 Texture2D g_shadow_map : register(t0);
 SamplerComparisonState g_shadow_sampler : register(s0);
 
-Texture2D g_texture : register(t1);
-SamplerState g_texture_sampler : register(s1);
+Texture2D g_ui_texture : register(t1);
+SamplerState g_ui_texture_sampler : register(s1);
+
+SamplerState g_texture_sampler : register(s2);
 
 struct Instance_Data {
     float4x4 instc_world_matrix;
@@ -79,6 +81,7 @@ struct Vertex_Out {
     float4 shadow_position : POSITION0;
     float3 position_world : POSITION1;
     float3 normal_world : NORMAL;
+    float2 uv : UV;
     uint material_index : MATERIAL;
 };
 
@@ -176,17 +179,10 @@ float4 PS(Vertex_Out pixel_in) : SV_Target {
 
     result = result * g_color_multiplier;
 
-    //
-    float4 test_tex_color;
-    test_tex_color = g_texture.Sample(g_texture_sampler, float2(0.5, 0.5));
-
-    result += test_tex_color;
-    result -= test_tex_color;
-
     return result;
 }
 
-float4 Silhouette_PS(Vertex_Out pixel_in) : SV_Target{
+float4 Silhouette_PS(Vertex_Out pixel_in) : SV_Target {
     float4 result = float4(1.0, 0.0, 0.0, g_color_multiplier.w);
 
     return result;
@@ -267,4 +263,46 @@ Vertex_Out Instance_Shadow_VS(Vertex_In vertex_in, uint instance_id : SV_Instanc
     vertex_out.position_screen = mul(position_world, g_view_projection);
 
     return vertex_out;
+}
+
+//
+Vertex_Out Text_UI_VS(Vertex_In vertex_in, uint instance_id : SV_InstanceID) {
+    Vertex_Out vertex_out = (Vertex_Out)0.0f;
+
+    float4 position_screen = float4(0.0f, 0.0f, 0.0f, 0.0f);
+
+    position_screen = mul(float4(vertex_in.position_local, 1.0f), g_instance_data[instance_id].instc_world_matrix);
+
+    vertex_out.position_screen = position_screen;
+
+    vertex_out.material_index = vertex_in.material_index;
+
+    //vertex_out.uv =
+    //    float2(g_instance_data[instance_id].additional_info.x +
+    //        (g_instance_data[instance_id].additional_info.z - g_instance_data[instance_id].additional_info.x) * vertex_in.uv.x,
+    //        g_instance_data[instance_id].additional_info.y +
+    //        (g_instance_data[instance_id].additional_info.w - g_instance_data[instance_id].additional_info.y) * vertex_in.uv.y);
+
+    vertex_out.uv = vertex_in.uv / 256.0 + g_instance_data[instance_id].additional_info / 256.0;
+
+    //vertex_out.uv = vertex_in.uv;
+
+    return vertex_out;
+}
+
+float4 Text_UI_PS(Vertex_Out pixel_in) : SV_Target{
+    float4 texture_color;
+texture_color = g_ui_texture.Sample(g_ui_texture_sampler, pixel_in.uv);
+//texture_color = g_ui_texture.Sample(g_ui_texture_sampler,
+//    pixel_in.uv / float2(256.0, 256.0) + float2(1.0 / 256.0 * 144, 1.0 / 256.0 * 18));
+
+    if (texture_color.r == 0.0) {
+        discard;
+    }
+
+    Material material = g_material_array[pixel_in.material_index];
+
+    float4 result = material.diffuse_albedo * g_color_multiplier;
+
+    return result;
 }

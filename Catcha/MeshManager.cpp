@@ -135,8 +135,88 @@ Mesh_Info* MeshManager::Crt_Box_Mesh(std::wstring mesh_name, float width, float 
     return Add_Mesh(mesh_name, vertices_vector, indices_vector);
 }
 
+Mesh_Info* MeshManager::Crt_Floor_Plane_Mesh(std::wstring mesh_name, float width, float depth) {
+    std::vector<Vertex_Info> vertices_vector;
+    std::vector<std::uint32_t> indices_vector;
+
+    Vertex_Info vertices[4];
+
+    float half_width = 0.5f * width;
+    float half_depth = 0.5f * depth;
+
+    int count = 0;
+
+    // top
+    vertices[count++] = Vertex_Info(-half_width, 0.0f, -half_depth, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+    vertices[count++] = Vertex_Info(-half_width, 0.0f, +half_depth, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+    vertices[count++] = Vertex_Info(+half_width, 0.0f, +half_depth, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+    vertices[count++] = Vertex_Info(+half_width, 0.0f, -half_depth, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f);
+
+    vertices_vector.assign(&vertices[0], &vertices[count]);
+
+    std::uint32_t indices[36];
+
+    count = 0;
+
+    // top
+    indices[count++] = 0;
+    indices[count++] = 1;
+    indices[count++] = 2;
+
+    indices[count++] = 0;
+    indices[count++] = 2;
+    indices[count++] = 3;
+
+    indices_vector.assign(&indices[0], &indices[count]);
+
+    return Add_Mesh(mesh_name, vertices_vector, indices_vector);
+}
+
+Mesh_Info* MeshManager::Crt_Wall_Plane_Mesh(std::wstring mesh_name, float width, float height) {
+    std::vector<Vertex_Info> vertices_vector;
+    std::vector<std::uint32_t> indices_vector;
+
+    Vertex_Info vertices[4];
+
+    float half_width = 0.5f * width;
+    float half_height = 0.5f * height;
+
+    int count = 0;
+    // front
+    vertices[count++] = Vertex_Info(-half_width, -half_height, 0.0f, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+    vertices[count++] = Vertex_Info(-half_width, +half_height, 0.0f, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+    vertices[count++] = Vertex_Info(+half_width, +half_height, 0.0f, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+    vertices[count++] = Vertex_Info(+half_width, -half_height, 0.0f, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f);
+
+    vertices_vector.assign(&vertices[0], &vertices[count]);
+
+    std::uint32_t indices[6];
+
+    count = 0;
+    // front
+    indices[count++] = 0;
+    indices[count++] = 1;
+    indices[count++] = 2;
+
+    indices[count++] = 0;
+    indices[count++] = 2;
+    indices[count++] = 3;
+
+    indices_vector.assign(&indices[0], &indices[count]);
+
+    return Add_Mesh(mesh_name, vertices_vector, indices_vector);
+}
+
 Mesh_Info* MeshManager::Crt_Default_Box() {
-    return Crt_Box_Mesh(L"default_box", 1.0f, 1.0f, 1.0f);
+    return Crt_Box_Mesh(L"default_box");
+}
+
+Mesh_Info* MeshManager::Crt_Default_Floor_Plane() {
+    return Crt_Floor_Plane_Mesh(L"default_floor_plane");
+}
+
+Mesh_Info* MeshManager::Crt_Default_Wall_Plane() {
+    return Crt_Wall_Plane_Mesh(L"default_wall_plane");
 }
 
 void MeshManager::Crt_BV(ID3D12Device* device, ID3D12GraphicsCommandList* command_list) {

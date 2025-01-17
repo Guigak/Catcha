@@ -2,6 +2,7 @@
 #include "D3DManager.h"
 #include "VoxelCheese.h"
 #include "MapData.h"
+#include "TextUIObject.h"
 
 std::unordered_map<std::wstring, ObjectOBB> g_obbData;
 
@@ -96,11 +97,6 @@ void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
 
 	for (auto& object : m_object_manager->Get_Obj_Arr()) {
 		if (object->Get_Dirty_Count()) {
-			// test
-			if (object->Get_Name().find(L"cheese") != std::wstring::npos) {
-				continue;
-			}
-
 			DirectX::XMMATRIX world_matrix = DirectX::XMLoadFloat4x4(&object->Get_WM_4x4f());
 
 			ObjectConstants object_constants;
@@ -140,18 +136,19 @@ void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
 	// instance data
 	{
 		for (auto& o : m_object_manager->Get_Instc_Obj_Arr()) {
-			if (o->Get_Dirty_Count()) {
-				VoxelCheese* voxel_cheese = (VoxelCheese*)o;
+			InstanceObject* instance_object_pointer = (InstanceObject*)o;
 
-				auto instance_data_buffer = m_current_frameresource->instance_data_buffer_array[voxel_cheese->Get_Instance_Index()].get();
-				std::vector<InstanceDatas> instance_data_array;
-				voxel_cheese->Get_Instance_Data(instance_data_array);
+			if (instance_object_pointer->Get_Instc_Dirty_Cnt()) {
 
-				for (UINT i = 0; i < voxel_cheese->Get_Instance_Count(); ++i) {
+				auto instance_data_buffer = m_current_frameresource->instance_data_buffer_array[instance_object_pointer->Get_Instance_Index()].get();
+				std::vector<InstanceData> instance_data_array;
+				instance_object_pointer->Get_Instance_Data(instance_data_array);
+
+				for (UINT i = 0; i < instance_object_pointer->Get_Instance_Count(); ++i) {
 					instance_data_buffer->Copy_Data(i, instance_data_array[i]);
 				}
 
-				o->Sub_Dirty_Count();
+				instance_object_pointer->Sub_Instc_Dirty_Cnt();
 			}
 		}
 	}
@@ -372,8 +369,14 @@ void TestScene::Draw(D3DManager* d3d_manager, ID3D12CommandList** command_lists)
 
 		command_list->SetPipelineState(m_pipeline_state_map[L"instance_shadow"].Get());
 
-		for (auto& object : m_object_manager->Get_Instc_Obj_Arr()) {
+		for (auto& object : m_object_manager->Get_Voxel_Cheese_Obj_Arr()) {
 			VoxelCheese* voxel_cheese_pointer = (VoxelCheese*)object;
+
+			UINT object_CBV_index = m_current_frameresource_index * (UINT)m_object_manager->Get_Obj_Count() + object->Get_CB_Index();
+			auto object_CBV_gpu_descriptor_handle = D3D12_GPU_DESCRIPTOR_HANDLE_EX(m_CBV_heap->GetGPUDescriptorHandleForHeapStart());
+			object_CBV_gpu_descriptor_handle.Get_By_Offset(object_CBV_index, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size());
+
+			command_list->SetGraphicsRootDescriptorTable(0, object_CBV_gpu_descriptor_handle);
 
 			UINT instance_data_SRV_index = m_instance_SRV_offset + m_current_frameresource_index * (UINT)m_object_manager->Get_Instc_Obj_Arr().size() + voxel_cheese_pointer->Get_Instance_Index();
 			auto instance_data_SRV_gpu_descriptor_handle = D3D12_GPU_DESCRIPTOR_HANDLE_EX(m_CBV_heap->GetGPUDescriptorHandleForHeapStart());
@@ -526,7 +529,7 @@ void TestScene::Draw(D3DManager* d3d_manager, ID3D12CommandList** command_lists)
 		}
 	}
 
-	// draw instance
+	// draw voxel cheese
 	if (m_wireframe) {
 		command_list->SetPipelineState(m_pipeline_state_map[L"instance_wireframe"].Get());
 	}
@@ -534,10 +537,16 @@ void TestScene::Draw(D3DManager* d3d_manager, ID3D12CommandList** command_lists)
 		command_list->SetPipelineState(m_pipeline_state_map[L"instance"].Get());
 	}
 
-	for (auto& object : m_object_manager->Get_Instc_Obj_Arr()) {
-		VoxelCheese* voxel_cheese_pointer = (VoxelCheese*)object;
+	for (auto& object : m_object_manager->Get_Voxel_Cheese_Obj_Arr()) {
+		InstanceObject* instance_object_pointer = (InstanceObject*)object;
 
-		UINT instance_data_SRV_index = m_instance_SRV_offset + m_current_frameresource_index * (UINT)m_object_manager->Get_Instc_Obj_Arr().size() + voxel_cheese_pointer->Get_Instance_Index();
+		UINT object_CBV_index = m_current_frameresource_index * (UINT)m_object_manager->Get_Obj_Count() + object->Get_CB_Index();
+		auto object_CBV_gpu_descriptor_handle = D3D12_GPU_DESCRIPTOR_HANDLE_EX(m_CBV_heap->GetGPUDescriptorHandleForHeapStart());
+		object_CBV_gpu_descriptor_handle.Get_By_Offset(object_CBV_index, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size());
+
+		command_list->SetGraphicsRootDescriptorTable(0, object_CBV_gpu_descriptor_handle);
+
+		UINT instance_data_SRV_index = m_instance_SRV_offset + m_current_frameresource_index * (UINT)m_object_manager->Get_Instc_Obj_Arr().size() + instance_object_pointer->Get_Instance_Index();
 		auto instance_data_SRV_gpu_descriptor_handle = D3D12_GPU_DESCRIPTOR_HANDLE_EX(m_CBV_heap->GetGPUDescriptorHandleForHeapStart());
 		instance_data_SRV_gpu_descriptor_handle.Get_By_Offset(instance_data_SRV_index, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size());
 
@@ -637,6 +646,48 @@ void TestScene::Draw(D3DManager* d3d_manager, ID3D12CommandList** command_lists)
 		}
 	}
 
+	// draw ui
+	d3d_manager->Clr_DSV(command_list);
+	command_list->SetPipelineState(m_pipeline_state_map[L"text_ui"].Get());
+
+	for (auto& object : m_object_manager->Get_Text_UI_Obj_Arr()) {
+		InstanceObject* instance_object_pointer = (InstanceObject*)object;
+
+		UINT object_CBV_index = m_current_frameresource_index * (UINT)m_object_manager->Get_Obj_Count() + object->Get_CB_Index();
+		auto object_CBV_gpu_descriptor_handle = D3D12_GPU_DESCRIPTOR_HANDLE_EX(m_CBV_heap->GetGPUDescriptorHandleForHeapStart());
+		object_CBV_gpu_descriptor_handle.Get_By_Offset(object_CBV_index, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size());
+
+		command_list->SetGraphicsRootDescriptorTable(0, object_CBV_gpu_descriptor_handle);
+
+		UINT instance_data_SRV_index = m_instance_SRV_offset + m_current_frameresource_index * (UINT)m_object_manager->Get_Instc_Obj_Arr().size() + instance_object_pointer->Get_Instance_Index();
+		auto instance_data_SRV_gpu_descriptor_handle = D3D12_GPU_DESCRIPTOR_HANDLE_EX(m_CBV_heap->GetGPUDescriptorHandleForHeapStart());
+		instance_data_SRV_gpu_descriptor_handle.Get_By_Offset(instance_data_SRV_index, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size());
+
+		command_list->SetGraphicsRootDescriptorTable(6, instance_data_SRV_gpu_descriptor_handle);
+
+		//
+		Mesh& mesh = object->Get_Mesh_Array()[0];
+		UINT material_CBV_index;
+
+		if (mesh.mesh_info->material == nullptr) {
+			material_CBV_index = m_material_CBV_offset +
+				m_current_frameresource_index * (UINT)m_object_manager->Get_Material_Manager().Get_Material_Count() + 0;
+		}
+		else {
+			material_CBV_index = m_material_CBV_offset +
+				m_current_frameresource_index * (UINT)m_object_manager->Get_Material_Manager().Get_Material_Count() +
+				mesh.mesh_info->material->constant_buffer_index;
+		}
+
+		auto material_CBV_gpu_descriptor_handle = D3D12_GPU_DESCRIPTOR_HANDLE_EX(m_CBV_heap->GetGPUDescriptorHandleForHeapStart());
+		material_CBV_gpu_descriptor_handle.Get_By_Offset(material_CBV_index, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size());
+
+		command_list->SetGraphicsRootDescriptorTable(1, material_CBV_gpu_descriptor_handle);
+
+		//
+		object->Draw(command_list);
+	}
+
 	// close
 	Throw_If_Failed(command_list->Close());
 
@@ -692,7 +743,7 @@ void TestScene::Build_RS(ID3D12Device* device) {
 	root_parameters[5].Init_As_DT(1, &desriptor_range_5, D3D12_SHADER_VISIBILITY_PIXEL);
 	root_parameters[6].Init_As_DT(1, &desriptor_range_6, D3D12_SHADER_VISIBILITY_VERTEX);
 
-	std::array<D3D12_STATIC_SAMPLER_DESC_EX, 2> sampler_desc;
+	std::array<D3D12_STATIC_SAMPLER_DESC_EX, 3> sampler_desc;
 	sampler_desc[0] = D3D12_STATIC_SAMPLER_DESC_EX(
 		0,
 		D3D12_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT,
@@ -705,6 +756,14 @@ void TestScene::Build_RS(ID3D12Device* device) {
 		D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK);
 	sampler_desc[1] = D3D12_STATIC_SAMPLER_DESC_EX(
 		1,
+		D3D12_FILTER_MIN_MAG_MIP_POINT,
+		D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+		D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+		D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+		0.0f,
+		1);
+	sampler_desc[2] = D3D12_STATIC_SAMPLER_DESC_EX(
+		2,
 		D3D12_FILTER_ANISOTROPIC,
 		D3D12_TEXTURE_ADDRESS_MODE_WRAP,
 		D3D12_TEXTURE_ADDRESS_MODE_WRAP,
@@ -746,6 +805,9 @@ void TestScene::Build_S_N_L() {
 
 	m_shader_map[L"instance_shadow_VS"] = Compile_Shader(L"shaders\\shaders.hlsl", nullptr, "Instance_Shadow_VS", "vs_5_1");
 
+	m_shader_map[L"text_ui_VS"] = Compile_Shader(L"shaders\\shaders.hlsl", nullptr, "Text_UI_VS", "vs_5_1");
+	m_shader_map[L"text_ui_PS"] = Compile_Shader(L"shaders\\shaders.hlsl", nullptr, "Text_UI_PS", "ps_5_1");
+
 	m_input_layouts = {
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
@@ -766,6 +828,9 @@ void TestScene::Build_Mesh(ID3D12Device* device, ID3D12GraphicsCommandList* comm
 
 	mesh_info = m_object_manager->Get_Mesh_Manager().Crt_Box_Mesh(L"cheese");
 	mesh_info->material = m_object_manager->Get_Material_Manager().Get_Material(L"cheese");
+
+	mesh_info = m_object_manager->Get_Mesh_Manager().Crt_Wall_Plane_Mesh(L"text");
+	mesh_info->material = m_object_manager->Get_Material_Manager().Get_Material(L"text");
 
 	m_object_manager->Ipt_From_FBX(L"cat_mesh_edit.fbx", true, false, true, MESH_INFO | SKELETON_INFO | MATERIAL_INFO);
 	m_object_manager->Ipt_From_FBX(L"cat_walk.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
@@ -798,6 +863,7 @@ void TestScene::Build_Material() {
 	//
 	m_object_manager->Get_Material_Manager().Add_Material(L"boundingbox", Material_Factor(DirectX::XMFLOAT4(DirectX::Colors::Red)));
 	m_object_manager->Get_Material_Manager().Add_Material(L"cheese", Material_Factor(DirectX::XMFLOAT4(DirectX::Colors::Yellow)));
+	m_object_manager->Get_Material_Manager().Add_Material(L"text", Material_Factor(DirectX::XMFLOAT4(DirectX::Colors::White)));
 }
 
 void TestScene::Build_O() {
@@ -909,6 +975,13 @@ void TestScene::Build_O() {
 		DirectX::XMFLOAT3(169.475f, 10.049f, 330.732f), 1.0f, 2);
 	/*m_object_manager->Add_Voxel_Cheese(L"cheese" + std::to_wstring(cheese_count++),
 		DirectX::XMFLOAT3(254.871f, 10.049f, 311.188f), 1.0f);*/
+
+	//
+	m_object_manager->Add_Obj(L"test_plane", L"text")->Set_Scale(10.0f, 10.0f, 10.0f);
+
+	object = m_object_manager->Add_Text_UI_Obj(L"test_text", 0.0f, 0.0f, 0.1f, 0.1f);
+	object->Set_Color_Mul(1.0f, 1.0f, 0.0f, 1.0f);
+	((TextUIObject*)object)->Set_Text(L"´Ù·º½È¾î");
 }
 
 void TestScene::Build_C(D3DManager* d3d_manager) {
@@ -1050,7 +1123,7 @@ void TestScene::Build_CBV(D3DManager* d3d_manager) {
 		}
 	}
 
-	UINT instance_data_buffer_size = (UINT)sizeof(InstanceDatas);
+	UINT instance_data_buffer_size = (UINT)sizeof(InstanceData);
 	object_count = (UINT)m_object_manager->Get_Instc_Obj_Arr().size();
 	UINT max_instance_count = m_object_manager->Get_Max_Instc_Count();
 
@@ -1132,16 +1205,25 @@ void TestScene::Build_PSO(D3DManager* d3d_manager) {
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC opaque_PSO_desc_copy = opaque_PSO_desc;
 
 	//
+	opaque_PSO_desc.VS = { reinterpret_cast<BYTE*>(m_shader_map[L"text_ui_VS"]->GetBufferPointer()), m_shader_map[L"text_ui_VS"]->GetBufferSize() };
+	opaque_PSO_desc.PS = { reinterpret_cast<BYTE*>(m_shader_map[L"text_ui_PS"]->GetBufferPointer()), m_shader_map[L"text_ui_PS"]->GetBufferSize() };
+
+	Throw_If_Failed(device->CreateGraphicsPipelineState(&opaque_PSO_desc, IID_PPV_ARGS(&m_pipeline_state_map[L"text_ui"])));
+
+	//
 	opaque_PSO_desc.VS = { reinterpret_cast<BYTE*>(m_shader_map[L"instance_VS"]->GetBufferPointer()), m_shader_map[L"instance_VS"]->GetBufferSize() };
+	opaque_PSO_desc.PS = { reinterpret_cast<BYTE*>(m_shader_map[L"opaque_PS"]->GetBufferPointer()), m_shader_map[L"opaque_PS"]->GetBufferSize() };
 
 	Throw_If_Failed(device->CreateGraphicsPipelineState(&opaque_PSO_desc, IID_PPV_ARGS(&m_pipeline_state_map[L"instance"])));
 
+	//
 	opaque_PSO_desc.RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME;
+
 	Throw_If_Failed(device->CreateGraphicsPipelineState(&opaque_PSO_desc, IID_PPV_ARGS(&m_pipeline_state_map[L"instance_wireframe"])));
 
+	//
 	opaque_PSO_desc.VS = { reinterpret_cast<BYTE*>(m_shader_map[L"standard_VS"]->GetBufferPointer()), m_shader_map[L"standard_VS"]->GetBufferSize() };
 
-	//
 	Throw_If_Failed(device->CreateGraphicsPipelineState(&opaque_PSO_desc, IID_PPV_ARGS(&m_pipeline_state_map[L"opaque_wireframe"])));
 
 	//

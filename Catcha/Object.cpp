@@ -273,18 +273,12 @@ void Object::Udt_LUR() {
 
 void Object::LerpPosition(float deltaTime)
 {
-	if (m_lerp_position_progress < 1.0f)
-	{
-		m_lerp_position_progress += deltaTime / interp_duration;
-		m_lerp_position_progress = m_lerp_position_progress < 1.0f ? m_lerp_position_progress : 1.0f;
-		m_position = MathHelper::Lerp(m_position, m_target_position, m_lerp_position_progress);
-	}
+	DirectX::XMStoreFloat3(&m_position, DirectX::XMVectorLerp(DirectX::XMLoadFloat3(&m_position), DirectX::XMLoadFloat3(&m_target_position), 1.0f / 4.0f));
 }
 
 void Object::SetTargetPosition(const DirectX::XMFLOAT3& newPosition)
 {
 	m_target_position = newPosition;
-	m_lerp_position_progress = 0.0f;
 }
 
 DirectX::XMFLOAT3 Object::GetCameraLook()
@@ -709,7 +703,7 @@ void Object::LerpRotate(float deltaTime)
 	if (m_lerp_pitch_progress < 1.0f)
 	{
 		// 진행도를 업데이트하고 1.0으로 제한
-		m_lerp_pitch_progress += deltaTime / interp_duration;
+		m_lerp_pitch_progress += deltaTime / m_pitch_send_delay;
 		m_lerp_pitch_progress = m_lerp_pitch_progress < 1.0f ? m_lerp_pitch_progress : 1.0f;
 
 		// 이전 보간된 값을 현재 각도로 설정
@@ -805,7 +799,7 @@ void Object::Set_OBB(DirectX::BoundingOrientedBox obb) {
 
 	Set_Position(obb.Center);
 	Set_Rotate(obb.Orientation);
-	Set_Scale(obb.Extents);
+	Set_Scale(obb.Extents * 2.0f);
 
 	m_dirty = true;
 }

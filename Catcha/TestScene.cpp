@@ -900,7 +900,13 @@ void TestScene::Build_O() {
 
 	int cheese_count = 0;
 	m_object_manager->Add_Voxel_Cheese(L"cheese" + std::to_wstring(cheese_count++),
-		DirectX::XMFLOAT3(169.475f, 10.049f, 230.732f), 1.0f, 1);
+		DirectX::XMFLOAT3(169.475f, 10.049f, 230.732f), 1.0f, 2);
+	m_object_manager->Add_Voxel_Cheese(L"cheese" + std::to_wstring(cheese_count++),
+		DirectX::XMFLOAT3(169.475f, 10.049f, 270.732f), 1.0f, 2);
+	m_object_manager->Add_Voxel_Cheese(L"cheese" + std::to_wstring(cheese_count++),
+		DirectX::XMFLOAT3(169.475f, 10.049f, 300.732f), 1.0f, 2);
+	m_object_manager->Add_Voxel_Cheese(L"cheese" + std::to_wstring(cheese_count++),
+		DirectX::XMFLOAT3(169.475f, 10.049f, 330.732f), 1.0f, 2);
 	/*m_object_manager->Add_Voxel_Cheese(L"cheese" + std::to_wstring(cheese_count++),
 		DirectX::XMFLOAT3(254.871f, 10.049f, 311.188f), 1.0f);*/
 }
@@ -1304,14 +1310,16 @@ void TestScene::CharacterChange(bool is_cat, const std::wstring& key1, const std
 	if (true == is_cat)
 	{
 		m_object_manager->Swap_Object(key1, key2);
-		m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"player", 0.0f, 50.0f, 0.0f, 150.0f, ROTATE_SYNC_RPY);
+		//m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"player", 0.0f, 50.0f, 0.0f, 150.0f, ROTATE_SYNC_RPY);
+		m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"player", 25.0f, 35.0f, 25.0f, 100.0f, ROTATE_SYNC_RPY);
 		m_object_manager->Set_Camera_4_Server(L"maincamera", true);
+		main_camera->Set_Limit_Rotate_Right(true, -DirectX::XMConvertToRadians(45.0f), DirectX::XMConvertToRadians(80.0f));
 		main_camera->Set_Lagging_Degree(4.0f);
 	}
 	else
 	{
 		m_object_manager->Swap_Object(key1, key2);
-		m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"player", 0.0f, 2.5f, 0.0f, 0.1f, ROTATE_SYNC_RPY);
+		m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"player", 0.0f, 4.0f, 0.0f, 0.1f, ROTATE_SYNC_RPY);
 		m_object_manager->Set_Camera_4_Server(L"maincamera", true);
 		main_camera->Set_Lagging_Degree(1.0f);
 

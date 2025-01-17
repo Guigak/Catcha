@@ -101,14 +101,10 @@ protected:
 	//////////////////////////////////////////////////////////////////
 	// [SC] 위치 보간을 위한 변수
 	DirectX::XMFLOAT3 m_target_position{ 0, 999.0f, 0 };				// 서버에서 받은 Position
-	float m_lerp_position_progress = 0.0f;								// Position 선형 보간 진행도 (0.0~1.0)
-
-	// [SC] 회전 보간을 위한 변수
-	const float interp_duration = 0.05f;								// 보간 시간 상수 (20ms)
 
 	// [SC] 회전 변화각 보낼때 사용하는 변수
 	float m_last_sent_pitch = 0.0f;										// 마지막으로 보낸 Pitch 값
-	const float m_pitch_send_delay = 0.05f;								// 100 ms (0.1 seconds)
+	const float m_pitch_send_delay = 0.1f;								// 100 ms (0.1 seconds)
 	std::chrono::high_resolution_clock::time_point m_last_sent_time;	// 마지막으로 보낸 시간
 
 	// [SC] 회전 변화각 받아서 보간에 사용하는 변수

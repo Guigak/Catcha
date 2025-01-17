@@ -27,6 +27,9 @@ private:
 
 	std::vector<Object*> m_instance_objects;
 
+	std::vector<Object*> m_voxel_cheese_objects;
+	std::vector<Object*> m_text_UI_objects;
+
 	UINT m_object_count = 0;
 	UINT m_instance_object_count = 0;
 
@@ -60,6 +63,8 @@ public:
 	std::vector<Object*>& Get_Instc_Obj_Arr() { return m_instance_objects; }	// Get Instance Object Array
 	std::vector<Object*>& Get_Optmz_OBB_Obj_Arr() { return m_optimization_obb_objects; }	// Get Optimization OBB Object Array
 	std::vector<Object*>& Get_Col_OBB_Obj_Arr() { return m_collision_obb_objects; }	// Get Collision OBB Object Array
+	std::vector<Object*>& Get_Voxel_Cheese_Obj_Arr() { return m_voxel_cheese_objects; }	// Get Voxel Cheese Object Array
+	std::vector<Object*>& Get_Text_UI_Obj_Arr() { return m_text_UI_objects; }	// Get Text UI Object Array
 
 	size_t Get_Opaque_Obj_Count() { return m_opaque_objects.size(); }
 	size_t Get_Transparent_Obj_Count() { return m_transparent_objects.size(); }
@@ -122,5 +127,8 @@ public:
 	Object* Add_Voxel_Cheese(std::wstring object_name, DirectX::XMFLOAT3 object_position, float scale, UINT detail_level);
 
 	UINT Get_Max_Instc_Count();
+
+	//
+	Object* Add_Text_UI_Obj(std::wstring object_name, float position_x, float position_y, float scale_x, float scale_y);
 };
 

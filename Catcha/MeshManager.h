@@ -18,8 +18,12 @@ public:
 
 	//
 	Mesh_Info* Crt_Box_Mesh(std::wstring mesh_name, float width = 1.0f, float height = 1.0f, float depth = 1.0f);
+	Mesh_Info* Crt_Floor_Plane_Mesh(std::wstring mesh_name, float width = 1.0f, float depth = 1.0f);
+	Mesh_Info* Crt_Wall_Plane_Mesh(std::wstring mesh_name, float width = 1.0f, float height = 1.0f);
 
 	Mesh_Info* Crt_Default_Box();
+	Mesh_Info* Crt_Default_Floor_Plane();
+	Mesh_Info* Crt_Default_Wall_Plane();
 
 	void Crt_BV(ID3D12Device* device, ID3D12GraphicsCommandList* command_list);
 };

@@ -3126,7 +3126,7 @@ struct TextureLoader {
 };
 
 //
-struct InstanceDatas {
+struct InstanceData {
 	DirectX::XMFLOAT4X4 world_matrix = MathHelper::Identity_4x4();
 	DirectX::XMFLOAT4 additional_info = DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
 };

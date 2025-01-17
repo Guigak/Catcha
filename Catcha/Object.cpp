@@ -242,22 +242,32 @@ void Object::Set_Position(float position_x, float position_y, float position_z) 
 
 void Object::Set_Rotate(float rotate_x, float rotate_y, float rotate_z, float rotate_w) {
 	m_rotate = DirectX::XMFLOAT4(rotate_x, rotate_y, rotate_z, rotate_w);
+
+	m_dirty = true;
 }
 
 void Object::Set_Scale(float scale_x, float scale_y, float scale_z) {
 	m_scale = DirectX::XMFLOAT3(scale_x, scale_y, scale_z);
+
+	m_dirty = true;
 }
 
 void Object::Set_Position(DirectX::XMFLOAT3 position) {
 	m_position = position;
+
+	m_dirty = true;
 }
 
 void Object::Set_Rotate(DirectX::XMFLOAT4 rotate) {
 	m_rotate_roll_pitch_yaw = rotate;
+
+	m_dirty = true;
 }
 
 void Object::Set_Scale(DirectX::XMFLOAT3 scale) {
 	m_scale = scale;
+
+	m_dirty = true;
 }
 
 void Object::Move(DirectX::XMFLOAT3 direction) {

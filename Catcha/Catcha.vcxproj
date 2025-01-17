@@ -165,6 +165,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MeshCreater.cpp" />
     <ClCompile Include="SceneManager.cpp" />
+    <ClCompile Include="TextUIObject.cpp" />
     <ClCompile Include="Timer.cpp" />
     <ClCompile Include="VoxelCheese.cpp" />
     <ClCompile Include="WindowManager.cpp" />
@@ -189,6 +190,7 @@
     <ClInclude Include="MeshCreater.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="SceneManager.h" />
+    <ClInclude Include="TextUIObject.h" />
     <ClInclude Include="Timer.h" />
     <ClInclude Include="UploadBuffer.h" />
     <ClInclude Include="VoxelCheese.h" />

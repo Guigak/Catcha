@@ -56,7 +56,7 @@ struct FrameResorce {
 	std::unique_ptr<UploadBuffer<PassConstants>> pass_constant_buffer = nullptr;
 	std::unique_ptr<UploadBuffer<AnimationConstants>> animation_constant_buffer = nullptr;
 
-	std::vector<std::unique_ptr<UploadBuffer<InstanceDatas>>> instance_data_buffer_array;
+	std::vector<std::unique_ptr<UploadBuffer<InstanceData>>> instance_data_buffer_array;
 
 	UINT64 fence = 0;
 
@@ -73,7 +73,7 @@ struct FrameResorce {
 		animation_constant_buffer = std::make_unique<UploadBuffer<AnimationConstants>>(device, object_count, true);
 
 		for (UINT i = 0; i < instance_object_count; ++i) {
-			instance_data_buffer_array.emplace_back(std::make_unique<UploadBuffer<InstanceDatas>>(device, max_instance_count, false));
+			instance_data_buffer_array.emplace_back(std::make_unique<UploadBuffer<InstanceData>>(device, max_instance_count, false));
 		}
 	}
 };

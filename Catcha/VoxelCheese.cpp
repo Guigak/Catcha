@@ -2,13 +2,13 @@
 
 VoxelCheese::VoxelCheese(float position_x, float position_y, float position_z, float scale, UINT detail_level) {
 	m_detail_level = detail_level;
-	m_instance_max_count = CHEESE_VOXEL_COUNT * (m_detail_level * 8 ? m_detail_level * 8 : 1);
+	m_instance_max_count = CHEESE_VOXEL_COUNT * (UINT)std::pow(8, m_detail_level);
 
 	Rst_Voxel(position_x, position_y, position_z, scale, m_detail_level);
-	//Remove_Random_Voxel();
+	Remove_Random_Voxel();
 }
 
-void VoxelCheese::Get_Instance_Data(std::vector<InstanceDatas>& instance_data_array) {
+void VoxelCheese::Get_Instance_Data(std::vector<InstanceData>& instance_data_array) {
 	for (UINT i = 0; i < m_instance_max_count; ++i) {
 		if (m_instance_data_array[i].additional_info.x) {
 			instance_data_array.emplace_back(m_instance_data_array[i]);
@@ -43,14 +43,14 @@ void VoxelCheese::Rst_Voxel(float position_x, float position_y, float position_z
 		position.y += scale;
 	}
 
-	m_instance_count = CHEESE_VOXEL_COUNT * (m_detail_level * 8 ? m_detail_level * 8 : 1);	// == CHEESE_VOXEL_COUNT
+	//m_instance_count = CHEESE_VOXEL_COUNT * std::pow(8, m_detail_level);	// == CHEESE_VOXEL_COUNT
 
-	Rst_Dirty_Count();
+	Rst_Instc_Dirty_Cnt();
 }
 
 void VoxelCheese::Add_Voxel(float position_x, float position_y, float position_z, float scale, UINT detail_level) {
 	if (detail_level == 0) {
-		Add_Instance_Data(InstanceDatas(
+		Add_Instance_Data(InstanceData(
 			DirectX::XMFLOAT4X4(
 				scale, 0.0f, 0.0f, position_x,
 				0.0f, scale, 0.0f, position_y,
@@ -79,7 +79,7 @@ void VoxelCheese::Remove_Voxel(int voxel_index) {
 
 	--m_instance_count;
 
-	Rst_Dirty_Count();
+	Rst_Instc_Dirty_Cnt();
 }
 
 void VoxelCheese::Remove_Random_Voxel() {
@@ -95,8 +95,8 @@ void VoxelCheese::Remove_Random_Voxel() {
 			for (int k = 0; k <= j / 2; ++k) {
 				if ((i == VOXEL_CHEESE_HEIGHT - 1 || j == VOXEL_CHEESE_DEPTH || k == 0 || k == j / 2) &&
 					!(uid(rd) % m_random_value)) {
-					for (UINT l = 0; l <= (m_detail_level * 8 ? m_detail_level * 8 - 1 : 0); ++l) {
-						Remove_Voxel(count * (m_detail_level * 8 ? m_detail_level * 8 : 1) + l);
+					for (UINT l = 0; l <= std::pow(8, m_detail_level) - 1; ++l) {
+						Remove_Voxel(count * (int)std::pow(8, m_detail_level) + l);
 					}
 				}
 

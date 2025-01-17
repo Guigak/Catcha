@@ -16,20 +16,23 @@ void InstanceObject::Draw(ID3D12GraphicsCommandList* command_list) {
 	}
 }
 
-void InstanceObject::Get_Instance_Data(InstanceDatas* instance_data_pointer) {
-	instance_data_pointer = new InstanceDatas[m_instance_count];
+void InstanceObject::Get_Instance_Data(InstanceData* instance_data_pointer) {
+	instance_data_pointer = new InstanceData[m_instance_count];
 
 	//for (int i = 0; i < m_instance_count; ++i) {
 	//	instance_data_pointer[i] = m_instance_data_array[i];
 	//}
 
-	std::memcpy(instance_data_pointer, m_instance_data_array.data(), m_instance_data_array.size() * sizeof(InstanceDatas));
+	std::memcpy(instance_data_pointer, m_instance_data_array.data(), m_instance_data_array.size() * sizeof(InstanceData));
 }
 
-void InstanceObject::Get_Instance_Data(std::vector<InstanceDatas>& instance_data_array) {
+void InstanceObject::Get_Instance_Data(std::vector<InstanceData>& instance_data_array) {
 	instance_data_array.assign(m_instance_data_array.begin(), m_instance_data_array.end());
 }
 
-void InstanceObject::Add_Instance_Data(InstanceDatas& instance_data) {
+void InstanceObject::Add_Instance_Data(InstanceData& instance_data) {
 	m_instance_data_array.emplace_back(instance_data);
+
+	++m_instance_count;
+	Rst_Instc_Dirty_Cnt();
 }

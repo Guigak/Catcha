@@ -7,6 +7,8 @@
 
 #define TEXT_MAX_COUNT 128
 
+constexpr float TEXT_WIDTH_MULTIPLIER = 3.0f / 5.0f;
+
 class TextUIObject : public InstanceObject {
 private:
 	std::wstring m_text = L"";

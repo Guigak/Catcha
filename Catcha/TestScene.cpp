@@ -901,7 +901,12 @@ void TestScene::Build_O() {
 	//
 	m_object_manager->Add_Obj(L"test_plane", L"text")->Set_Scale(10.0f, 10.0f, 10.0f);
 
-	object = m_object_manager->Add_Text_UI_Obj(L"test_text", 0.0f, 0.0f, 0.1f, 0.1f);
+	object = m_object_manager->Add_Text_UI_Obj(L"test_text", 0.0f, 0.0f, 0.02f, 0.02f);
+	object->Set_Color_Mul(1.0f, 1.0f, 0.0f, 1.0f);
+	((TextUIObject*)object)->Set_Text(L"¡Û");
+	//((TextUIObject*)object)->Set_Text(std::wstring(1, (wchar_t)0x263A));
+
+	object = m_object_manager->Add_Text_UI_Obj(L"i_hate_dx", -0.95f, 0.93f, 0.1f, 0.1f);
 	object->Set_Color_Mul(1.0f, 1.0f, 0.0f, 1.0f);
 	((TextUIObject*)object)->Set_Text(L"´Ù·º½È¾î");
 }

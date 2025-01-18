@@ -167,6 +167,7 @@
     <ClCompile Include="SceneManager.cpp" />
     <ClCompile Include="TextUIObject.cpp" />
     <ClCompile Include="Timer.cpp" />
+    <ClCompile Include="UIObject.cpp" />
     <ClCompile Include="VoxelCheese.cpp" />
     <ClCompile Include="WindowManager.cpp" />
   </ItemGroup>
@@ -192,6 +193,7 @@
     <ClInclude Include="SceneManager.h" />
     <ClInclude Include="TextUIObject.h" />
     <ClInclude Include="Timer.h" />
+    <ClInclude Include="UIObject.h" />
     <ClInclude Include="UploadBuffer.h" />
     <ClInclude Include="VoxelCheese.h" />
     <ClInclude Include="WindowManager.h" />

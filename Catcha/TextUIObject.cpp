@@ -3,8 +3,8 @@
 TextUIObject::TextUIObject(float position_x, float position_y, float scale_x, float scale_y) {
 	m_instance_max_count = TEXT_MAX_COUNT;
 
-	m_position = DirectX::XMFLOAT2(position_x, position_y);
-	m_scale = DirectX::XMFLOAT2(scale_x, scale_y * CLIENT_ASPECT_RATIO);
+	m_position = DirectX::XMFLOAT3(position_x, position_y, 0.0f);
+	m_scale = DirectX::XMFLOAT3(scale_x, scale_y * CLIENT_ASPECT_RATIO, 0.0f);
 
 	Set_Text(L"text");
 }

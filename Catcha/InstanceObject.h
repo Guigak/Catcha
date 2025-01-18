@@ -4,7 +4,7 @@
 
 class InstanceObject : public Object {
 protected:
-	std::vector<InstanceData> m_instance_data_array;
+	std::vector<InstanceData> m_instance_data_array;	// transposed
 
 	UINT m_instance_index = -1;
 	UINT m_instance_max_count = -1;

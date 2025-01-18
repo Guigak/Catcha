@@ -2052,6 +2052,8 @@ struct Texture_Info {
 
 	Microsoft::WRL::ComPtr<ID3D12Resource> resource = nullptr;
 	Microsoft::WRL::ComPtr<ID3D12Resource> upload_heap = nullptr;
+
+	UINT buffer_index = -1;
 };
 
 // texture

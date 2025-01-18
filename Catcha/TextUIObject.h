@@ -12,8 +12,6 @@ constexpr float TEXT_WIDTH_MULTIPLIER = 3.0f / 5.0f;
 class TextUIObject : public InstanceObject {
 private:
 	std::wstring m_text = L"";
-	DirectX::XMFLOAT2 m_position = DirectX::XMFLOAT2(0.0f, 0.0f);	// x, y
-	DirectX::XMFLOAT2 m_scale = DirectX::XMFLOAT2(1.0f, 1.0f);	// x, y
 
 public:
 	TextUIObject(float position_x, float position_y, float scale_x, float scale_y);

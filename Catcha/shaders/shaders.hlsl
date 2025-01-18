@@ -20,6 +20,7 @@
 cbuffer CB_Object : register(b0) {
 	float4x4 g_world;
     float4 g_color_multiplier;
+    float3 g_additional_info;
     uint g_animated;
 };
 
@@ -53,9 +54,10 @@ cbuffer CB_Animation : register(b3) {
 Texture2D g_shadow_map : register(t0);
 SamplerComparisonState g_shadow_sampler : register(s0);
 
-Texture2D g_ui_texture : register(t1);
-SamplerState g_ui_texture_sampler : register(s1);
+Texture2D g_unicode_texture : register(t1);
+SamplerState g_unicode_texture_sampler : register(s1);
 
+Texture2D g_texture : register(t2);
 SamplerState g_texture_sampler : register(s2);
 
 struct Instance_Data {
@@ -283,18 +285,17 @@ Vertex_Out Text_UI_VS(Vertex_In vertex_in, uint instance_id : SV_InstanceID) {
     //        g_instance_data[instance_id].additional_info.y +
     //        (g_instance_data[instance_id].additional_info.w - g_instance_data[instance_id].additional_info.y) * vertex_in.uv.y);
 
-    vertex_out.uv = vertex_in.uv / 256.0 + g_instance_data[instance_id].additional_info / 256.0;
+    vertex_out.uv = vertex_in.uv / 256.0 + g_instance_data[instance_id].additional_info.xy / 256.0;
 
-    //vertex_out.uv = vertex_in.uv;
+    //vertex_out.uv = vertex_in.uv / 256.0;
 
     return vertex_out;
 }
 
 float4 Text_UI_PS(Vertex_Out pixel_in) : SV_Target{
     float4 texture_color;
-texture_color = g_ui_texture.Sample(g_ui_texture_sampler, pixel_in.uv);
-//texture_color = g_ui_texture.Sample(g_ui_texture_sampler,
-//    pixel_in.uv / float2(256.0, 256.0) + float2(1.0 / 256.0 * 144, 1.0 / 256.0 * 18));
+
+    texture_color = g_unicode_texture.Sample(g_unicode_texture_sampler, pixel_in.uv);
 
     if (texture_color.r == 0.0) {
         discard;
@@ -303,6 +304,46 @@ texture_color = g_ui_texture.Sample(g_ui_texture_sampler, pixel_in.uv);
     Material material = g_material_array[pixel_in.material_index];
 
     float4 result = material.diffuse_albedo * g_color_multiplier;
+
+    return result;
+}
+
+//
+Vertex_Out UI_VS(Vertex_In vertex_in) {
+    Vertex_Out vertex_out = (Vertex_Out)0.0f;
+
+    float4 position_screen = float4(0.0f, 0.0f, 0.0f, 0.0f);
+
+    float4x4 world_matrix = g_world;
+
+    float top = world_matrix._14;
+    float left = world_matrix._24;
+    float bottom = world_matrix._34;
+    float right = world_matrix._44;
+
+    world_matrix._14_24_34_44 = float4(0.0, 0.0, 0.0, 1.0);
+
+    position_screen = mul(float4(vertex_in.position_local, 1.0f), world_matrix);
+
+    vertex_out.position_screen = position_screen;
+
+    vertex_out.material_index = vertex_in.material_index;
+
+    float texture_width = g_additional_info.x;
+    float texture_height = g_additional_info.y;
+
+    vertex_out.uv.x = left / texture_width + vertex_in.uv.x * (right - left) / texture_width;
+    vertex_out.uv.y = top / texture_height + vertex_in.uv.y * (bottom - top) / texture_height;
+
+    return vertex_out;
+}
+
+float4 UI_PS(Vertex_Out pixel_in) : SV_Target{
+    float4 texture_color;
+
+    texture_color = g_texture.Sample(g_texture_sampler, pixel_in.uv);
+
+    float4 result = texture_color * g_color_multiplier;
 
     return result;
 }

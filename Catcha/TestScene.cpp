@@ -85,6 +85,7 @@ void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
 			ObjectConstants object_constants;
 			DirectX::XMStoreFloat4x4(&object_constants.world_matrix, DirectX::XMMatrixTranspose(world_matrix));
 			object_constants.color_multiplier = object->Get_Color_Mul();
+			object_constants.additional_info = object->Get_Additional_Info();
 			object_constants.animated = (UINT)object->Get_Animated();
 
 			current_object_constant_buffer->Copy_Data(object->Get_CB_Index(), object_constants);
@@ -390,10 +391,17 @@ void TestScene::Draw(D3DManager* d3d_manager, ID3D12CommandList** command_lists)
 		command_list->SetPipelineState(m_pipeline_state_map[L"opaque"].Get());
 	}
 
-	//
-	D3D12_GPU_DESCRIPTOR_HANDLE_EX texture_descriptor_handle(m_CBV_heap->GetGPUDescriptorHandleForHeapStart());
-	texture_descriptor_handle.Get_By_Offset(m_texture_SRV_offset, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size());
-	command_list->SetGraphicsRootDescriptorTable(5, texture_descriptor_handle);
+	// test?
+	{
+		D3D12_GPU_DESCRIPTOR_HANDLE_EX texture_descriptor_handle(m_CBV_heap->GetGPUDescriptorHandleForHeapStart());
+		texture_descriptor_handle.Get_By_Offset(m_texture_SRV_offset + m_texture_map[L"unicode_texture"]->buffer_index, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size());
+		command_list->SetGraphicsRootDescriptorTable(5, texture_descriptor_handle);
+	}
+	{
+		D3D12_GPU_DESCRIPTOR_HANDLE_EX texture_descriptor_handle(m_CBV_heap->GetGPUDescriptorHandleForHeapStart());
+		texture_descriptor_handle.Get_By_Offset(m_texture_SRV_offset + m_texture_map[L"test_ui"]->buffer_index, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size());
+		command_list->SetGraphicsRootDescriptorTable(7, texture_descriptor_handle);
+	}
 
 	//
 	D3D12_GPU_DESCRIPTOR_HANDLE_EX shadow_map_descriptor_handle(m_CBV_heap->GetGPUDescriptorHandleForHeapStart());
@@ -631,6 +639,42 @@ void TestScene::Draw(D3DManager* d3d_manager, ID3D12CommandList** command_lists)
 
 	// draw ui
 	d3d_manager->Clr_DSV(command_list);
+
+	{
+		command_list->SetPipelineState(m_pipeline_state_map[L"ui"].Get());
+
+		for (auto& object : m_object_manager->Get_UI_Obj_Arr()) {
+			UINT object_CBV_index = m_current_frameresource_index * (UINT)m_object_manager->Get_Obj_Count() + object->Get_CB_Index();
+			auto object_CBV_gpu_descriptor_handle = D3D12_GPU_DESCRIPTOR_HANDLE_EX(m_CBV_heap->GetGPUDescriptorHandleForHeapStart());
+			object_CBV_gpu_descriptor_handle.Get_By_Offset(object_CBV_index, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size());
+
+			//
+			command_list->SetGraphicsRootDescriptorTable(0, object_CBV_gpu_descriptor_handle);
+
+			Mesh& mesh = object->Get_Mesh_Array()[0];
+			UINT material_CBV_index;
+
+			if (mesh.mesh_info->material == nullptr) {
+				material_CBV_index = m_material_CBV_offset +
+					m_current_frameresource_index * (UINT)m_object_manager->Get_Material_Manager().Get_Material_Count() + 0;
+			}
+			else {
+				material_CBV_index = m_material_CBV_offset +
+					m_current_frameresource_index * (UINT)m_object_manager->Get_Material_Manager().Get_Material_Count() +
+					mesh.mesh_info->material->constant_buffer_index;
+			}
+
+			auto material_CBV_gpu_descriptor_handle = D3D12_GPU_DESCRIPTOR_HANDLE_EX(m_CBV_heap->GetGPUDescriptorHandleForHeapStart());
+			material_CBV_gpu_descriptor_handle.Get_By_Offset(material_CBV_index, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size());
+
+			command_list->SetGraphicsRootDescriptorTable(1, material_CBV_gpu_descriptor_handle);
+
+			//
+			object->Draw(command_list);
+		}
+	}
+
+	//
 	command_list->SetPipelineState(m_pipeline_state_map[L"text_ui"].Get());
 
 	for (auto& object : m_object_manager->Get_Text_UI_Obj_Arr()) {
@@ -684,9 +728,21 @@ void TestScene::Prcs_Input_Msg(HWND hwnd, UINT message, WPARAM wparam, LPARAM lp
 }
 
 void TestScene::Load_Texture(ID3D12Device* device, ID3D12GraphicsCommandList* command_list) {
+	auto unicode_texture = std::make_unique<Texture_Info>();
+	unicode_texture->name = L"unicode_texture";
+	unicode_texture->file_name = L"unicode_texture.dds";
+	unicode_texture->buffer_index = (UINT)m_texture_map.size();
+	Throw_If_Failed(TextureLoader::Create_DDS_Texture_From_File(
+		device, command_list,
+		unicode_texture->file_name.c_str(), unicode_texture->resource, unicode_texture->upload_heap));
+
+	m_texture_map[unicode_texture->name] = std::move(unicode_texture);
+	
+	//
 	auto ui_texture = std::make_unique<Texture_Info>();
-	ui_texture->name = L"ui_texture";
-	ui_texture->file_name = L"test_texture.dds";
+	ui_texture->name = L"test_ui";
+	ui_texture->file_name = L"test_ui.dds";
+	ui_texture->buffer_index = (UINT)m_texture_map.size();
 	Throw_If_Failed(TextureLoader::Create_DDS_Texture_From_File(
 		device, command_list,
 		ui_texture->file_name.c_str(), ui_texture->resource, ui_texture->upload_heap));
@@ -711,12 +767,15 @@ void TestScene::Build_RS(ID3D12Device* device) {
 	desriptor_range_4.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);	// shadow map
 
 	D3D12_DESCRIPTOR_RANGE_EX desriptor_range_5;
-	desriptor_range_5.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1);	// texture
+	desriptor_range_5.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1);	//  unicode texture
 
 	D3D12_DESCRIPTOR_RANGE_EX desriptor_range_6;
 	desriptor_range_6.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 1);	// instance
 
-	D3D12_ROOT_PARAMETER_EX root_parameters[7];
+	D3D12_DESCRIPTOR_RANGE_EX desriptor_range_7;
+	desriptor_range_7.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 2);	// texture
+
+	D3D12_ROOT_PARAMETER_EX root_parameters[8];
 
 	root_parameters[0].Init_As_DT(1, &desriptor_range_0);
 	root_parameters[1].Init_As_DT(1, &desriptor_range_1);
@@ -725,6 +784,7 @@ void TestScene::Build_RS(ID3D12Device* device) {
 	root_parameters[4].Init_As_DT(1, &desriptor_range_4, D3D12_SHADER_VISIBILITY_PIXEL);
 	root_parameters[5].Init_As_DT(1, &desriptor_range_5, D3D12_SHADER_VISIBILITY_PIXEL);
 	root_parameters[6].Init_As_DT(1, &desriptor_range_6, D3D12_SHADER_VISIBILITY_VERTEX);
+	root_parameters[7].Init_As_DT(1, &desriptor_range_7, D3D12_SHADER_VISIBILITY_PIXEL);
 
 	std::array<D3D12_STATIC_SAMPLER_DESC_EX, 3> sampler_desc;
 	sampler_desc[0] = D3D12_STATIC_SAMPLER_DESC_EX(
@@ -754,7 +814,7 @@ void TestScene::Build_RS(ID3D12Device* device) {
 		0.0f,
 		8);
 
-	D3D12_ROOT_SIGNATURE_DESC_EX root_signature_desc(7, root_parameters,
+	D3D12_ROOT_SIGNATURE_DESC_EX root_signature_desc(8, root_parameters,
 		(UINT)sampler_desc.size(), sampler_desc.data(), D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
 	Microsoft::WRL::ComPtr<ID3DBlob> serialized_root_signature = nullptr;
@@ -791,6 +851,9 @@ void TestScene::Build_S_N_L() {
 	m_shader_map[L"text_ui_VS"] = Compile_Shader(L"shaders\\shaders.hlsl", nullptr, "Text_UI_VS", "vs_5_1");
 	m_shader_map[L"text_ui_PS"] = Compile_Shader(L"shaders\\shaders.hlsl", nullptr, "Text_UI_PS", "ps_5_1");
 
+	m_shader_map[L"ui_VS"] = Compile_Shader(L"shaders\\shaders.hlsl", nullptr, "UI_VS", "vs_5_1");
+	m_shader_map[L"ui_PS"] = Compile_Shader(L"shaders\\shaders.hlsl", nullptr, "UI_PS", "ps_5_1");
+
 	m_input_layouts = {
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
@@ -812,8 +875,8 @@ void TestScene::Build_Mesh(ID3D12Device* device, ID3D12GraphicsCommandList* comm
 	mesh_info = m_object_manager->Get_Mesh_Manager().Crt_Box_Mesh(L"cheese");
 	mesh_info->material = m_object_manager->Get_Material_Manager().Get_Material(L"cheese");
 
-	mesh_info = m_object_manager->Get_Mesh_Manager().Crt_Wall_Plane_Mesh(L"text");
-	mesh_info->material = m_object_manager->Get_Material_Manager().Get_Material(L"text");
+	mesh_info = m_object_manager->Get_Mesh_Manager().Crt_Wall_Plane_Mesh(L"ui");
+	mesh_info->material = m_object_manager->Get_Material_Manager().Get_Material(L"ui");
 
 	m_object_manager->Ipt_From_FBX(L"cat_mesh_edit.fbx", true, false, true, MESH_INFO | SKELETON_INFO | MATERIAL_INFO);
 	m_object_manager->Ipt_From_FBX(L"cat_walk.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
@@ -846,7 +909,7 @@ void TestScene::Build_Material() {
 	//
 	m_object_manager->Get_Material_Manager().Add_Material(L"boundingbox", Material_Factor(DirectX::XMFLOAT4(DirectX::Colors::LightGreen)));
 	m_object_manager->Get_Material_Manager().Add_Material(L"cheese", Material_Factor(DirectX::XMFLOAT4(DirectX::Colors::Yellow)));
-	m_object_manager->Get_Material_Manager().Add_Material(L"text", Material_Factor(DirectX::XMFLOAT4(DirectX::Colors::White)));
+	m_object_manager->Get_Material_Manager().Add_Material(L"ui", Material_Factor(DirectX::XMFLOAT4(DirectX::Colors::White)));
 }
 
 void TestScene::Build_O() {
@@ -899,8 +962,6 @@ void TestScene::Build_O() {
 		DirectX::XMFLOAT3(50.0f, -59.0f, 100.0f), 1.0f, 0);
 
 	//
-	m_object_manager->Add_Obj(L"test_plane", L"text")->Set_Scale(10.0f, 10.0f, 10.0f);
-
 	object = m_object_manager->Add_Text_UI_Obj(L"test_text", 0.0f, 0.0f, 0.02f, 0.02f);
 	object->Set_Color_Mul(1.0f, 1.0f, 0.0f, 1.0f);
 	((TextUIObject*)object)->Set_Text(L"¡Û");
@@ -909,6 +970,10 @@ void TestScene::Build_O() {
 	object = m_object_manager->Add_Text_UI_Obj(L"i_hate_dx", -0.95f, 0.93f, 0.1f, 0.1f);
 	object->Set_Color_Mul(1.0f, 1.0f, 0.0f, 1.0f);
 	((TextUIObject*)object)->Set_Text(L"´Ù·º½È¾î");
+
+	//
+	object = m_object_manager->Add_UI_Obj(L"test_ui", 0.0f, 0.0f, 2.0f, 2.0f,
+		2040, 1200, 0.0f, 0.0f, 1080.0f, 1920.0f);
 }
 
 void TestScene::Build_C(D3DManager* d3d_manager) {
@@ -1132,12 +1197,14 @@ void TestScene::Build_PSO(D3DManager* d3d_manager) {
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC opaque_PSO_desc_copy = opaque_PSO_desc;
 
 	//
+	opaque_PSO_desc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_ALWAYS;
 	opaque_PSO_desc.VS = { reinterpret_cast<BYTE*>(m_shader_map[L"text_ui_VS"]->GetBufferPointer()), m_shader_map[L"text_ui_VS"]->GetBufferSize() };
 	opaque_PSO_desc.PS = { reinterpret_cast<BYTE*>(m_shader_map[L"text_ui_PS"]->GetBufferPointer()), m_shader_map[L"text_ui_PS"]->GetBufferSize() };
 
 	Throw_If_Failed(device->CreateGraphicsPipelineState(&opaque_PSO_desc, IID_PPV_ARGS(&m_pipeline_state_map[L"text_ui"])));
 
 	//
+	opaque_PSO_desc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
 	opaque_PSO_desc.VS = { reinterpret_cast<BYTE*>(m_shader_map[L"instance_VS"]->GetBufferPointer()), m_shader_map[L"instance_VS"]->GetBufferSize() };
 	opaque_PSO_desc.PS = { reinterpret_cast<BYTE*>(m_shader_map[L"opaque_PS"]->GetBufferPointer()), m_shader_map[L"opaque_PS"]->GetBufferSize() };
 
@@ -1177,6 +1244,16 @@ void TestScene::Build_PSO(D3DManager* d3d_manager) {
 	Throw_If_Failed(device->CreateGraphicsPipelineState(&opaque_PSO_desc, IID_PPV_ARGS(&m_pipeline_state_map[L"silhouette"])));
 
 	//
+	opaque_PSO_desc_copy.BlendState.RenderTarget[0] = render_target_blend_desc;
+	opaque_PSO_desc_copy.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_ALWAYS;
+	opaque_PSO_desc_copy.VS = { reinterpret_cast<BYTE*>(m_shader_map[L"ui_VS"]->GetBufferPointer()), m_shader_map[L"ui_VS"]->GetBufferSize() };
+	opaque_PSO_desc_copy.PS = { reinterpret_cast<BYTE*>(m_shader_map[L"ui_PS"]->GetBufferPointer()), m_shader_map[L"ui_PS"]->GetBufferSize() };
+
+	Throw_If_Failed(device->CreateGraphicsPipelineState(&opaque_PSO_desc_copy, IID_PPV_ARGS(&m_pipeline_state_map[L"ui"])));
+
+	//
+	opaque_PSO_desc_copy.BlendState = D3D12_BLEND_DESC_EX(D3D12_DEFAULT());
+	opaque_PSO_desc_copy.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
 	opaque_PSO_desc_copy.RasterizerState.DepthBias = 10000;
 	opaque_PSO_desc_copy.RasterizerState.DepthBiasClamp = 0.0f;
 	opaque_PSO_desc_copy.RasterizerState.SlopeScaledDepthBias = 1.0f;

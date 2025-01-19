@@ -1,10 +1,12 @@
 #include "ObjectManager.h"
 #include "InputManager.h"
+#include "Scene.h"
 #include "Camera.h"
 #include "InstanceObject.h"
 #include "VoxelCheese.h"
 #include "TextUIObject.h"
 #include "UIObject.h"
+#include "ParticleObject.h"
 
 Object* ObjectManager::Get_Obj(std::wstring object_name) {
     return m_object_map[object_name].get();
@@ -128,6 +130,8 @@ void ObjectManager::Actions(std::wstring object_name, Action action) {
 }
 
 void ObjectManager::Update(float elapsed_time) {
+    float total_time = m_scene->Get_Total_Time();
+
     m_material_manager.Update();
 
     for (auto& o : m_opaque_objects) {
@@ -154,6 +158,10 @@ void ObjectManager::Update(float elapsed_time) {
 
     for (auto& o : m_UI_objects) {
         o->Update(elapsed_time);
+    }
+
+    for (auto& o : m_particle_objects) {
+        o->Update(total_time);
     }
 
     //
@@ -370,6 +378,29 @@ Object* ObjectManager::Add_UI_Obj(std::wstring object_name, float position_x, fl
     m_UI_objects.emplace_back(object_pointer);
 
     m_object_set_map[L"UI"].emplace_back(object_pointer);
+
+    return m_object_map[object_name].get();
+}
+
+Object* ObjectManager::Add_Particle_Obj(std::wstring object_name) {
+    std::unique_ptr<Object> object;
+    object = std::make_unique<ParticleObject>();
+
+    object->Set_Name(object_name);
+    object->Add_Mesh(m_mesh_manager.Get_Mesh(L"point"));
+    object->Set_PT(D3D_PRIMITIVE_TOPOLOGY_POINTLIST);
+    object->Set_CB_Index(m_object_count++);
+
+    ((InstanceObject*)object.get())->Set_Instance_Index((UINT)(m_instance_objects.size()));
+
+    m_object_map[object_name] = std::move(object);
+
+    Object* object_pointer = m_object_map[object_name].get();
+    m_objects.emplace_back(object_pointer);
+    m_instance_objects.emplace_back(object_pointer);
+    m_particle_objects.emplace_back(object_pointer);
+
+    m_object_set_map[L"Particle"].emplace_back(object_pointer);
 
     return m_object_map[object_name].get();
 }

@@ -3,6 +3,7 @@
 //#include "MeshCreater.h"
 #include "VoxelCheese.h"
 #include "TextUIObject.h"
+#include "ParticleObject.h"
 
 #define PASS_NUMBER 2
 
@@ -12,7 +13,9 @@ bool m_render_silhouette = false;
 DirectX::BoundingSphere m_scene_sphere;
 
 void TestScene::Enter(D3DManager* d3d_manager) {
-	m_object_manager = std::make_unique<ObjectManager>();
+	m_total_time = 0.0f;
+
+	m_object_manager = std::make_unique<ObjectManager>(this);
 	m_input_manager = std::make_unique<InputManager>(this, m_object_manager.get(), d3d_manager->Get_Client_Width(), d3d_manager->Get_Client_Height());                                   
 
 	ID3D12Device* device = d3d_manager->Get_Device();
@@ -54,6 +57,17 @@ void TestScene::Exit(D3DManager* d3d_manager) {
 }
 
 void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
+	// test
+	static int count = 0;
+
+	if (count++ > 20) {
+		((ParticleObject*)m_object_manager->Get_Obj(L"particle"))->Add_Particle(
+			DirectX::XMFLOAT3(0.0f, 100.0f, 0.0f), DirectX::XMFLOAT3(5.0f, 5.0f, 5.0f),
+			DirectX::XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f), 20, m_total_time);
+
+		count = 0;
+	}
+
 	Object* cat_object = m_object_manager->Get_Obj(L"cat_test");
 	cat_object->Set_Color_Alpha(
 		MathHelper::Min(1.0f, 1.0f - MathHelper::Length(MathHelper::Subtract(cat_object->Get_Position_3f(), m_object_manager->Get_Obj(L"player")->Get_Position_3f())) / 500.0f));
@@ -215,7 +229,7 @@ void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
 	m_main_pass_constant_buffer.inverse_render_target_size = DirectX::XMFLOAT2(1.0f / (float)d3d_manager->Get_Client_Width(), 1.0f / (float)d3d_manager->Get_Client_Height());
 	m_main_pass_constant_buffer.near_z = 1.0f;
 	m_main_pass_constant_buffer.far_z = 1000.0f;
-	m_main_pass_constant_buffer.total_time = 0.0f;
+	m_main_pass_constant_buffer.total_time = m_total_time;
 	m_main_pass_constant_buffer.delta_time = 0.0f;
 	m_main_pass_constant_buffer.ambient_light = { 0.25f, 0.25f, 0.35f, 1.0f };
 	//
@@ -268,6 +282,9 @@ void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
 		auto current_pass_constant_buffer = m_current_frameresource->pass_constant_buffer.get();
 		current_pass_constant_buffer->Copy_Data(1, m_shadow_pass_constant_buffer);
 	}
+
+	//
+	m_total_time += elapsed_time;
 }
 
 void TestScene::Resize(D3DManager* d3d_manager) {
@@ -601,6 +618,47 @@ void TestScene::Draw(D3DManager* d3d_manager, ID3D12CommandList** command_lists)
 		}
 		//
 	}
+	
+	// draw particle
+	command_list->SetPipelineState(m_pipeline_state_map[L"particle"].Get());
+
+	for (auto& object : m_object_manager->Get_Particle_Obj_Arr()) {
+		InstanceObject* instance_object_pointer = (InstanceObject*)object;
+
+		UINT object_CBV_index = m_current_frameresource_index * (UINT)m_object_manager->Get_Obj_Count() + object->Get_CB_Index();
+		auto object_CBV_gpu_descriptor_handle = D3D12_GPU_DESCRIPTOR_HANDLE_EX(m_CBV_heap->GetGPUDescriptorHandleForHeapStart());
+		object_CBV_gpu_descriptor_handle.Get_By_Offset(object_CBV_index, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size());
+
+		command_list->SetGraphicsRootDescriptorTable(0, object_CBV_gpu_descriptor_handle);
+
+		UINT instance_data_SRV_index = m_instance_SRV_offset + m_current_frameresource_index * (UINT)m_object_manager->Get_Instc_Obj_Arr().size() + instance_object_pointer->Get_Instance_Index();
+		auto instance_data_SRV_gpu_descriptor_handle = D3D12_GPU_DESCRIPTOR_HANDLE_EX(m_CBV_heap->GetGPUDescriptorHandleForHeapStart());
+		instance_data_SRV_gpu_descriptor_handle.Get_By_Offset(instance_data_SRV_index, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size());
+
+		command_list->SetGraphicsRootDescriptorTable(6, instance_data_SRV_gpu_descriptor_handle);
+
+		//
+		Mesh& mesh = object->Get_Mesh_Array()[0];
+		UINT material_CBV_index;
+
+		if (mesh.mesh_info->material == nullptr) {
+			material_CBV_index = m_material_CBV_offset +
+				m_current_frameresource_index * (UINT)m_object_manager->Get_Material_Manager().Get_Material_Count() + 0;
+		}
+		else {
+			material_CBV_index = m_material_CBV_offset +
+				m_current_frameresource_index * (UINT)m_object_manager->Get_Material_Manager().Get_Material_Count() +
+				mesh.mesh_info->material->constant_buffer_index;
+		}
+
+		auto material_CBV_gpu_descriptor_handle = D3D12_GPU_DESCRIPTOR_HANDLE_EX(m_CBV_heap->GetGPUDescriptorHandleForHeapStart());
+		material_CBV_gpu_descriptor_handle.Get_By_Offset(material_CBV_index, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size());
+
+		command_list->SetGraphicsRootDescriptorTable(1, material_CBV_gpu_descriptor_handle);
+
+		//
+		object->Draw(command_list);
+	}
 
 	// draw wireframe bounding box
 	if (m_render_boundingbox) {
@@ -674,7 +732,7 @@ void TestScene::Draw(D3DManager* d3d_manager, ID3D12CommandList** command_lists)
 		}
 	}
 
-	//
+	// draw text ui
 	command_list->SetPipelineState(m_pipeline_state_map[L"text_ui"].Get());
 
 	for (auto& object : m_object_manager->Get_Text_UI_Obj_Arr()) {
@@ -783,7 +841,7 @@ void TestScene::Build_RS(ID3D12Device* device) {
 	root_parameters[3].Init_As_DT(1, &desriptor_range_3);
 	root_parameters[4].Init_As_DT(1, &desriptor_range_4, D3D12_SHADER_VISIBILITY_PIXEL);
 	root_parameters[5].Init_As_DT(1, &desriptor_range_5, D3D12_SHADER_VISIBILITY_PIXEL);
-	root_parameters[6].Init_As_DT(1, &desriptor_range_6, D3D12_SHADER_VISIBILITY_VERTEX);
+	root_parameters[6].Init_As_DT(1, &desriptor_range_6);
 	root_parameters[7].Init_As_DT(1, &desriptor_range_7, D3D12_SHADER_VISIBILITY_PIXEL);
 
 	std::array<D3D12_STATIC_SAMPLER_DESC_EX, 3> sampler_desc;
@@ -854,6 +912,10 @@ void TestScene::Build_S_N_L() {
 	m_shader_map[L"ui_VS"] = Compile_Shader(L"shaders\\shaders.hlsl", nullptr, "UI_VS", "vs_5_1");
 	m_shader_map[L"ui_PS"] = Compile_Shader(L"shaders\\shaders.hlsl", nullptr, "UI_PS", "ps_5_1");
 
+	m_shader_map[L"particle_VS"] = Compile_Shader(L"shaders\\shaders.hlsl", nullptr, "Particle_VS", "vs_5_1");
+	m_shader_map[L"particle_GS"] = Compile_Shader(L"shaders\\shaders.hlsl", nullptr, "Particle_GS", "gs_5_1");
+	m_shader_map[L"particle_PS"] = Compile_Shader(L"shaders\\shaders.hlsl", nullptr, "Particle_PS", "ps_5_1");
+
 	m_input_layouts = {
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
@@ -877,6 +939,8 @@ void TestScene::Build_Mesh(ID3D12Device* device, ID3D12GraphicsCommandList* comm
 
 	mesh_info = m_object_manager->Get_Mesh_Manager().Crt_Wall_Plane_Mesh(L"ui");
 	mesh_info->material = m_object_manager->Get_Material_Manager().Get_Material(L"ui");
+
+	mesh_info = m_object_manager->Get_Mesh_Manager().Crt_Point_Mesh(L"point");
 
 	m_object_manager->Ipt_From_FBX(L"cat_mesh_edit.fbx", true, false, true, MESH_INFO | SKELETON_INFO | MATERIAL_INFO);
 	m_object_manager->Ipt_From_FBX(L"cat_walk.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
@@ -969,11 +1033,14 @@ void TestScene::Build_O() {
 
 	object = m_object_manager->Add_Text_UI_Obj(L"i_hate_dx", -0.95f, 0.93f, 0.1f, 0.1f);
 	object->Set_Color_Mul(1.0f, 1.0f, 0.0f, 1.0f);
-	((TextUIObject*)object)->Set_Text(L"´Ù·º½È¾î");
+	((TextUIObject*)object)->Set_Text(L"ŒbŒäd");
 
 	//
 	object = m_object_manager->Add_UI_Obj(L"test_ui", 0.0f, 0.0f, 2.0f, 2.0f,
 		2040, 1200, 0.0f, 0.0f, 1080.0f, 1920.0f);
+
+	//
+	object = m_object_manager->Add_Particle_Obj(L"particle");
 }
 
 void TestScene::Build_C(D3DManager* d3d_manager) {
@@ -1197,8 +1264,18 @@ void TestScene::Build_PSO(D3DManager* d3d_manager) {
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC opaque_PSO_desc_copy = opaque_PSO_desc;
 
 	//
+	opaque_PSO_desc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT;
+	opaque_PSO_desc.VS = { reinterpret_cast<BYTE*>(m_shader_map[L"particle_VS"]->GetBufferPointer()), m_shader_map[L"particle_VS"]->GetBufferSize() };
+	opaque_PSO_desc.GS = { reinterpret_cast<BYTE*>(m_shader_map[L"particle_GS"]->GetBufferPointer()), m_shader_map[L"particle_GS"]->GetBufferSize() };
+	opaque_PSO_desc.PS = { reinterpret_cast<BYTE*>(m_shader_map[L"particle_PS"]->GetBufferPointer()), m_shader_map[L"particle_PS"]->GetBufferSize() };
+
+	Throw_If_Failed(device->CreateGraphicsPipelineState(&opaque_PSO_desc, IID_PPV_ARGS(&m_pipeline_state_map[L"particle"])));
+
+	//
+	opaque_PSO_desc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 	opaque_PSO_desc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_ALWAYS;
 	opaque_PSO_desc.VS = { reinterpret_cast<BYTE*>(m_shader_map[L"text_ui_VS"]->GetBufferPointer()), m_shader_map[L"text_ui_VS"]->GetBufferSize() };
+	opaque_PSO_desc.GS = D3D12_SHADER_BYTECODE();
 	opaque_PSO_desc.PS = { reinterpret_cast<BYTE*>(m_shader_map[L"text_ui_PS"]->GetBufferPointer()), m_shader_map[L"text_ui_PS"]->GetBufferSize() };
 
 	Throw_If_Failed(device->CreateGraphicsPipelineState(&opaque_PSO_desc, IID_PPV_ARGS(&m_pipeline_state_map[L"text_ui"])));

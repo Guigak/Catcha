@@ -207,6 +207,19 @@ Mesh_Info* MeshManager::Crt_Wall_Plane_Mesh(std::wstring mesh_name, float width,
     return Add_Mesh(mesh_name, vertices_vector, indices_vector);
 }
 
+Mesh_Info* MeshManager::Crt_Point_Mesh(std::wstring mesh_name) {
+    std::vector<Vertex_Info> vertices_vector;
+    std::vector<std::uint32_t> indices_vector;
+
+    vertices_vector.emplace_back(Vertex_Info());
+    indices_vector.emplace_back(0);
+
+    Mesh_Info* mesh_info_pointer = Add_Mesh(mesh_name, vertices_vector, indices_vector);
+    mesh_info_pointer->primitive_topology = D3D_PRIMITIVE_TOPOLOGY_POINTLIST;
+
+    return mesh_info_pointer;
+}
+
 Mesh_Info* MeshManager::Crt_Default_Box() {
     return Crt_Box_Mesh(L"default_box");
 }

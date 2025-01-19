@@ -84,6 +84,9 @@ protected:
 	//
 	std::unordered_map<std::wstring, std::unique_ptr<Texture_Info>> m_texture_map;
 
+	//
+	float m_total_time = 0.0f;
+
 public:
 	Scene(std::wstring name, Scene* back_scene = nullptr) : m_name(name), m_back_scene(back_scene) {}
 
@@ -128,5 +131,8 @@ public:
 	void Chg_Boundingbox_Flag() { m_render_boundingbox = !m_render_boundingbox; }
 
 	void Flush_Cmd_Q(D3DManager* d3d_manager);
+
+	//
+	float Get_Total_Time() { return m_total_time; }
 };
 

@@ -8,10 +8,10 @@ enum class ANIM_TYPE { IDLE };
 
 struct Client
 {
-	ANIM_TYPE Type;
-	int character_id = NUM_GHOST;		// 캐릭터 번호
-	DirectX::XMFLOAT3 Location;
-	float pitch;
+	ANIM_TYPE Type;						// 애니메이션 정보
+	int character_id = NUM_GHOST;		// *[캐릭터 번호]
+	DirectX::XMFLOAT3 Location;			// 위치 정보
+	float pitch;						// 회전 변화 정보
 };
 
 class Object;
@@ -30,6 +30,9 @@ private:
 	WSAOVERLAPPED m_overlapped;
 
 	std::string m_name;
+	std::string m_password;
+
+	bool is_login = false;
 
 	std::vector<Object*> m_objects;
 	std::vector<VoxelCheese*> m_cheeses;
@@ -43,8 +46,8 @@ private:
 	NetworkManager& operator=(const NetworkManager&) = delete;
 
 public:
-	int m_myid;											// 자신의 서버 아이디 번호
-	std::unordered_map<int, Client> characters;			// [key] 서버 아이디 번호 / [value]캐릭터 정보
+	int m_myid;											// *자신의 서버 아이디(플레이어 순서) 번호
+	std::unordered_map<int, Client> characters;			// [key] *서버 아이디 번호 / [value]캐릭터 정보
 
 
 	bool Choose = false;								// 캐릭터 선택 여부 확인

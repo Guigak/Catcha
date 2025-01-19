@@ -967,8 +967,8 @@ void TestScene::Build_O() {
 	int cheese_count = 0;
 	m_object_manager->Add_Voxel_Cheese(L"cheese" + std::to_wstring(cheese_count++),
 		DirectX::XMFLOAT3(169.475f, 10.049f, 230.732f), 1.0f, 1);
-	//m_object_manager->Add_Voxel_Cheese(L"cheese" + std::to_wstring(cheese_count++),
-	//	DirectX::XMFLOAT3(169.475f, 10.049f, 270.732f), 1.0f, 1);
+	m_object_manager->Add_Voxel_Cheese(L"cheese" + std::to_wstring(cheese_count++),
+		DirectX::XMFLOAT3(169.475f, 10.049f, 270.732f), 1.0f, 1);
 	//m_object_manager->Add_Voxel_Cheese(L"cheese" + std::to_wstring(cheese_count++),
 	//	DirectX::XMFLOAT3(169.475f, 10.049f, 300.732f), 1.0f, 1);
 	//m_object_manager->Add_Voxel_Cheese(L"cheese" + std::to_wstring(cheese_count++),

@@ -48,6 +48,7 @@ void NetworkManager::InitSocket()
 	std::cout << "Enter User Name : ";
 	//std::cin >> m_name;
 	m_name = "Temp01";
+	m_password = "1234";
 
 	inet_pton(AF_INET, SERVER_ADDR, &m_server_addr.sin_addr);
 	res = connect(m_server_socket, reinterpret_cast<sockaddr*>(&m_server_addr), sizeof(m_server_addr));
@@ -72,6 +73,7 @@ void NetworkManager::InitSocket()
 	p.size = sizeof(p);
 	p.type = CS_LOGIN;
 	strcpy_s(p.name, m_name.c_str());
+	strcpy_s(p.password, m_password.c_str());
 	DoSend(&p);
 
 	// UDP ╪рдо Initialize
@@ -276,12 +278,13 @@ void NetworkManager::ProcessPacket(char* ptr)
 	case SC_LOGIN_INFO:
 	{
 		SC_LOGIN_INFO_PACKET* p = reinterpret_cast<SC_LOGIN_INFO_PACKET*>(ptr);
-		m_myid = p->id;
-		DirectX::XMFLOAT3 coord = { static_cast<float>(p->x), static_cast<float>(p->y), static_cast<float>(p->z) };
-		characters[m_myid].Location = coord;
-		float pitch = 0.f;
-		characters[m_myid].pitch = pitch;
-
+		is_login = p->result;
+		break;
+	}
+	case SC_SET_MY_ID:
+	{
+		SC_SET_MY_ID_PACKET* p = reinterpret_cast<SC_SET_MY_ID_PACKET*>(ptr);
+		m_myid = p->my_id;
 		break;
 	}
 	case SC_ADD_PLAYER:
@@ -394,8 +397,8 @@ void NetworkManager::ProcessPacket(char* ptr)
 	case SC_CHANGE_CHARACTER:
 	{
 		SC_CHANGE_CHARACTER_PACKET* p = reinterpret_cast<SC_CHANGE_CHARACTER_PACKET*>(ptr);
-		int id = p->id;
-		int character_id = characters[p->id].character_id;
+		int id = p->player_num;
+		int character_id = characters[p->player_num].character_id;
 
 		int prev_character_num = static_cast<int>(p->prev_character_num);
 		int new_character_num = static_cast<int>(p->new_character_num);

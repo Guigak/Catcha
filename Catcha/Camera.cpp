@@ -127,7 +127,7 @@ void Camera::Udt_VM() {
 
 	look = DirectX::XMVector3Normalize(look);
 	up = DirectX::XMVector3Normalize(DirectX::XMVector3Cross(look, right));
-	right = DirectX::XMVector3Cross(up, look);
+	right = DirectX::XMVector3Normalize(DirectX::XMVector3Cross(up, look));
 
 	float x = -DirectX::XMVectorGetX(DirectX::XMVector3Dot(position, right));
 	float y = -DirectX::XMVectorGetX(DirectX::XMVector3Dot(position, up));

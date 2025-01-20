@@ -16,7 +16,7 @@ protected:
 	DirectX::XMFLOAT3 m_up = { 0.0f, 1.0f, 0.0f };
 	DirectX::XMFLOAT3 m_right = { 1.0f, 0.0f, 0.0f };
 
-	DirectX::XMFLOAT4X4 m_world_matrix = MathHelper::Identity_4x4();
+	DirectX::XMFLOAT4X4 m_world_matrix = MathHelper::Identity_4x4();	// not transposed
 
 	UINT m_constant_buffer_index = -1;
 
@@ -97,6 +97,9 @@ protected:
 
 	//
 	DirectX::XMFLOAT4 m_color_multiplier = DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+
+	//
+	DirectX::XMFLOAT3 m_additional_info = DirectX::XMFLOAT3();
 
 	//////////////////////////////////////////////////////////////////
 	// [SC] 위치 보간을 위한 변수
@@ -304,5 +307,8 @@ public:
 	void Set_Color_Mul(float color_r, float color_g, float color_b, float color_a);
 	void Set_Color_Alpha(float color_a);
 	DirectX::XMFLOAT4 Get_Color_Mul() { return m_color_multiplier; }
+
+	//
+	DirectX::XMFLOAT3 Get_Additional_Info() { return m_additional_info; }
 };
 

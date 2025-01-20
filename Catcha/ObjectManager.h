@@ -17,6 +17,8 @@ enum class ObjectType {
 	GHOST_OBJECT
 };
 
+class Scene;
+
 class ObjectManager {
 private:
 	std::unordered_map<std::wstring, std::unique_ptr<Object>> m_object_map;
@@ -35,6 +37,10 @@ private:
 
 	std::vector<Object*> m_voxel_cheese_objects;
 	std::vector<Object*> m_text_UI_objects;
+	
+	std::vector<Object*> m_UI_objects;
+
+	std::vector<Object*> m_particle_objects;
 
 	UINT m_object_count = 0;
 	UINT m_instance_object_count = 0;
@@ -53,8 +59,11 @@ private:
 	SkeletonManager m_skeleton_manager;
 	AnimationManager m_animation_manager;
 
+	//
+	Scene* m_scene = nullptr;
+
 public:
-	ObjectManager() {}
+	ObjectManager(Scene* scene) { m_scene = scene; }
 	~ObjectManager() {}
 
 	Object* Get_Obj(std::wstring object_name);
@@ -72,6 +81,8 @@ public:
 	std::vector<Object*>& Get_Col_OBB_Obj_Arr() { return m_collision_obb_objects; }	// Get Collision OBB Object Array
 	std::vector<Object*>& Get_Voxel_Cheese_Obj_Arr() { return m_voxel_cheese_objects; }	// Get Voxel Cheese Object Array
 	std::vector<Object*>& Get_Text_UI_Obj_Arr() { return m_text_UI_objects; }	// Get Text UI Object Array
+	std::vector<Object*>& Get_UI_Obj_Arr() { return m_UI_objects; }	// Get UI Object Array
+	std::vector<Object*>& Get_Particle_Obj_Arr() { return m_particle_objects; }	// Get Particle Object Array
 
 	size_t Get_Opaque_Obj_Count() { return m_opaque_objects.size(); }
 	size_t Get_Transparent_Obj_Count() { return m_transparent_objects.size(); }
@@ -140,6 +151,11 @@ public:
 
 	//
 	Object* Add_Text_UI_Obj(std::wstring object_name, float position_x, float position_y, float scale_x, float scale_y);
+	Object* Add_UI_Obj(std::wstring object_name, float position_x, float position_y, float scale_x, float scale_y,
+		UINT texture_width, UINT texture_height, float top, float left, float bottom, float right);
+
+	//
+	Object* Add_Particle_Obj(std::wstring object_name);
 
 	// player 전환을 위한 object swap
 	void Swap_Object(const std::wstring& key1, const std::wstring& key2);

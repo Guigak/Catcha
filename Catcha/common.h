@@ -77,8 +77,9 @@ extern void print_error(const char* msg, int err_no);
 #include "fbxsdk.h"
 
 // constant
-constexpr int CLIENT_WIDTH = 1920;
-constexpr int CLIENT_HEIGHT = 1080;
+constexpr int CLIENT_WIDTH = 1600;
+constexpr int CLIENT_HEIGHT = 900;
+constexpr float CLIENT_ASPECT_RATIO = (float)CLIENT_WIDTH / (float)CLIENT_HEIGHT;
 
 constexpr int FRAME_RESOURCES_NUMBER = 3;
 
@@ -2109,6 +2110,8 @@ struct Texture_Info {
 
 	Microsoft::WRL::ComPtr<ID3D12Resource> resource = nullptr;
 	Microsoft::WRL::ComPtr<ID3D12Resource> upload_heap = nullptr;
+
+	UINT buffer_index = -1;
 };
 
 // texture

@@ -16,7 +16,7 @@ void ParticleObject::Update(float total_time) {
 
 		m_instance_count = (UINT)m_instance_data_array.size();
 
-		Rst_Dirty_Count();
+		Rst_Instc_Dirty_Cnt();
 	}
 }
 

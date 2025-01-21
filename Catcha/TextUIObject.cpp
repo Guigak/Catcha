@@ -35,7 +35,7 @@ void TextUIObject::Update(float elapsed_time) {
 
 		m_instance_count = count;
 
-		Rst_Dirty_Count();
+		Rst_Instc_Dirty_Cnt();
 	}
 }
 

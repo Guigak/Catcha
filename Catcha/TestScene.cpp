@@ -60,13 +60,24 @@ void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
 	// test
 	static int count = 0;
 
-	if (count++ > 20) {
+	count++;
+
+	if (count == 20) {
 		((ParticleObject*)m_object_manager->Get_Obj(L"particle"))->Add_Particle(
 			DirectX::XMFLOAT3(0.0f, 100.0f, 0.0f), DirectX::XMFLOAT3(5.0f, 5.0f, 5.0f),
 			DirectX::XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f), 20, m_total_time);
+	}
+	else if (count == 40) {
+		((ParticleObject*)m_object_manager->Get_Obj(L"particle"))->Add_Particle(
+			DirectX::XMFLOAT3(0.0f, 100.0f, 0.0f), DirectX::XMFLOAT3(5.0f, 5.0f, 5.0f),
+			DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f), 20, m_total_time);
+
 
 		count = 0;
 	}
+
+	((TextUIObject*)m_object_manager->Get_Obj(L"total_time"))->Set_Text(std::to_wstring((int)m_total_time));
+	//
 
 	Object* cat_object = m_object_manager->Get_Obj(L"cat_test");
 	cat_object->Set_Color_Alpha(
@@ -1026,14 +1037,14 @@ void TestScene::Build_O() {
 		DirectX::XMFLOAT3(50.0f, -59.0f, 100.0f), 1.0f, 0);
 
 	//
-	object = m_object_manager->Add_Text_UI_Obj(L"test_text", 0.0f, 0.0f, 0.02f, 0.02f);
+	object = m_object_manager->Add_Text_UI_Obj(L"aim_circle", 0.0f, 0.0f, 0.02f, 0.02f);
 	object->Set_Color_Mul(1.0f, 1.0f, 0.0f, 1.0f);
 	((TextUIObject*)object)->Set_Text(L"¡Û");
 	//((TextUIObject*)object)->Set_Text(std::wstring(1, (wchar_t)0x263A));
 
-	object = m_object_manager->Add_Text_UI_Obj(L"i_hate_dx", -0.95f, 0.93f, 0.1f, 0.1f);
+	object = m_object_manager->Add_Text_UI_Obj(L"total_time", -0.95f, 0.93f, 0.1f, 0.1f);
 	object->Set_Color_Mul(1.0f, 1.0f, 0.0f, 1.0f);
-	((TextUIObject*)object)->Set_Text(L"ŒbŒäd");
+	((TextUIObject*)object)->Set_Text(std::to_wstring((int)m_total_time));
 
 	//
 	object = m_object_manager->Add_UI_Obj(L"test_ui", 0.0f, 0.0f, 2.0f, 2.0f,

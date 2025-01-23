@@ -61,6 +61,7 @@ public:
 	DirectX::XMFLOAT4X4 Get_PM_4x4f() { return m_projection_matrix; }	// Get Projection Matrix float4x4
 
 	void Set_Frustum(float FOV_y, float aspect_ratio, float near_z, float far_z);
+	void Set_Distance(float distance) { m_distance = distance; }
 
 	void Look_At(DirectX::FXMVECTOR position, DirectX::FXMVECTOR target, DirectX::FXMVECTOR up_vector);
 	void Look_At(const DirectX::XMFLOAT3 position, const DirectX::XMFLOAT3 target, const DirectX::XMFLOAT3 up_vector);

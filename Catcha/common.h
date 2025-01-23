@@ -160,10 +160,18 @@ constexpr int CHEESE_VOXEL_COUNT = VOXEL_CHEESE_HEIGHT *
 
 // enum class
 enum class Object_State {
+	STATE_NONE,
 	STATE_IDLE, STATE_MOVE,
 	STATE_JUMP_START, STATE_JUMP_IDLE, STATE_JUMP_END,
 	STATE_ACTION_ONE, STATE_ACTION_TWO, STATE_ACTION_THREE,
 	STATE_DEAD
+};
+
+enum class Restriction_Option {
+	Restrict_None,
+	Restrict_Move,
+	Restrict_Rotate,
+	Restrict_All
 };
 
 // struct
@@ -2100,8 +2108,8 @@ struct Animation_Binding_Info {
 	float multiply_time = 1.0f;
 	float blending_time = 0.0f;
 	bool loop = false;
-	Object_State next_object_state = Object_State::STATE_IDLE;
-	bool movable = true;
+	Object_State next_object_state = Object_State::STATE_NONE;
+	Restriction_Option restriction_option = Restriction_Option::Restrict_None;
 };
 
 struct Texture_Info {

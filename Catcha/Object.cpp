@@ -178,8 +178,9 @@ void Object::Update(float elapsed_time) {
 		// checking animation end
 		if (animation_binding_info.loop == false) {
 			if (animation_manager.Get_Animation(animation_binding_info.binded_animation_name)->animation_time < m_animated_time * animation_binding_info.multiply_time) {
-				m_next_state = animation_binding_info.next_object_state;
-				//m_next_state = m_network_state;				
+				if (animation_binding_info.next_object_state != Object_State::STATE_NONE) {
+					m_next_state = animation_binding_info.next_object_state;
+				}
 			}
 		}
 
@@ -195,7 +196,38 @@ void Object::Update(float elapsed_time) {
 			m_state = m_next_state;
 			m_animated_time = 0.0f;
 
-			m_movable = next_animation_binding_info.movable;
+			switch (next_animation_binding_info.restriction_option) {
+			case Restriction_Option::Restrict_None:
+				m_movable = true;
+				m_rotatable = true;
+				break;
+			case Restriction_Option::Restrict_Move:
+				m_movable = false;
+				m_rotatable = true;
+				break;
+			case Restriction_Option::Restrict_Rotate:
+				m_movable = true;
+				m_rotatable = false;
+				if (m_camera)
+				{
+					// Rotate 서버로 안보내게
+					m_camera->Set_Camera_Need_Send(false);
+					m_camera->Set_Distance(100.0f);
+					Set_Visiable(true);
+				}
+				break;
+			case Restriction_Option::Restrict_All:
+				m_movable = false;
+				m_rotatable = false;
+				if (m_camera)
+				{
+					m_camera->Set_Camera_Need_Send(false);
+					m_camera->Set_Distance(100.0f);
+					Set_Visiable(true);
+				}
+				break;
+				break;
+			}
 		}
 
 		// calculate animation
@@ -226,7 +258,7 @@ void Object::Update(float elapsed_time) {
 	}
 
 	if (m_dirty) {
-		if (m_camera) {
+		if (m_camera && m_rotatable) {
 			switch (m_camera_rotate_synchronization_flag) {
 			case ROTATE_SYNC_NONE:
 				break;
@@ -612,7 +644,10 @@ void Object::Rotate_Pitch(float degree) {
 
 	m_dirty = true;
 
-	SendRotate(degree);
+	if (true == Get_Camera_Need_Send())
+	{
+		SendRotate(degree);
+	}
 }
 
 void Object::Rotate_Yaw(float degree) {

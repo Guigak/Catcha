@@ -1034,6 +1034,7 @@ void TestScene::Build_O() {
 		object->Bind_Anim_2_State(Object_State::STATE_JUMP_IDLE, Animation_Binding_Info(L"mouse_jump_idle.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
 		object->Bind_Anim_2_State(Object_State::STATE_JUMP_END, Animation_Binding_Info(L"mouse_jump_end.fbx", 1.0f, 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE));
 		object->Bind_Anim_2_State(Object_State::STATE_ACTION_ONE, Animation_Binding_Info(L"mouse_hit.fbx", 1.0f, 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE, NOT_MOVABLE));
+		object->Bind_Anim_2_State(Object_State::STATE_DEAD, Animation_Binding_Info(L"mouse_death.fbx", 1.0f, 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE, NOT_MOVABLE));
 		object->Set_Animated(true);
 		object->Set_Phys(true);
 		object->TP_Down(999.0f);
@@ -1052,7 +1053,7 @@ void TestScene::Build_O() {
 	object->Bind_Anim_2_State(Object_State::STATE_JUMP_START, Animation_Binding_Info(L"cat_jump_test_start.fbx", 0.5f, 0.2f, ONCE_ANIMATION, Object_State::STATE_JUMP_IDLE));
 	object->Bind_Anim_2_State(Object_State::STATE_JUMP_IDLE, Animation_Binding_Info(L"cat_jump_test_idle.fbx", 0.5f, 0.2f, LOOP_ANIMATION));
 	object->Bind_Anim_2_State(Object_State::STATE_JUMP_END, Animation_Binding_Info(L"cat_jump_test_end.fbx", 0.5f, 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE));
-	object->Bind_Anim_2_State(Object_State::STATE_ACTION_ONE, Animation_Binding_Info(L"cat_paw.fbx", 0.5f, 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE, NOT_MOVABLE));
+	object->Bind_Anim_2_State(Object_State::STATE_ACTION_ONE, Animation_Binding_Info(L"cat_paw.fbx", 1.0f, 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE, NOT_MOVABLE));
 	object->Set_Animated(true);
 	object->Set_Phys(true);
 	object->TP_Down(999.0f);
@@ -1112,14 +1113,14 @@ void TestScene::Build_O() {
 		DirectX::XMFLOAT3(254.871f, 10.049f, 311.188f), 1.0f);*/
 
 	//
-	object = m_object_manager->Add_Text_UI_Obj(L"test_text", 0.0f, 0.0f, 0.02f, 0.02f);
+	object = m_object_manager->Add_Text_UI_Obj(L"Aim_text", 0.0f, 0.0f, 0.02f, 0.02f);
 	object->Set_Color_Mul(1.0f, 1.0f, 0.0f, 1.0f);
 	((TextUIObject*)object)->Set_Text(L"¡Û");
 	//((TextUIObject*)object)->Set_Text(std::wstring(1, (wchar_t)0x263A));
 
 	object = m_object_manager->Add_Text_UI_Obj(L"i_hate_dx", -0.95f, 0.93f, 0.1f, 0.1f);
 	object->Set_Color_Mul(1.0f, 1.0f, 0.0f, 1.0f);
-	((TextUIObject*)object)->Set_Text(L"ŒbŒäd");
+	((TextUIObject*)object)->Set_Text(L"TEST");
 
 	//
 	object = m_object_manager->Add_UI_Obj(L"test_ui", 0.0f, 0.0f, 2.0f, 2.0f,
@@ -1556,14 +1557,16 @@ void TestScene::Del_Voxel(int cheese_index, int voxel_index) {
 void TestScene::CharacterChange(bool is_cat, const std::wstring& key1, const std::wstring& key2)
 {
 	Camera* main_camera = reinterpret_cast<Camera*>(m_object_manager->Get_Obj(L"maincamera"));
+	TextUIObject* Aim = (TextUIObject*)m_object_manager->Get_Obj(L"Aim_text");
 	if (true == is_cat)
 	{
 		m_object_manager->Swap_Object(key1, key2);
 		//m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"player", 0.0f, 50.0f, 0.0f, 150.0f, ROTATE_SYNC_RPY);
-		m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"player", 25.0f, 35.0f, 25.0f, 100.0f, ROTATE_SYNC_RPY);
+		m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"player", 25.0f, 35.0f, 20.0f, 100.0f, ROTATE_SYNC_RPY);
 		m_object_manager->Set_Camera_4_Server(L"maincamera", true);
 		main_camera->Set_Limit_Rotate_Right(true, -DirectX::XMConvertToRadians(45.0f), DirectX::XMConvertToRadians(80.0f));
 		main_camera->Set_Lagging_Degree(4.0f);
+		Aim->Set_Text(L"");
 	}
 	else
 	{

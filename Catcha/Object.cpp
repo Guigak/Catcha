@@ -140,7 +140,9 @@ void Object::Update(float elapsed_time) {
 		// checking animation end
 		if (animation_binding_info.loop == false) {
 			if (animation_manager.Get_Animation(animation_binding_info.binded_animation_name)->animation_time < m_animated_time * animation_binding_info.multiply_time) {
-				m_next_state = animation_binding_info.next_object_state;
+				if (animation_binding_info.next_object_state != Object_State::STATE_NONE) {
+					m_next_state = animation_binding_info.next_object_state;
+				}
 			}
 		}
 

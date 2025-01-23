@@ -85,6 +85,10 @@ void ObjectManager::Teleport(std::wstring object_name, Action action, float dist
 void ObjectManager::Rotate(std::wstring object_name, Action action, float degree) {
     Object* object = Get_Obj(object_name);
 
+    if (object->Get_Rotatable() == false) {
+        return;
+    }
+
     switch (action) {
     case Action::ROTATE:
         break;

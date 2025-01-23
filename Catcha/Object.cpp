@@ -158,7 +158,25 @@ void Object::Update(float elapsed_time) {
 			m_state = m_next_state;
 			m_animated_time = 0.0f;
 
-			m_movable = next_animation_binding_info.movable;
+			switch (next_animation_binding_info.restriction_option) {
+			case Restriction_Option::Restrict_None:
+				m_movable = true;
+				m_rotatable = true;
+				break;
+			case Restriction_Option::Restrict_Move:
+				m_movable = false;
+				m_rotatable = true;
+				break;
+			case Restriction_Option::Restrict_Rotate:
+				m_movable = true;
+				m_rotatable = false;
+				break;
+			case Restriction_Option::Restrict_All:
+				m_movable = false;
+				m_rotatable = false;
+				break;
+				break;
+			}
 		}
 
 		// calculate animation
@@ -189,7 +207,7 @@ void Object::Update(float elapsed_time) {
 	}
 
 	if (m_dirty) {
-		if (m_camera) {
+		if (m_camera && m_rotatable) {
 			switch (m_camera_rotate_synchronization_flag) {
 			case ROTATE_SYNC_NONE:
 				break;

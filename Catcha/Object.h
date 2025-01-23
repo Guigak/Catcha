@@ -93,6 +93,7 @@ protected:
 	//
 	bool m_processable_input = true;
 	bool m_movable = true;
+	bool m_rotatable = true;
 
 	//
 	DirectX::XMFLOAT4 m_color_multiplier = DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
@@ -245,6 +246,7 @@ public:
 	//
 	bool Get_Processable_Input() { return m_processable_input; }
 	bool Get_Movable() { return m_movable; }
+	bool Get_Rotatable() { return m_rotatable; }
 
 	//
 	void Set_OBB(DirectX::BoundingOrientedBox obb);

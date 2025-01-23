@@ -147,6 +147,13 @@ enum class Object_State {
 	STATE_ACTION_ONE, STATE_ACTION_TWO, STATE_ACTION_THREE
 };
 
+enum class Restriction_Option {
+	Restrict_None,
+	Restrict_Move,
+	Restrict_Rotate,
+	Restrict_All
+};
+
 // struct
 struct D3D12_DEFAULT;
 struct D3D12_RECT_EX;
@@ -2043,7 +2050,7 @@ struct Animation_Binding_Info {
 	float blending_time = 0.0f;
 	bool loop = false;
 	Object_State next_object_state = Object_State::STATE_NONE;
-	bool movable = true;
+	Restriction_Option restriction_option = Restriction_Option::Restrict_None;
 };
 
 struct Texture_Info {

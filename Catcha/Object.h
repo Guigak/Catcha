@@ -105,10 +105,11 @@ protected:
 	//////////////////////////////////////////////////////////////////
 	// [SC] 위치 보간을 위한 변수
 	DirectX::XMFLOAT3 m_target_position{ 0, 999.0f, 0 };				// 서버에서 받은 Position
+	float m_lerp_degree = 4.0f;											// 보간 수준 (작을수록 빠름) - 플레이어 기준 4.0f, AI 기준 50.0f
 
 	// [SC] 회전 변화각 보낼때 사용하는 변수
 	float m_last_sent_pitch = 0.0f;										// 마지막으로 보낸 Pitch 값
-	const float m_pitch_send_delay = 0.1f;								// 100 ms (0.1 seconds)
+	const float m_pitch_send_delay = 0.05f;								// 50 ms (0.05 seconds)
 	std::chrono::high_resolution_clock::time_point m_last_sent_time;	// 마지막으로 보낸 시간
 
 	// [SC] 회전 변화각 받아서 보간에 사용하는 변수
@@ -247,9 +248,11 @@ public:
 	virtual void Act_Three();
 
 	// [SC] 회전 보간을 위한 함수
+	void SetLerpDegree(float degree) { m_lerp_degree = degree; }
 	void SendRotate(float degree);
 	void LerpRotate(float deltaTime);
 	void SetTargetPitch(float newpitch);
+	void SetTargetQuat(const DirectX::XMFLOAT4& newQuat);
 
 	//
 	void Bind_Camera(Camera* camera);

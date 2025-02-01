@@ -1033,14 +1033,18 @@ void TestScene::Build_O() {
 		object = m_object_manager->Get_Obj(L"mouse" + std::to_wstring(i));
 		object->Bind_Anim_2_State(Object_State::STATE_IDLE, Animation_Binding_Info(L"mouse_idle.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
 		object->Bind_Anim_2_State(Object_State::STATE_MOVE, Animation_Binding_Info(L"mouse_walk.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
-		object->Bind_Anim_2_State(Object_State::STATE_JUMP_START, Animation_Binding_Info(L"mouse_jump_start.fbx", 1.0f, 0.2f, ONCE_ANIMATION, Object_State::STATE_JUMP_IDLE));
-		object->Bind_Anim_2_State(Object_State::STATE_JUMP_IDLE, Animation_Binding_Info(L"mouse_jump_idle.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
-		object->Bind_Anim_2_State(Object_State::STATE_JUMP_END, Animation_Binding_Info(L"mouse_jump_end.fbx", 1.0f, 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE));
-		object->Bind_Anim_2_State(Object_State::STATE_ACTION_ONE, Animation_Binding_Info(L"mouse_hit.fbx", 1.0f, 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE));
-		object->Bind_Anim_2_State(Object_State::STATE_DEAD, Animation_Binding_Info(L"mouse_death.fbx", 1.0f, 0.2f, ONCE_ANIMATION, Object_State::STATE_NONE, Restriction_Option::Restrict_All));
+		object->Bind_Anim_2_State(Object_State::STATE_JUMP_START, Animation_Binding_Info(L"mouse_jump_start.fbx", 0.5f, 0.2f, ONCE_ANIMATION, Object_State::STATE_JUMP_IDLE));
+		object->Bind_Anim_2_State(Object_State::STATE_JUMP_IDLE, Animation_Binding_Info(L"mouse_jump_idle.fbx", 0.5f, 0.2f, LOOP_ANIMATION));
+		object->Bind_Anim_2_State(Object_State::STATE_JUMP_END, Animation_Binding_Info(L"mouse_jump_end.fbx", 0.5f, 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE));
+		object->Bind_Anim_2_State(Object_State::STATE_ACTION_ONE, Animation_Binding_Info(L"mouse_hit.fbx", 0.5f, 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE));
+		object->Bind_Anim_2_State(Object_State::STATE_DEAD, Animation_Binding_Info(L"mouse_death.fbx", 0.5f, 0.2f, ONCE_ANIMATION, Object_State::STATE_NONE, Restriction_Option::Restrict_All));
 		object->Set_Animated(true);
 		object->Set_Phys(true);
 		object->TP_Down(999.0f);
+		if (i > NUM_MOUSE4)
+		{
+			object->SetLerpDegree(50.0f);
+		}
 		/*m_object_manager->Add_Col_OBB_Obj(L"mouse" + std::to_wstring(i) + L"_OBB_",
 			DirectX::BoundingOrientedBox(
 				DirectX::XMFLOAT3(0.00781226f, 2.38999f, 0.004617309f),
@@ -1052,7 +1056,7 @@ void TestScene::Build_O() {
 
 	object = m_object_manager->Get_Obj(L"cat");
 	object->Bind_Anim_2_State(Object_State::STATE_IDLE, Animation_Binding_Info(L"cat_idle.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
-	object->Bind_Anim_2_State(Object_State::STATE_MOVE, Animation_Binding_Info(L"cat_walk.fbx", 1.5f, 0.2f, LOOP_ANIMATION));
+	object->Bind_Anim_2_State(Object_State::STATE_MOVE, Animation_Binding_Info(L"cat_walk.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
 	object->Bind_Anim_2_State(Object_State::STATE_JUMP_START, Animation_Binding_Info(L"cat_jump_test_start.fbx", 0.5f, 0.2f, ONCE_ANIMATION, Object_State::STATE_JUMP_IDLE));
 	object->Bind_Anim_2_State(Object_State::STATE_JUMP_IDLE, Animation_Binding_Info(L"cat_jump_test_idle.fbx", 0.5f, 0.2f, LOOP_ANIMATION));
 	object->Bind_Anim_2_State(Object_State::STATE_JUMP_END, Animation_Binding_Info(L"cat_jump_test_end.fbx", 0.5f, 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE));

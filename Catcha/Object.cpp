@@ -160,7 +160,8 @@ void Object::Update(float elapsed_time) {
 		AnimationManager& animation_manager = m_object_manager->Get_Animation_Manager();
 
 		// 네트워크 연결시 애니메이션 로직 없애기
-		if (-1 == Get_Character_Number())
+		int character_number = Get_Character_Number();
+		if (character_number >= NUM_AI1 && character_number <= NUM_AI4)
 		{
 			if (m_grounded &&
 				(m_next_state == Object_State::STATE_IDLE || m_next_state == Object_State::STATE_MOVE)) {
@@ -305,7 +306,20 @@ void Object::Udt_LUR() {
 
 void Object::LerpPosition(float deltaTime)
 {
-	DirectX::XMStoreFloat3(&m_position, DirectX::XMVectorLerp(DirectX::XMLoadFloat3(&m_position), DirectX::XMLoadFloat3(&m_target_position), 1.0f / 4.0f));
+	DirectX::XMStoreFloat3(&m_position, DirectX::XMVectorLerp(DirectX::XMLoadFloat3(&m_position), DirectX::XMLoadFloat3(&m_target_position), 1.0f / m_lerp_degree));
+	if (m_character_number >= NUM_AI1 && m_character_number <= NUM_AI4)
+	{
+		DirectX::XMFLOAT3 length = MathHelper::Subtract(m_position, m_target_position);
+		float length_xz = MathHelper::Length_XZ(length);
+		if(length_xz < 5.0f)
+		{
+			m_speed = 0.0f;
+		}
+		else
+		{
+			m_speed = length_xz;
+		}
+	}
 }
 
 void Object::SetTargetPosition(const DirectX::XMFLOAT3& newPosition)
@@ -786,6 +800,12 @@ void Object::SetTargetPitch(float newpitch)
 	
 	// 보간 진행도 초기화
 	m_lerp_pitch_progress = 0.0f;     
+}
+
+void Object::SetTargetQuat(const DirectX::XMFLOAT4& newQuat)
+{
+	m_change_pitch = true;
+	m_target_quat = newQuat;
 }
 
 void Object::Bind_Camera(Camera* camera) {

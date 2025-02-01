@@ -332,27 +332,19 @@ void NetworkManager::ProcessPacket(char* ptr)
 			m_objects[characters[id].character_id]->Set_Next_State(state);
 		}
 
-		// 내 캐릭터
-		if (id == m_myid)
+		// 타격시 색 변화 정보
+		if (true == cat_attacked)
 		{
-			// pass
+			m_objects[characters[id].character_id]->Set_Color_Mul(1.0f, 0.0f, 0.0f, 1.0f);
 		}
-		// 타 캐릭터(자기 자신은 색 및 회전이 변할 필요가 없어서..)
 		else
 		{
-			// 타격시 색 변화 정보
-			if (true == cat_attacked)
-			{
-				m_objects[characters[id].character_id]->Set_Color_Mul(1.0f, 0.0f, 0.0f, 1.0f);
-			}
-			else
-			{
-				m_objects[characters[id].character_id]->Set_Color_Mul(1.0f, 1.0f, 1.0f, 1.0f);
-			}
-
-			// 다른 캐릭터의 받은 회전값
-			m_objects[characters[id].character_id]->SetTargetPitch(p->player_pitch);			
+			m_objects[characters[id].character_id]->Set_Color_Mul(1.0f, 1.0f, 1.0f, 1.0f);
 		}
+
+		// 다른 캐릭터의 받은 회전값
+		m_objects[characters[id].character_id]->SetTargetPitch(p->player_pitch);			
+		
 		break;
 	}
 	case SC_SYNC_PLAYER:
@@ -417,6 +409,8 @@ void NetworkManager::ProcessPacket(char* ptr)
 		{
 			// 다른 캐릭터의 캐릭터 변경
 			characters[id].character_id = new_character_num;
+			m_objects[characters[id].character_id]->SetLerpDegree(4.0f);
+			m_objects[characters[id].character_id]->SetTargetQuat(DirectX::XMFLOAT4{ 0.0f, 0.0f, 0.0f, 1.0f });
 		}
 		break;
 	}
@@ -446,6 +440,47 @@ void NetworkManager::ProcessPacket(char* ptr)
 		float radius = 5.0f;
 		m_cheeses[cheese_num]->Remove_Sphere_Voxel(sphere_center, radius);
 		
+		break;
+	}
+	case SC_AI_MOVE:
+	{
+		SC_AI_MOVE_PACKET* p = reinterpret_cast<SC_AI_MOVE_PACKET*>(ptr);
+		int AI_id = p->id;
+		DirectX::XMFLOAT3 coord = { static_cast<float>(p->x), FLOOR_Y, static_cast<float>(p->z) };
+		m_objects[AI_id]->SetTargetPosition(coord);
+		
+		DirectX::XMVECTOR prev_pos = m_objects[AI_id]->Get_Position_V();
+		DirectX::XMVECTOR target_pos = DirectX::XMLoadFloat3(&coord);
+		DirectX::XMVECTOR dir = DirectX::XMVectorSubtract(target_pos, prev_pos);
+		dir = DirectX::XMVectorSetY(dir, 0.0f);
+		dir = DirectX::XMVector3Normalize(dir);
+
+		// 기준 전방 벡터
+		DirectX::XMVECTOR forward = DirectX::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+
+		// 회전축 계산 (전방 벡터와 dir 벡터 사이)
+		DirectX::XMVECTOR axis = DirectX::XMVector3Cross(forward, dir);
+
+		// 내적을 이용해 회전각 계산
+		float dot = DirectX::XMVectorGetX(DirectX::XMVector3Dot(forward, dir));
+		float angle = std::acos(std::clamp(dot, -1.0f, 1.0f));
+
+		DirectX::XMVECTOR cross = DirectX::XMVector3Cross(forward, dir);
+		float cross_y = DirectX::XMVectorGetY(cross);
+
+		if (cross_y < 0.0f)
+		{
+			angle = -angle; // 반대 방향 회전 적용
+		}
+
+		// Y축 회전 쿼터니언 생성
+		DirectX::XMVECTOR quaternion = DirectX::XMQuaternionRotationAxis(DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f), angle);
+
+		// 쿼터니언을 XMFLOAT4로 변환 후 적용
+		DirectX::XMFLOAT4 quat;
+		DirectX::XMStoreFloat4(&quat, quaternion);
+		m_objects[AI_id]->SetTargetQuat(quat);
+
 		break;
 	}
 	default:
@@ -482,6 +517,8 @@ void NetworkManager::ChangeOwnCharacter(int character_id, int new_number)
 			if (!is_cat) 
 			{
 				character->Set_Visiable(false);
+				character->SetLerpDegree(4.0f);
+				character->SetTargetQuat(DirectX::XMFLOAT4{ 0.0f, 0.0f, 0.0f, 1.0f });
 			}
 
 			std::wstring new_name = is_cat ? L"cat" : L"mouse" + std::to_wstring(new_number);

@@ -4,11 +4,12 @@
 #include "NetworkObserver.h"
 
 
-enum class ANIM_TYPE { IDLE };
+
+// AI를 위한 맵 설정
+constexpr float FLOOR_Y = -61.6f;
 
 struct Client
 {
-	ANIM_TYPE Type;						// 애니메이션 정보
 	int character_id = NUM_GHOST;		// *[캐릭터 번호]
 	DirectX::XMFLOAT3 Location;			// 위치 정보
 	float pitch;						// 회전 변화 정보
@@ -34,7 +35,7 @@ private:
 
 	bool is_login = false;
 
-	std::vector<Object*> m_objects;
+	std::vector<Object*> m_objects;						// *캐릭터 오브젝트[character_id]
 	std::vector<VoxelCheese*> m_cheeses;
 
 

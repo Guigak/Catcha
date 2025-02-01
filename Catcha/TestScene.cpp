@@ -28,6 +28,14 @@ constexpr float MAX_PICKING_DISTANCE = 1.0f;
 // ui functions
 void Game_Start_UI_Function();
 void Game_End_UI_Function();
+void To_Main_UI_Function();
+void Select_Cat_UI_Function();
+void Select_Mouse_UI_Function();
+
+// test //
+void Result_Test_UI_Function() {
+	m_next_scene_state = Scene_State::END_STATE;
+}
 
 void TestScene::Enter(D3DManager* d3d_manager) {
 	m_total_time = 0.0f;
@@ -1120,15 +1128,36 @@ void TestScene::Build_O() {
 		DirectX::XMFLOAT3(50.0f, -59.0f, 100.0f), 1.0f, 0);
 
 	// main scene ui
-	object = m_object_manager->Add_Text_UI_Obj(L"game_start", -0.8f, -0.3f, 0.2f, 0.2f, true);
+	object = m_object_manager->Add_Text_UI_Obj(L"game_start", -0.8f, -0.3f, 0.2f, 0.2f, true, true);
 	object->Set_Color_Mul(1.0f, 1.0f, 0.0f, 1.0f);
 	object->Set_Custom_Fuction_One(Game_Start_UI_Function);
 	((TextUIObject*)object)->Set_Text(L"게임 시작");
 
-	object = m_object_manager->Add_Text_UI_Obj(L"game_end", -0.8f, -0.7f, 0.2f, 0.2f, true);
+	object = m_object_manager->Add_Text_UI_Obj(L"game_end", -0.8f, -0.7f, 0.2f, 0.2f, true, true);
 	object->Set_Color_Mul(1.0f, 1.0f, 0.0f, 1.0f);
 	object->Set_Custom_Fuction_One(Game_End_UI_Function);
 	((TextUIObject*)object)->Set_Text(L"게임 종료");
+
+	object = m_object_manager->Add_UI_Obj(L"catcha_title", -0.3f, 0.4f, 1.0f, 0.75f,
+		2040, 1200, 0.0f, 0.0f, 1080.0f, 1920.0f, false, true);
+
+	// matching scene
+	object = m_object_manager->Add_Text_UI_Obj(L"select_animal", -0.85f, 0.8f, 0.2f, 0.2f, false, false);
+	object->Set_Color_Mul(1.0f, 1.0f, 0.0f, 1.0f);
+	((TextUIObject*)object)->Set_Text(L"동물 선택");
+
+	object = m_object_manager->Add_Text_UI_Obj(L"to_main", -0.9f, -0.85f, 0.1f, 0.1f, true, false);
+	object->Set_Color_Mul(1.0f, 1.0f, 0.0f, 1.0f);
+	object->Set_Custom_Fuction_One(To_Main_UI_Function);
+	((TextUIObject*)object)->Set_Text(L"메인으로");
+
+	object = m_object_manager->Add_UI_Obj(L"select_cat", -0.5f, -0.05f, 0.75f, 1.25f,
+		2040, 1200, 0.0f, 0.0f, 1080.0f, 1920.0f, true, false);
+	object->Set_Custom_Fuction_One(Select_Cat_UI_Function);
+
+	object = m_object_manager->Add_UI_Obj(L"select_mouse", 0.5f, -0.05f, 0.75f, 1.25f,
+		2040, 1200, 0.0f, 0.0f, 1080.0f, 1920.0f, true, false);
+	object->Set_Custom_Fuction_One(Select_Mouse_UI_Function);
 
 	// game play scene ui
 	object = m_object_manager->Add_Text_UI_Obj(L"aim_circle", 0.0f, 0.0f, 0.02f, 0.02f);
@@ -1138,6 +1167,21 @@ void TestScene::Build_O() {
 
 	object = m_object_manager->Add_UI_Obj(L"game_play_ui", 0.0f, 0.0f, 2.0f, 2.0f,
 		2040, 1200, 0.0f, 0.0f, 1080.0f, 1920.0f, false, false);
+
+	// test //
+	object = m_object_manager->Add_Text_UI_Obj(L"result_test", 0.0f, 0.0f, 0.1f, 0.1f, true, true);
+	object->Set_Color_Mul(1.0f, 1.0f, 0.0f, 1.0f);
+	object->Set_Custom_Fuction_One(Result_Test_UI_Function);
+	((TextUIObject*)object)->Set_Text(L"결과 테스트");
+
+	// game end scene
+	object = m_object_manager->Add_Text_UI_Obj(L"winner_is", -0.9f, 0.85f, 0.15f, 0.15f, false, false);
+	object->Set_Color_Mul(1.0f, 1.0f, 0.0f, 1.0f);
+	((TextUIObject*)object)->Set_Text(L"승자는..");
+
+	object = m_object_manager->Add_Text_UI_Obj(L"winner", -0.75f, 0.4f, 0.4f, 0.4f, false, false);
+	object->Set_Color_Mul(1.0f, 1.0f, 0.0f, 1.0f);
+	((TextUIObject*)object)->Set_Text(L"고양이");
 
 	// dissolve
 	object = m_object_manager->Add_Text_UI_Obj(L"dissolve", 0.0f, 0.0f, 5.0f, 5.0f, false);
@@ -1565,24 +1609,52 @@ void TestScene::Del_Voxel(int cheese_index, int voxel_index) {
 }
 
 void TestScene::Chg_Scene_State(Scene_State scene_state) {
-	//m_object_manager->Hide_All_UI();
-	for (auto& o : m_object_manager->Get_Text_UI_Obj_Arr()) {
-		if (o->Get_Name() == L"dissolve") {
-			continue;
-		}
-
-		o->Set_Visible(false);
-	}
-	for (auto& o : m_object_manager->Get_UI_Obj_Arr()) {
-		o->Set_Visible(false);
-	}
+	m_object_manager->Hide_All_UI();
+	m_object_manager->Get_Obj(L"dissolve")->Set_Visible(true);
 
 	m_input_manager->Rst_Manager();
 
 	switch (scene_state) {
 	case Scene_State::MAIN_STATE:
+		m_object_manager->Get_Obj(L"game_start")->Set_Visible(true);
+		m_object_manager->Get_Obj(L"game_end")->Set_Visible(true);
+		m_object_manager->Get_Obj(L"catcha_title")->Set_Visible(true);
+
+		//
+		m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"main_scene_object",
+			0.0f, 5.0f, 0.0f, 0.1f, ROTATE_SYNC_NONE);
+		m_main_camera->Rst_Rotate();
+		m_main_camera->Rotate_Pitch(0.25f);
+		m_main_camera->Rotate_Right(-0.25f);
+
+		//
+		m_input_manager->Bind_Key_Up(VK_LBUTTON, BindingInfo(L"", Action::CUSTOM_FUNCTION_TWO));
+
+		m_input_manager->Bind_Mouse_Move(BindingInfo(L"", Action::PICKING, POINTF(0.0f, 0.0f)),
+			BindingInfo(), BindingInfo());
+
+		m_input_manager->Bind_Key_First_Down(VK_F1, BindingInfo(L"", Action::CHANGE_WIREFRAME_FLAG));
 		break;
 	case Scene_State::MATCHING_STATE:
+		m_object_manager->Get_Obj(L"select_animal")->Set_Visible(true);
+		m_object_manager->Get_Obj(L"to_main")->Set_Visible(true);
+		m_object_manager->Get_Obj(L"select_cat")->Set_Visible(true);
+		m_object_manager->Get_Obj(L"select_mouse")->Set_Visible(true);
+
+		//
+		m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"main_scene_object",
+			0.0f, 5.0f, 0.0f, 0.1f, ROTATE_SYNC_NONE);
+		m_main_camera->Rst_Rotate();
+		m_main_camera->Rotate_Pitch(0.25f);
+		m_main_camera->Rotate_Right(-0.25f);
+
+		//
+		m_input_manager->Bind_Key_Up(VK_LBUTTON, BindingInfo(L"", Action::CUSTOM_FUNCTION_TWO));
+
+		m_input_manager->Bind_Mouse_Move(BindingInfo(L"", Action::PICKING, POINTF(0.0f, 0.0f)),
+			BindingInfo(), BindingInfo());
+
+		m_input_manager->Bind_Key_First_Down(VK_F1, BindingInfo(L"", Action::CHANGE_WIREFRAME_FLAG));
 		break;
 	case Scene_State::PLAY_STATE:
 		m_object_manager->Get_Obj(L"aim_circle")->Set_Visible(true);
@@ -1591,6 +1663,7 @@ void TestScene::Chg_Scene_State(Scene_State scene_state) {
 		//
 		m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"player",
 			0.0f, 50.0f, 0.0f, 150.0f, ROTATE_SYNC_RPY);
+		m_main_camera->Rst_Rotate();
 
 		//
 		m_input_manager->Bind_Key_Down(VK_W, BindingInfo(L"player", Action::MOVE_FORWARD, MOVE_ONLY_XZ));
@@ -1608,6 +1681,24 @@ void TestScene::Chg_Scene_State(Scene_State scene_state) {
 		m_input_manager->Bind_Key_First_Down(VK_F2, BindingInfo(L"", Action::CHANGE_BOUNDINGBOX_FLAG));
 		break;
 	case Scene_State::END_STATE:
+		m_object_manager->Get_Obj(L"winner_is")->Set_Visible(true);
+		m_object_manager->Get_Obj(L"winner")->Set_Visible(true);
+		m_object_manager->Get_Obj(L"to_main")->Set_Visible(true);
+
+		//
+		m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"end_scene_object",
+			0.0f, 5.0f, 0.0f, 0.1f, ROTATE_SYNC_NONE);
+		m_main_camera->Rst_Rotate();
+		m_main_camera->Rotate_Pitch(0.25f);
+		m_main_camera->Rotate_Right(0.25f);
+
+		//
+		m_input_manager->Bind_Key_Up(VK_LBUTTON, BindingInfo(L"", Action::CUSTOM_FUNCTION_TWO));
+
+		m_input_manager->Bind_Mouse_Move(BindingInfo(L"", Action::PICKING, POINTF(0.0f, 0.0f)),
+			BindingInfo(), BindingInfo());
+
+		m_input_manager->Bind_Key_First_Down(VK_F1, BindingInfo(L"", Action::CHANGE_WIREFRAME_FLAG));
 		break;
 	default:
 		break;
@@ -1672,9 +1763,21 @@ void TestScene::Picking(POINTF screen_position) {
 
 //
 void Game_Start_UI_Function() {
-	m_next_scene_state = Scene_State::PLAY_STATE;
+	m_next_scene_state = Scene_State::MATCHING_STATE;
 }
 
 void Game_End_UI_Function() {
 	PostQuitMessage(0);
+}
+
+void To_Main_UI_Function() {
+	m_next_scene_state = Scene_State::MAIN_STATE;
+}
+
+void Select_Cat_UI_Function() {
+	m_next_scene_state = Scene_State::PLAY_STATE;
+}
+
+void Select_Mouse_UI_Function() {
+	m_next_scene_state = Scene_State::PLAY_STATE;
 }

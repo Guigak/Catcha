@@ -297,6 +297,14 @@ void Object::Set_Scale(DirectX::XMFLOAT3 scale) {
 	m_dirty = true;
 }
 
+void Object::Rst_Rotate() {
+	m_rotate_roll_pitch_yaw = DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
+	m_rotate_look = 0.0f;
+	m_rotate_right = 0.0f;
+
+	m_dirty = true;
+}
+
 void Object::Move(DirectX::XMFLOAT3 direction) {
 	m_velocity = MathHelper::Add(Get_Vel(), direction, m_acceleration);
 

@@ -190,6 +190,9 @@ public:
 	void Set_Rotate(DirectX::XMFLOAT4 rotate);
 	void Set_Scale(DirectX::XMFLOAT3 scale);
 
+	//
+	void Rst_Rotate();
+
 	// move
 	void Move(DirectX::XMFLOAT3 direction);
 

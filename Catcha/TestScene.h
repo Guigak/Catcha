@@ -2,6 +2,14 @@
 #include "common.h"
 #include "Scene.h"
 
+//
+enum class Scene_State {
+	MAIN_STATE,
+	MATCHING_STATE,
+	PLAY_STATE,
+	END_STATE
+};
+
 class TestScene : public Scene {
 public:
 	TestScene(std::wstring name, Scene* back_scene = nullptr) : Scene(name, back_scene) {}
@@ -33,7 +41,7 @@ public:
 
 	//
 	virtual void Custom_Function_One();
-	virtual void Custom_Function_Two() {}
+	virtual void Custom_Function_Two();
 	virtual void Custom_Function_Three() {}
 
 	//
@@ -42,5 +50,11 @@ public:
 
 	//
 	void Del_Voxel(int cheese_index, int voxel_index);
+
+	//
+	void Chg_Scene_State(Scene_State scene_state);
+
+	//
+	virtual void Picking(POINTF screen_position);
 };
 

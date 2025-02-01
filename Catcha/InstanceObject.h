@@ -33,5 +33,9 @@ public:
 	virtual void Get_Instance_Data(std::vector<InstanceData>& instance_data_array);
 
 	void Add_Instance_Data(InstanceData& instance_data);
+
+	//
+	virtual bool Picking(DirectX::XMFLOAT4 origin_ray, DirectX::XMFLOAT4 ray_direction,
+		DirectX::XMFLOAT4X4 inverse_view_matrix, float picking_distance) { return false; }
 };
 

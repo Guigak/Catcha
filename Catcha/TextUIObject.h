@@ -20,5 +20,9 @@ public:
 	virtual void Update(float elapsed_time);
 
 	void Set_Text(std::wstring text);
+
+	//
+	virtual bool Picking(DirectX::XMFLOAT4 origin_ray, DirectX::XMFLOAT4 ray_direction,
+		DirectX::XMFLOAT4X4 inverse_view_matrix, float picking_distance);
 };
 

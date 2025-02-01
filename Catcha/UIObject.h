@@ -15,5 +15,9 @@ public:
 
 	void Set_Texture_WH(UINT texture_width, UINT texture_height);	// Set Texture Width Height
 	void Set_TLBR(float top, float left, float bottom, float right);	// Set Top Left Bottom Right
+
+	//
+	virtual bool Picking(DirectX::XMFLOAT4 origin_ray, DirectX::XMFLOAT4 ray_direction,
+		DirectX::XMFLOAT4X4 inverse_view_matrix, float picking_distance);
 };
 

@@ -2,7 +2,7 @@
 #include "Camera.h"
 #include "ObjectManager.h"
 
-Object::Object(ObjectManager* object_manager, std::wstring object_name, Mesh_Info* mesh, DirectX::XMMATRIX world_matrix, UINT constant_buffer_index, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, bool physics, bool visiable) {
+Object::Object(ObjectManager* object_manager, std::wstring object_name, Mesh_Info* mesh, DirectX::XMMATRIX world_matrix, UINT constant_buffer_index, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, bool physics, bool visible) {
 	Set_Object_Manager(object_manager);
 	Set_Name(object_name);
 	Set_CB_Index(constant_buffer_index);
@@ -10,17 +10,17 @@ Object::Object(ObjectManager* object_manager, std::wstring object_name, Mesh_Inf
 	Set_WM(world_matrix);
 	Set_PT(primitive_topology);
 	Set_Phys(physics);
-	Set_Visiable(visiable);
+	Set_Visible(visible);
 }
 
-Object::Object(ObjectManager* object_manager, std::wstring object_name, std::vector<Mesh>& mesh_array, UINT constant_buffer_index, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, bool physics, bool visiable) {
+Object::Object(ObjectManager* object_manager, std::wstring object_name, std::vector<Mesh>& mesh_array, UINT constant_buffer_index, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, bool physics, bool visible) {
 	Set_Object_Manager(object_manager);
 	Set_Name(object_name);
 	Set_CB_Index(constant_buffer_index);
 	Add_Mesh(mesh_array);
 	Set_PT(primitive_topology);
 	Set_Phys(physics);
-	Set_Visiable(visiable);
+	Set_Visible(visible);
 }
 
 DirectX::XMMATRIX Object::Get_OBB_WM() {
@@ -239,7 +239,8 @@ void Object::Update(float elapsed_time) {
 void Object::Udt_WM() {
 	DirectX::XMMATRIX translate_matrix = DirectX::XMMatrixTranslation(m_position.x, m_position.y, m_position.z);
 	DirectX::XMMATRIX rotate_matrix = DirectX::XMMatrixRotationQuaternion(DirectX::XMLoadFloat4(&m_rotate));
-	DirectX::XMMATRIX scale_matrix = DirectX::XMMatrixScaling(m_scale.x, m_scale.y, m_scale.z);
+	DirectX::XMMATRIX scale_matrix = DirectX::XMMatrixScaling(
+		m_scale.x + m_additional_scale.x, m_scale.y + m_additional_scale.y, m_scale.z + m_additional_scale.z);
 
 	DirectX::XMStoreFloat4x4(&m_world_matrix, scale_matrix * rotate_matrix * translate_matrix);
 }
@@ -268,6 +269,12 @@ void Object::Set_Rotate(float rotate_x, float rotate_y, float rotate_z, float ro
 
 void Object::Set_Scale(float scale_x, float scale_y, float scale_z) {
 	m_scale = DirectX::XMFLOAT3(scale_x, scale_y, scale_z);
+
+	m_dirty = true;
+}
+
+void Object::Set_Additional_Scale(float scale_x, float scale_y, float scale_z) {
+	m_additional_scale = DirectX::XMFLOAT3(scale_x, scale_y, scale_z);
 
 	m_dirty = true;
 }

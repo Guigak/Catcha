@@ -11,6 +11,9 @@ protected:
 	DirectX::XMFLOAT3 m_position = { 0.0f, 0.0f, 0.0f };
 	DirectX::XMFLOAT3 m_scale = { 0.0f, 0.0f, 0.0f };
 
+	//
+	DirectX::XMFLOAT3 m_additional_scale = { 0.0f, 0.0f, 0.0f };
+
 	DirectX::XMFLOAT3 m_look = { 0.0f, 0.0f, 1.0f };
 	DirectX::XMFLOAT3 m_up = { 0.0f, 1.0f, 0.0f };
 	DirectX::XMFLOAT3 m_right = { 1.0f, 0.0f, 0.0f };
@@ -61,7 +64,7 @@ protected:
 	//
 	Camera* m_camera = nullptr;
 
-	bool m_visiable = false;
+	bool m_visible = false;
 
 	//
 	BYTE m_camera_rotate_synchronization_flag = ROTATE_SYNC_NONE;
@@ -101,10 +104,17 @@ protected:
 	//
 	DirectX::XMFLOAT3 m_additional_info = DirectX::XMFLOAT3();
 
+	//
+	void (*m_custom_function_one)();
+	void (*m_custom_function_two)();
+	void (*m_custom_function_three)();
+
+	bool m_selectable = false;
+
 public:
 	Object() {}
-	Object(ObjectManager* object_manager, std::wstring object_name, Mesh_Info* mesh, DirectX::XMMATRIX world_matrix, UINT constant_buffer_index, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, bool physics, bool visiable);
-	Object(ObjectManager* object_manager, std::wstring object_name, std::vector<Mesh>& mesh_array, UINT constant_buffer_index, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, bool physics, bool visiable);
+	Object(ObjectManager* object_manager, std::wstring object_name, Mesh_Info* mesh, DirectX::XMMATRIX world_matrix, UINT constant_buffer_index, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, bool physics, bool visible);
+	Object(ObjectManager* object_manager, std::wstring object_name, std::vector<Mesh>& mesh_array, UINT constant_buffer_index, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, bool physics, bool visible);
 	virtual ~Object() {}
 
 	void Set_Object_Manager(ObjectManager* object_manager) { m_object_manager = object_manager; }
@@ -112,7 +122,7 @@ public:
 	void Set_CB_Index(UINT constant_buffer_index) { m_constant_buffer_index = constant_buffer_index; }
 	void Set_PT(D3D12_PRIMITIVE_TOPOLOGY primitive_topology) { m_primitive_topology = primitive_topology; }
 	void Set_Phys(bool physics) { m_physics = physics; }
-	void Set_Visiable(bool visiable) { m_visiable = visiable; }
+	void Set_Visible(bool visible) { m_visible = visible; }
 
 	//
 	DirectX::XMMATRIX Get_OBB_WM();
@@ -159,7 +169,7 @@ public:
 
 	float Get_Spd() { return m_speed; }
 
-	bool Get_Visiable() { return m_visiable; }
+	bool Get_Visible() { return m_visible; }
 
 	void Calc_Delta(float elapsed_time);
 	//void Move_N_Solve_Collision();
@@ -172,6 +182,9 @@ public:
 	void Set_Position(float position_x, float position_y, float position_z);
 	void Set_Rotate(float rotate_x, float rotate_y, float rotate_z, float rotate_w);
 	void Set_Scale(float scale_x, float scale_y, float scale_z);
+
+	//
+	void Set_Additional_Scale(float scale_x, float scale_y, float scale_z);
 
 	void Set_Position(DirectX::XMFLOAT3 position);
 	void Set_Rotate(DirectX::XMFLOAT4 rotate);
@@ -258,5 +271,21 @@ public:
 
 	//
 	DirectX::XMFLOAT3 Get_Additional_Info() { return m_additional_info; }
+
+	//
+	void Set_Custom_Fuction_One(void(*custom_function)()) { m_custom_function_one = custom_function; }
+	void Set_Custom_Fuction_Two(void(*custom_function)()) { m_custom_function_two = custom_function; }
+	void Set_Custom_Fuction_Three(void(*custom_function)()) { m_custom_function_three = custom_function; }
+
+	void Call_Custom_Function_One() { if (m_custom_function_one) { m_custom_function_one(); } }
+	void Call_Custom_Function_Two() { if (m_custom_function_two) { m_custom_function_two(); } }
+	void Call_Custom_Function_Three() { if (m_custom_function_three) { m_custom_function_three(); } }
+
+	bool Get_Selectable() { return m_selectable; }
+	void Set_Selectable(bool selectable) { m_selectable = selectable; }
+
+	//
+	virtual bool Picking(DirectX::XMFLOAT4 origin_ray, DirectX::XMFLOAT4 ray_direction,
+		DirectX::XMFLOAT4X4 inverse_view_matrix, float picking_distance) { return false; }
 };
 

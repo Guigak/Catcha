@@ -6,8 +6,6 @@
 #include "InputManager.h"
 #include "Shadowmap.h"
 
-class Camera;
-
 class SceneManager;
 class D3DManager;
 
@@ -87,6 +85,10 @@ protected:
 	//
 	float m_total_time = 0.0f;
 
+	//
+	int m_client_width;
+	int m_client_height;
+
 public:
 	Scene(std::wstring name, Scene* back_scene = nullptr) : m_name(name), m_back_scene(back_scene) {}
 
@@ -134,5 +136,8 @@ public:
 
 	//
 	float Get_Total_Time() { return m_total_time; }
+
+	//
+	virtual void Picking(POINTF screen_position) {}
 };
 

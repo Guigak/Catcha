@@ -2,6 +2,34 @@
 #include "ObjectManager.h"
 #include "Scene.h"
 
+void InputManager::Rst_Manager() {
+	//m_state[256] = { false };
+	//m_previous_state[256] = { false };
+
+	m_key_set.clear();
+
+	m_key_down_map.clear();
+	m_key_first_down_map.clear();
+	m_key_up_map.clear();
+
+	POINT m_previous_point = { -1, -1 };
+	for (size_t i = 0; i < 3; ++i) {
+		m_mouse_move_info[i] = BindingInfo();
+	}
+
+	//
+	m_captured = false;
+
+	m_client_width = 0;
+	m_client_height = 0;
+
+	m_hide_cursor = false;
+	m_fix_cursor = false;
+
+	//
+	m_screen_point = { -1, -1 };
+}
+
 void InputManager::Bind_Key_Down(int key_id, BindingInfo binding_info) {
 	m_key_down_map[key_id] = binding_info;
 	m_key_set.insert(key_id);
@@ -37,14 +65,18 @@ void InputManager::Prcs_Input_Msg(HWND hwnd, UINT message, WPARAM wparam, LPARAM
 	case WM_MBUTTONUP:
 		m_state[VK_MBUTTON] = false;
 		break;
+	case WM_MOUSEMOVE:
+		m_screen_point = { (int)(short)LOWORD(lparam), (int)(short)HIWORD(lparam) };
+		break;
 	default:
 		break;
 	}
 }
 
-void InputManager::Bind_Mouse_Move(BindingInfo binding_info_x, BindingInfo binding_info_y) {
-	m_mouse_move_info[0] = binding_info_x;
-	m_mouse_move_info[1] = binding_info_y;
+void InputManager::Bind_Mouse_Move(BindingInfo binding_info_xy, BindingInfo binding_info_x, BindingInfo binding_info_y) {
+	m_mouse_move_info[0] = binding_info_xy;
+	m_mouse_move_info[1] = binding_info_x;
+	m_mouse_move_info[2] = binding_info_y;
 }
 
 void InputManager::Prcs_Input() {
@@ -98,18 +130,38 @@ void InputManager::Prcs_Input() {
 	if (m_previous_point.x != -1 && m_previous_point.y != -1) {
 		BindingInfo binding_info;
 
-		if (m_previous_point.x != new_point.x) {
-			binding_info = m_mouse_move_info[0];
-			binding_info.value = std::get<float>(binding_info.value) * (float)(new_point.x - m_previous_point.x);
+		if (m_mouse_move_info[0].action == Action::ACTION_NONE) {
+			if (m_previous_point.x != new_point.x) {
+				binding_info = m_mouse_move_info[1];
+				binding_info.value = std::get<float>(binding_info.value) * (float)(new_point.x - m_previous_point.x);
 
-			Prcs_Binding_Info(binding_info);
+				Prcs_Binding_Info(binding_info);
+			}
+
+			if (m_previous_point.y != new_point.y) {
+				binding_info = m_mouse_move_info[2];
+				binding_info.value = std::get<float>(binding_info.value) * (float)(new_point.y - m_previous_point.y);
+
+				Prcs_Binding_Info(binding_info);
+			}
 		}
+		else {
+			if ((m_previous_point.x != new_point.x) || (m_previous_point.y != new_point.y)) {
+				binding_info = m_mouse_move_info[0];
+				
+				POINTF pointf = std::get<POINTF>(binding_info.value);
 
-		if (m_previous_point.y != new_point.y) {
-			binding_info = m_mouse_move_info[1];
-			binding_info.value = std::get<float>(binding_info.value) * (float)(new_point.y - m_previous_point.y);
+				if (pointf.x == 0.0f && pointf.y == 0.0f) {
+					binding_info.value = POINTF((float)m_screen_point.x, (float)m_screen_point.y);
+				}
+				else {
+					binding_info.value = POINTF(
+						pointf.x * ((float)(new_point.x - m_previous_point.x)),
+						pointf.y * ((float)(new_point.y - m_previous_point.y)));
+				}
 
-			Prcs_Binding_Info(binding_info);
+				Prcs_Binding_Info(binding_info);
+			}
 		}
 	}
 
@@ -185,6 +237,8 @@ void InputManager::Prcs_Binding_Info(BindingInfo binding_info) {
 		case Action::CUSTOM_FUNCTION_THREE:
 			m_scene->Custom_Function_Three();
 			break;
+		case Action::PICKING:
+			m_scene->Picking(std::get<POINTF>(binding_info.value));
 			break;
 		default:
 			break;

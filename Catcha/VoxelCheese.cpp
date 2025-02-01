@@ -18,8 +18,10 @@ void VoxelCheese::Get_Instance_Data(std::vector<InstanceData>& instance_data_arr
 }
 
 void VoxelCheese::Rst_Voxel(float position_x, float position_y, float position_z, float scale, UINT detail_level) {
-	m_instance_data_array.clear();
-	m_instance_data_array.shrink_to_fit();
+	//m_instance_data_array.clear();
+	//m_instance_data_array.shrink_to_fit();
+
+	m_instance_data_array = std::vector<InstanceData>();
 
 	DirectX::XMFLOAT3 position = DirectX::XMFLOAT3(position_x, position_y, position_z);
 	DirectX::XMFLOAT3 pivot_position = position;

@@ -1,5 +1,33 @@
 #include "NetworkManager.h"
 #include "VoxelCheese.h"
+#include "ParticleObject.h"
+
+constexpr DirectX::XMFLOAT3 CHARACTER_POS[9] =
+{
+	DirectX::XMFLOAT3(10.0f, FLOOR_Y, 10.0f),					// Mouse1
+	DirectX::XMFLOAT3(-10.0f, FLOOR_Y, 10.0f),					// Mouse2
+	DirectX::XMFLOAT3(10.0f, FLOOR_Y, -10.0f),					// Mouse3
+	DirectX::XMFLOAT3(-10.0f, FLOOR_Y, -10.0f),					// Mouse4
+	DirectX::XMFLOAT3(0.0f, FLOOR_Y, 0.0f),						// AI1
+	DirectX::XMFLOAT3(0.0f, FLOOR_Y, 0.0f),						// AI2
+	DirectX::XMFLOAT3(0.0f, FLOOR_Y, 0.0f),						// AI3
+	DirectX::XMFLOAT3(0.0f, FLOOR_Y, 0.0f),						// AI4
+	DirectX::XMFLOAT3(437.225f, FLOOR_Y, -117.493f)				// CAT
+};
+
+constexpr DirectX::XMFLOAT4 CHARACTER_ROTATION[9] =
+{
+	DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),					// Mouse1
+	DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),					// Mouse2
+	DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 0.0f),					// Mouse3
+	DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 0.0f),					// Mouse4
+	DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),					// AI1
+	DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),					// AI2
+	DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),					// AI3
+	DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),					// AI4
+	DirectX::XMFLOAT4(0.0f, -0.7071f, 0.0f, 0.7071f)			// CAT
+};
+
 
 void print_error(const char* msg, int err_no)
 {
@@ -292,6 +320,7 @@ void NetworkManager::ProcessPacket(char* ptr)
 		SC_ADD_PLAYER_PACKET* p = reinterpret_cast<SC_ADD_PLAYER_PACKET*>(ptr);
 		int id = p->id;
 		int character_id = static_cast<int>(p->character_num);
+		// 캐릭터 축가
 		characters[id].character_id = character_id;
 
 		DirectX::XMFLOAT3 coord = { static_cast<float>(p->x), static_cast<float>(p->y), static_cast<float>(p->z) };
@@ -300,7 +329,8 @@ void NetworkManager::ProcessPacket(char* ptr)
 		characters[id].Location = coord;
 
 		m_objects[characters[id].character_id]->Set_Look(quat);
-		m_objects[characters[id].character_id]->Set_Position(coord.x, coord.y, coord.z);
+		m_objects[characters[id].character_id]->Set_Position(coord);
+		m_objects[characters[id].character_id]->SetTargetPosition(coord);
 
 		if (id == m_myid)
 		{
@@ -336,6 +366,13 @@ void NetworkManager::ProcessPacket(char* ptr)
 		if (true == cat_attacked)
 		{
 			m_objects[characters[id].character_id]->Set_Color_Mul(1.0f, 0.0f, 0.0f, 1.0f);
+			m_particle_object->Add_Particle(
+				m_objects[characters[id].character_id]->Get_Position_3f(),
+				DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f),
+				DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f),
+				20,
+				*m_total_time
+			);
 		}
 		else
 		{
@@ -360,7 +397,7 @@ void NetworkManager::ProcessPacket(char* ptr)
 			
 			characters[m_myid].Location = coord;
 			m_objects[characters[m_myid].character_id]->SetTargetPosition(coord);
-			m_objects[characters[m_myid].character_id]->Set_Look(quat);
+			m_objects[characters[m_myid].character_id]->Set_Rotate(quat);
 
 			// 다시 서버로 동기화 패킷 전송
 			CS_SYNC_PLAYER_PACKET sync;
@@ -404,6 +441,13 @@ void NetworkManager::ProcessPacket(char* ptr)
 			{
 				observer->InitCamera();
 			}
+			m_particle_object->Add_Particle(
+				m_objects[characters[id].character_id]->Get_Position_3f(),
+				DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f),
+				DirectX::XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f),
+				20,
+				*m_total_time
+			);
 		}
 		else
 		{
@@ -411,6 +455,13 @@ void NetworkManager::ProcessPacket(char* ptr)
 			characters[id].character_id = new_character_num;
 			m_objects[characters[id].character_id]->SetLerpDegree(4.0f);
 			m_objects[characters[id].character_id]->SetTargetQuat(DirectX::XMFLOAT4{ 0.0f, 0.0f, 0.0f, 1.0f });
+			m_particle_object->Add_Particle(
+				m_objects[characters[id].character_id]->Get_Position_3f(),
+				DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f),
+				DirectX::XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f),
+				20,
+				*m_total_time
+			);
 		}
 		break;
 	}
@@ -439,7 +490,13 @@ void NetworkManager::ProcessPacket(char* ptr)
 		DirectX::XMFLOAT3 sphere_center {p->center_x, p->center_y, p->center_z};
 		float radius = 5.0f;
 		m_cheeses[cheese_num]->Remove_Sphere_Voxel(sphere_center, radius);
-		
+		m_particle_object->Add_Particle(
+			sphere_center,
+			DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f),
+			DirectX::XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f), 
+			20, 
+			*m_total_time
+		);
 		break;
 	}
 	case SC_AI_MOVE:
@@ -483,6 +540,11 @@ void NetworkManager::ProcessPacket(char* ptr)
 
 		break;
 	}
+	case SC_GAME_START:
+	{
+		InitialzeCharacters();
+		break;
+	}
 	default:
 	{
 		printf("Unknown PACKET type [%d]\n", ptr[1]);
@@ -505,10 +567,10 @@ void NetworkManager::ChangeOwnCharacter(int character_id, int new_number)
 			m_objects[character_id]->Set_Name(L"free_mode");
 
 			// 접속전 기본 캐릭터 안보이게 설정
-			if (m_objects[character_id]->Get_Character_Number() == -1)
+			if (m_objects[character_id]->Get_Character_Number() == NUM_GHOST)
 			{
 				m_objects[character_id]->Set_Visiable(false);
-				m_objects[character_id]->Set_Position(0.0f, -999.0f, 0.0f);
+				m_objects[character_id]->Set_Position(-999.0f, -999.0f, -999.0f);
 			}
 
 			character->Set_Name(L"player");
@@ -531,4 +593,22 @@ void NetworkManager::ChangeOwnCharacter(int character_id, int new_number)
 			break;
 		}
 	}
+}
+
+
+void NetworkManager::InitialzeCharacters()
+{
+	for(int i = NUM_MOUSE1; i <= NUM_CAT; ++i)
+	{
+		m_objects[i]->SetTargetPosition(CHARACTER_POS[i]);
+		m_objects[i]->Set_Position(CHARACTER_POS[i]);
+		m_objects[i]->SetTargetQuat(CHARACTER_ROTATION[i]);
+		m_objects[i]->Set_Rotate(CHARACTER_ROTATION[i++]);
+	}
+
+	for (auto& observer : m_observers)
+	{
+		observer->InitCamera(CHARACTER_ROTATION[characters[m_myid].character_id]);
+	}
+
 }

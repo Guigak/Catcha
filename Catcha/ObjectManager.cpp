@@ -478,6 +478,9 @@ Object* ObjectManager::Add_Particle_Obj(std::wstring object_name) {
     m_instance_objects.emplace_back(object_pointer);
     m_particle_objects.emplace_back(object_pointer);
 
+    // [CS] 파티클 등록
+    NetworkManager::GetInstance().AddParticleObject(*(ParticleObject*)object_pointer);
+
     m_object_set_map[L"Particle"].emplace_back(object_pointer);
 
     return m_object_map[object_name].get();
@@ -508,8 +511,8 @@ void ObjectManager::Set_Camera_4_Server(std::wstring camera_name, bool NeedSend)
     camera->Set_Camera_Need_Send(NeedSend);
 }
 
-void ObjectManager::Set_Camera_Init_4_Server(std::wstring camera_name)
+void ObjectManager::Set_Camera_Init_4_Server(std::wstring camera_name, DirectX::XMFLOAT4 rotate_quat)
 {
 	Camera* camera = (Camera*)Get_Obj(camera_name);
-    camera->Set_Rotate(DirectX::XMFLOAT4(0, 0, 0, 1));
+    camera->Set_Rotate(rotate_quat);
 }

@@ -75,23 +75,23 @@ void TestScene::Exit(D3DManager* d3d_manager) {
 
 void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
 	// test
-	static int count = 0;
+	//static int count = 0;
 
-	count++;
+	//count++;
 
-	if (count == 20) {
-		((ParticleObject*)m_object_manager->Get_Obj(L"particle"))->Add_Particle(
-			DirectX::XMFLOAT3(0.0f, 100.0f, 0.0f), DirectX::XMFLOAT3(5.0f, 5.0f, 5.0f),
-			DirectX::XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f), 20, m_total_time);
-	}
-	else if (count == 40) {
-		((ParticleObject*)m_object_manager->Get_Obj(L"particle"))->Add_Particle(
-			DirectX::XMFLOAT3(0.0f, 100.0f, 0.0f), DirectX::XMFLOAT3(5.0f, 5.0f, 5.0f),
-			DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f), 20, m_total_time);
+	//if (count == 20) {
+	//	((ParticleObject*)m_object_manager->Get_Obj(L"particle"))->Add_Particle(
+	//		DirectX::XMFLOAT3(0.0f, 100.0f, 0.0f), DirectX::XMFLOAT3(5.0f, 5.0f, 5.0f),
+	//		DirectX::XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f), 20, m_total_time);
+	//}
+	//else if (count == 40) {
+	//	((ParticleObject*)m_object_manager->Get_Obj(L"particle"))->Add_Particle(
+	//		DirectX::XMFLOAT3(0.0f, 100.0f, 0.0f), DirectX::XMFLOAT3(5.0f, 5.0f, 5.0f),
+	//		DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f), 20, m_total_time);
 
 
-		count = 0;
-	}
+	//	count = 0;
+	//}
 
 	((TextUIObject*)m_object_manager->Get_Obj(L"total_time"))->Set_Text(std::to_wstring((int)m_total_time));
 	//
@@ -992,7 +992,7 @@ void TestScene::Build_Mesh(ID3D12Device* device, ID3D12GraphicsCommandList* comm
 	m_object_manager->Ipt_From_FBX(L"mouse_jump_idle.fbx", true, false, true, ANIMATION_INFO, L"mouse_mesh_edit.fbx");
 	m_object_manager->Ipt_From_FBX(L"mouse_jump_end.fbx", true, false, true, ANIMATION_INFO, L"mouse_mesh_edit.fbx");
 
-	m_object_manager->Ipt_From_FBX(L"house.fbx", false, true, false, MESH_INFO | MATERIAL_INFO);
+	m_object_manager->Ipt_From_FBX(L"housee.fbx", false, true, false, MESH_INFO | MATERIAL_INFO);
 
 	m_object_manager->Build_BV(device, command_list);
 }
@@ -1045,13 +1045,6 @@ void TestScene::Build_O() {
 		{
 			object->SetLerpDegree(50.0f);
 		}
-		/*m_object_manager->Add_Col_OBB_Obj(L"mouse" + std::to_wstring(i) + L"_OBB_",
-			DirectX::BoundingOrientedBox(
-				DirectX::XMFLOAT3(0.00781226f, 2.38999f, 0.004617309f),
-				DirectX::XMFLOAT3(3.864098f, 5.104148f, 10.92712f),
-				DirectX::XMFLOAT4(0, 0, 0, 1)
-			)
-		);*/
 	}
 
 	object = m_object_manager->Get_Obj(L"cat");
@@ -1064,13 +1057,6 @@ void TestScene::Build_O() {
 	object->Set_Animated(true);
 	object->Set_Phys(true);
 	object->TP_Down(999.0f);
-	/*m_object_manager->Add_Col_OBB_Obj(L"cat_OBB_",
-		DirectX::BoundingOrientedBox(
-			DirectX::XMFLOAT3(-6.570594E-05f, 19.85514f, 1.016994f),
-			DirectX::XMFLOAT3(26.47168f, 53.77291f, 39.95445f),
-			DirectX::XMFLOAT4(-0.7071068f, 0.0f, 0.0f, 0.7071068f)
-		)
-	);*/
 
 	m_object_manager->Add_Obj(L"player", L"mouse_mesh_edit.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
 	m_object_manager->Set_Sklt_2_Obj(L"player", L"mouse_mesh_edit.fbx");
@@ -1111,13 +1097,13 @@ void TestScene::Build_O() {
 	m_object_manager->Add_Voxel_Cheese(L"cheese" + std::to_wstring(cheese_count++),
 		DirectX::XMFLOAT3(169.475f, 10.049f, 230.732f), 1.0f, 2);
 	m_object_manager->Add_Voxel_Cheese(L"cheese" + std::to_wstring(cheese_count++),
-		DirectX::XMFLOAT3(169.475f, 10.049f, 270.732f), 1.0f, 2);
-	//m_object_manager->Add_Voxel_Cheese(L"cheese" + std::to_wstring(cheese_count++),
-	//	DirectX::XMFLOAT3(169.475f, 10.049f, 300.732f), 1.0f, 1);
-	//m_object_manager->Add_Voxel_Cheese(L"cheese" + std::to_wstring(cheese_count++),
-	//	DirectX::XMFLOAT3(169.475f, 10.049f, 330.732f), 1.0f, 1);
-	/*m_object_manager->Add_Voxel_Cheese(L"cheese" + std::to_wstring(cheese_count++),
-		DirectX::XMFLOAT3(254.871f, 10.049f, 311.188f), 1.0f);*/
+		DirectX::XMFLOAT3(441.877f, 15.263f, 466.983f), 1.0f, 2);
+	m_object_manager->Add_Voxel_Cheese(L"cheese" + std::to_wstring(cheese_count++),
+		DirectX::XMFLOAT3(135.288f, 21.432f, -504.089f), 1.0f, 2);
+	m_object_manager->Add_Voxel_Cheese(L"cheese" + std::to_wstring(cheese_count++),
+		DirectX::XMFLOAT3(-550.68f, -8.712f, 468.083f), 1.0f, 2);
+	m_object_manager->Add_Voxel_Cheese(L"cheese" + std::to_wstring(cheese_count++),
+		DirectX::XMFLOAT3(-540.713f, -61.436f, -448.526f), 1.0f, 2);
 
 	//
 	object = m_object_manager->Add_Text_UI_Obj(L"aim_circle", 0.0f, 0.0f, 0.02f, 0.02f);
@@ -1135,6 +1121,9 @@ void TestScene::Build_O() {
 
 	//
 	object = m_object_manager->Add_Particle_Obj(L"particle");
+
+	// [CS] total 타임 추가
+	NetworkManager::GetInstance().SetTotalTime(m_total_time);
 }
 
 void TestScene::Build_C(D3DManager* d3d_manager) {
@@ -1585,7 +1574,7 @@ void TestScene::CharacterChange(bool is_cat, const std::wstring& key1, const std
 	}
 }
 
-void TestScene::InitCamera()
+void TestScene::InitCamera(DirectX::XMFLOAT4 rotate_quat)
 {
-	m_object_manager->Set_Camera_Init_4_Server(L"maincamera");
+	m_object_manager->Set_Camera_Init_4_Server(L"maincamera", rotate_quat);
 }

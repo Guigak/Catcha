@@ -144,6 +144,6 @@ public:
 	float Get_Total_Time() { return m_total_time; }
 
 	virtual void CharacterChange(bool is_cat, const std::wstring& key1, const std::wstring& key2) = 0;		// 옵저버를 이용한 캐릭터 변경
-	virtual void InitCamera() = 0;	// 접속시 카메라 값 초기화
+	virtual void InitCamera(DirectX::XMFLOAT4 rotate_quat = DirectX::XMFLOAT4{ 0.0f, 0.0f, 0.0f, 1.0f }) = 0;	// 접속시 카메라 값 초기화
 };
 

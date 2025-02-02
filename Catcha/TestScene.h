@@ -44,6 +44,6 @@ public:
 	void Del_Voxel(int cheese_index, int voxel_index);
 
 	void CharacterChange(bool is_cat, const std::wstring& key1, const std::wstring& key2) override;		// 옵저버를 이용한 캐릭터 변경
-	void InitCamera() override;	// 접속시 카메라 값 초기화
+	void InitCamera(DirectX::XMFLOAT4 rotate_quat = DirectX::XMFLOAT4{ 0.0f, 0.0f, 0.0f, 1.0f }) override;	// 접속시 카메라 값 초기화
 };
 

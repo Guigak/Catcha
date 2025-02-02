@@ -6,7 +6,7 @@ public:
     virtual ~NetworkObserver() = default;
 
     // 접속시 카메라 값 초기화
-    virtual void InitCamera() = 0;
+    virtual void InitCamera(DirectX::XMFLOAT4 rotate_quat = DirectX::XMFLOAT4{ 0.0f, 0.0f, 0.0f, 1.0f }) = 0;
 
     // 캐릭터가 변경되었을 때 호출될 함수
     virtual void CharacterChange(bool is_cat, const std::wstring& key1, const std::wstring& key2) = 0;

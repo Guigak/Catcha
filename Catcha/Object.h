@@ -111,6 +111,9 @@ protected:
 
 	bool m_selectable = false;
 
+	//
+	bool m_shade = true;
+
 public:
 	Object() {}
 	Object(ObjectManager* object_manager, std::wstring object_name, Mesh_Info* mesh, DirectX::XMMATRIX world_matrix, UINT constant_buffer_index, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, bool physics, bool visible);
@@ -290,5 +293,9 @@ public:
 	//
 	virtual bool Picking(DirectX::XMFLOAT4 origin_ray, DirectX::XMFLOAT4 ray_direction,
 		DirectX::XMFLOAT4X4 inverse_view_matrix, float picking_distance) { return false; }
+
+	//
+	bool Get_Shade() { return m_shade; }
+	void Set_Shade(bool shade) { m_shade = shade; }
 };
 

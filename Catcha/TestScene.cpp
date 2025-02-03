@@ -396,13 +396,13 @@ void TestScene::Draw(D3DManager* d3d_manager, ID3D12CommandList** command_lists)
 		frustum_OBB.Transform(frustum_OBB, MathHelper::Inverse(XMFLOAT4X4_2_XMMATRIX(m_light_view_matrix)));
 
 		for (auto& object : m_object_manager->Get_Opaque_Obj_Arr()) {
-			if (object->Get_Name() == L"Ceiling") {
-				continue;
-			}
-
-			//if (!object->Get_Visible()) {
+			//if (object->Get_Name() == L"Ceiling") {
 			//	continue;
 			//}
+
+			if (!object->Get_Shade()) {
+				continue;
+			}
 
 			UINT object_CBV_index = m_current_frameresource_index * (UINT)m_object_manager->Get_Obj_Count() + object->Get_CB_Index();
 			auto object_CBV_gpu_descriptor_handle = D3D12_GPU_DESCRIPTOR_HANDLE_EX(m_CBV_heap->GetGPUDescriptorHandleForHeapStart());
@@ -884,7 +884,8 @@ void TestScene::Load_Texture(ID3D12Device* device, ID3D12GraphicsCommandList* co
 	//
 	auto ui_texture = std::make_unique<Texture_Info>();
 	ui_texture->name = L"test_ui";
-	ui_texture->file_name = L"test_ui.dds";
+	ui_texture->file_name = L"ui_sample.dds";
+	//ui_texture->file_name = L"test_ui.dds";
 	ui_texture->buffer_index = (UINT)m_texture_map.size();
 	Throw_If_Failed(TextureLoader::Create_DDS_Texture_From_File(
 		device, command_list,
@@ -1039,6 +1040,9 @@ void TestScene::Build_Mesh(ID3D12Device* device, ID3D12GraphicsCommandList* comm
 	m_object_manager->Ipt_From_FBX(L"cat_jump_test_start.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
 	m_object_manager->Ipt_From_FBX(L"cat_jump_test_idle.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
 	m_object_manager->Ipt_From_FBX(L"cat_jump_test_end.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
+	m_object_manager->Ipt_From_FBX(L"cat_damage.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
+	m_object_manager->Ipt_From_FBX(L"cat_win_0.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
+	m_object_manager->Ipt_From_FBX(L"cat_lose_0.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
 
 	m_object_manager->Ipt_From_FBX(L"mouse_mesh_edit.fbx", true, false, true, MESH_INFO | SKELETON_INFO | MATERIAL_INFO);
 	m_object_manager->Ipt_From_FBX(L"mouse_death.fbx", true, false, true, ANIMATION_INFO, L"mouse_mesh_edit.fbx");
@@ -1050,8 +1054,11 @@ void TestScene::Build_Mesh(ID3D12Device* device, ID3D12GraphicsCommandList* comm
 	m_object_manager->Ipt_From_FBX(L"mouse_jump_start.fbx", true, false, true, ANIMATION_INFO, L"mouse_mesh_edit.fbx");
 	m_object_manager->Ipt_From_FBX(L"mouse_jump_idle.fbx", true, false, true, ANIMATION_INFO, L"mouse_mesh_edit.fbx");
 	m_object_manager->Ipt_From_FBX(L"mouse_jump_end.fbx", true, false, true, ANIMATION_INFO, L"mouse_mesh_edit.fbx");
+	m_object_manager->Ipt_From_FBX(L"mouse_win_0.fbx", true, false, true, ANIMATION_INFO, L"mouse_mesh_edit.fbx");
+	m_object_manager->Ipt_From_FBX(L"mouse_lose_0.fbx", true, false, true, ANIMATION_INFO, L"mouse_mesh_edit.fbx");
 
-	m_object_manager->Ipt_From_FBX(L"house.fbx", false, true, false, MESH_INFO | MATERIAL_INFO);
+	m_object_manager->Ipt_From_FBX(L"housee.fbx", false, true, false, MESH_INFO | MATERIAL_INFO);
+	m_object_manager->Get_Obj(L"Ceiling")->Set_Shade(false);
 
 	m_object_manager->Build_BV(device, command_list);
 }
@@ -1112,7 +1119,7 @@ void TestScene::Build_O() {
 	object->TP_Forward(200.0f);
 	object->TP_Right(80.0f);
 	object->Rotate_Pitch(4.0f);
-	object->Bind_Anim_2_State(Object_State::STATE_IDLE, Animation_Binding_Info(L"mouse_idle.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
+	object->Bind_Anim_2_State(Object_State::STATE_IDLE, Animation_Binding_Info(L"mouse_win_0.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
 	object->Set_Animated(true);
 
 	object = m_object_manager->Get_Obj(L"cat_test");
@@ -1124,7 +1131,7 @@ void TestScene::Build_O() {
 	object->Set_Animated(true);
 
 	int cheese_count = 0;
-	m_object_manager->Add_Voxel_Cheese(L"cheese_" + std::to_wstring(cheese_count++),
+	m_object_manager->Add_Voxel_Cheese(L"voxel_cheese_" + std::to_wstring(cheese_count++),
 		DirectX::XMFLOAT3(50.0f, -59.0f, 100.0f), 1.0f, 0);
 
 	// main scene ui
@@ -1139,7 +1146,7 @@ void TestScene::Build_O() {
 	((TextUIObject*)object)->Set_Text(L"게임 종료");
 
 	object = m_object_manager->Add_UI_Obj(L"catcha_title", -0.3f, 0.4f, 1.0f, 0.75f,
-		2040, 1200, 0.0f, 0.0f, 1080.0f, 1920.0f, false, true);
+		2880, 1755, 0.0f, 1920.0f, 405.0f, 2880.0f, false, true);
 
 	// matching scene
 	object = m_object_manager->Add_Text_UI_Obj(L"select_animal", -0.85f, 0.8f, 0.2f, 0.2f, false, false);
@@ -1152,21 +1159,42 @@ void TestScene::Build_O() {
 	((TextUIObject*)object)->Set_Text(L"메인으로");
 
 	object = m_object_manager->Add_UI_Obj(L"select_cat", -0.5f, -0.05f, 0.75f, 1.25f,
-		2040, 1200, 0.0f, 0.0f, 1080.0f, 1920.0f, true, false);
+		2880, 1755, 405.0f, 1920.0f, 1080.0f, 2640.0f, true, false);
 	object->Set_Custom_Fuction_One(Select_Cat_UI_Function);
 
 	object = m_object_manager->Add_UI_Obj(L"select_mouse", 0.5f, -0.05f, 0.75f, 1.25f,
-		2040, 1200, 0.0f, 0.0f, 1080.0f, 1920.0f, true, false);
+		2880, 1755, 1080.0f, 1920.0f, 1755.0f, 2640.0f, true, false);
 	object->Set_Custom_Fuction_One(Select_Mouse_UI_Function);
 
 	// game play scene ui
-	object = m_object_manager->Add_Text_UI_Obj(L"aim_circle", 0.0f, 0.0f, 0.02f, 0.02f);
+	object = m_object_manager->Add_Text_UI_Obj(L"aim_circle", 0.0f, 0.0f, 0.02f, 0.02f, false, false);
 	object->Set_Color_Mul(1.0f, 1.0f, 0.0f, 1.0f);
 	((TextUIObject*)object)->Set_Text(L"○");
-	object->Set_Visible(false);
+
+	object = m_object_manager->Add_Text_UI_Obj(L"timer", -0.05f, 0.9f, 0.1f, 0.1f, false, false);
+	object->Set_Color_Mul(0.0f, 0.0f, 0.0f, 1.0f);
+	((TextUIObject*)object)->Set_Text(L"300");
 
 	object = m_object_manager->Add_UI_Obj(L"game_play_ui", 0.0f, 0.0f, 2.0f, 2.0f,
-		2040, 1200, 0.0f, 0.0f, 1080.0f, 1920.0f, false, false);
+		2880, 1755, 0.0f, 0.0f, 1080.0f, 1920.0f, false, false);
+
+	object = m_object_manager->Add_UI_Obj(L"portrait", -1.0f + (100.0f / 960.0f), -1.0f + (100.0f / 540.0f), 250.0f / 960.0f, 250.0f / 540.0f,
+		2880, 1755, 1080.0f, 960.0f, 1330.0f, 1210.0f, false, false);
+
+	for (int i = 0; i < 4; ++i) {
+		object = m_object_manager->Add_UI_Obj(L"mouse_icon_" + std::to_wstring(i), -(0.675f - (float)i * 0.125f), 1.0f - (50.0f / 540.0f), 100.0f / 960.0f, 100.0f / 540.0f,
+			2880, 1755, 1330.0f, 960.0f, 1580.0f, 1210.0f, false, false);
+	}
+
+	for (int i = 0; i < 4; ++i) {
+		object = m_object_manager->Add_UI_Obj(L"mouse_icon_" + std::to_wstring(i + 4), 0.3f + (float)i * 0.125f, 1.0f - (50.0f / 540.0f), 100.0f / 960.0f, 100.0f / 540.0f,
+			2880, 1755, 1330.0f, 1210.0f, 1580.0f, 1460.0f, false, false);
+	}
+
+	for (int i = 0; i < 4; ++i) {
+		object = m_object_manager->Add_UI_Obj(L"cheese_icon_" + std::to_wstring(i), -0.12f + (float)i * 0.08f, 0.75f, 100.0f / 960.0f, 100.0f / 540.0f,
+			2880, 1755, 1080.0f, 1460.0f, 1180.0f, 1560.0f, false, false);
+	}
 
 	// test //
 	object = m_object_manager->Add_Text_UI_Obj(L"result_test", 0.0f, 0.0f, 0.1f, 0.1f, true, true);
@@ -1658,7 +1686,17 @@ void TestScene::Chg_Scene_State(Scene_State scene_state) {
 		break;
 	case Scene_State::PLAY_STATE:
 		m_object_manager->Get_Obj(L"aim_circle")->Set_Visible(true);
+		m_object_manager->Get_Obj(L"timer")->Set_Visible(true);
 		m_object_manager->Get_Obj(L"game_play_ui")->Set_Visible(true);
+		m_object_manager->Get_Obj(L"portrait")->Set_Visible(true);
+
+		for (int i = 0; i < 8; ++i) {
+			m_object_manager->Get_Obj(L"mouse_icon_" + std::to_wstring(i))->Set_Visible(true);
+		}
+
+		for (int i = 0; i < 4; ++i) {
+			m_object_manager->Get_Obj(L"cheese_icon_" + std::to_wstring(i))->Set_Visible(true);
+		}
 
 		//
 		m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"player",

@@ -57,6 +57,10 @@
 // fbx sdk
 #include "fbxsdk.h"
 
+// fmod
+#include <fmod.hpp>
+#include <fmod_errors.h>
+
 // constant
 constexpr int CLIENT_WIDTH = 1600;
 constexpr int CLIENT_HEIGHT = 900;

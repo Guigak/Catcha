@@ -6,6 +6,8 @@
 #include "TextUIObject.h"
 #include "ParticleObject.h"
 
+#include "SoundManager.h"
+
 #define PASS_NUMBER 2
 
 UINT m_voxel_count = 0;
@@ -79,6 +81,11 @@ void TestScene::Enter(D3DManager* d3d_manager) {
 	//
 	m_client_width = d3d_manager->Get_Client_Width();
 	m_client_height = d3d_manager->Get_Client_Height();
+
+	//
+	SoundManager* sound_manager = SoundManager::Get_Inst();
+	sound_manager->Add_Sound(L"Work_of_a_cat.mp3", FMOD_2D | FMOD_LOOP_NORMAL | FMOD_CREATESTREAM);
+	sound_manager->Play_Sound(L"bgm", L"Work_of_a_cat.mp3");
 }
 
 void TestScene::Exit(D3DManager* d3d_manager) {
@@ -1119,7 +1126,7 @@ void TestScene::Build_O() {
 	object->TP_Forward(200.0f);
 	object->TP_Right(80.0f);
 	object->Rotate_Pitch(4.0f);
-	object->Bind_Anim_2_State(Object_State::STATE_IDLE, Animation_Binding_Info(L"mouse_win_0.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
+	object->Bind_Anim_2_State(Object_State::STATE_IDLE, Animation_Binding_Info(L"mouse_lose_0.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
 	object->Set_Animated(true);
 
 	object = m_object_manager->Get_Obj(L"cat_test");
@@ -1127,7 +1134,7 @@ void TestScene::Build_O() {
 	object->TP_Forward(200.0f);
 	object->TP_Right(100.0f);
 	object->Rotate_Pitch(4.0f);
-	object->Bind_Anim_2_State(Object_State::STATE_IDLE, Animation_Binding_Info(L"cat_idle.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
+	object->Bind_Anim_2_State(Object_State::STATE_IDLE, Animation_Binding_Info(L"cat_win_0.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
 	object->Set_Animated(true);
 
 	int cheese_count = 0;

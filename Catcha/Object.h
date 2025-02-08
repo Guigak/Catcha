@@ -297,5 +297,11 @@ public:
 	//
 	bool Get_Shade() { return m_shade; }
 	void Set_Shade(bool shade) { m_shade = shade; }
+
+	//
+	DirectX::XMFLOAT3* Get_Position_Addr() { return &m_position; }	// Get Position Address
+	DirectX::XMFLOAT3* Get_Velocity_Addr() { return &m_velocity; }	// Get Position Address
+	DirectX::XMFLOAT3* Get_Look_Addr() { return &m_look; }	// Get Position Address
+	DirectX::XMFLOAT3* Get_Up_Addr() { return &m_up; }	// Get Position Address
 };
 

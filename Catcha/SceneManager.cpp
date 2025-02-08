@@ -47,7 +47,11 @@ void SceneManager::Chg_Scene(std::unique_ptr<Scene> scene) {
 
 void SceneManager::Chg_Scene(std::wstring scene_name, std::wstring back_scene_name) {
 	if (!m_scene_stack.empty()) {
-		m_scene_stack.top()->Exit(m_d3d_manager);
+		Scene* scene_pointer = m_scene_stack.top();
+
+		scene_pointer->Exit(m_d3d_manager);
+		m_scene_map.erase(scene_pointer->Get_Name());
+
 		m_scene_stack.pop();
 	}
 
@@ -111,7 +115,7 @@ std::unique_ptr<Scene> SceneManager::Crt_Scene(std::wstring scene_name) {
 		auto result = std::make_unique<DummyScene>(scene_name);
 		return result;
 	}
-	else if (scene_name == L"Test") {
+	else if (scene_name == L"Test" || scene_name == L"Test2") {
 		auto result = std::make_unique<TestScene>(scene_name);
 		return result;
 	}

@@ -38,6 +38,9 @@ private:
 	DirectX::XMFLOAT3 m_target_position = { 0.0f, 0.0f, 0.0f };
 	float m_lagging_degree = 1.0f;
 
+	// 
+	float m_freezing_time = 0.0f;
+
 public:
 	Camera();
 	virtual ~Camera() {}
@@ -82,4 +85,6 @@ public:
 	void Set_Target_Position(float target_position_x, float target_position_y, float target_position_z);
 
 	void Set_Lagging_Degree(float lagging_degree) { m_lagging_degree = lagging_degree; }
+
+	void Set_Freezing_Time(float time) { m_freezing_time = time; }
 };

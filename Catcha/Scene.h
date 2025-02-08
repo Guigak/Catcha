@@ -7,8 +7,6 @@
 #include "Shadowmap.h"
 #include "NetworkObserver.h"
 
-class Camera;
-
 class SceneManager;
 class D3DManager;
 
@@ -88,6 +86,10 @@ protected:
 	//
 	float m_total_time = 0.0f;
 
+	//
+	int m_client_width;
+	int m_client_height;
+
 public:
 	Scene(std::wstring name, Scene* back_scene = nullptr) : m_name(name), m_back_scene(back_scene) {
 		// NetworkManager에 현재 TestScene을 옵저버로 등록
@@ -142,6 +144,9 @@ public:
 
 	//
 	float Get_Total_Time() { return m_total_time; }
+
+	//
+	virtual void Picking(POINTF screen_position) {}
 
 	virtual void CharacterChange(bool is_cat, const std::wstring& key1, const std::wstring& key2) = 0;		// 옵저버를 이용한 캐릭터 변경
 	virtual void InitCamera(DirectX::XMFLOAT4 rotate_quat = DirectX::XMFLOAT4{ 0.0f, 0.0f, 0.0f, 1.0f }) = 0;	// 접속시 카메라 값 초기화

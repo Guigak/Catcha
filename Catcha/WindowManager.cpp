@@ -126,6 +126,7 @@ LRESULT CALLBACK Main_Wnd_Proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lp
     case WM_RBUTTONDOWN:
     case WM_MBUTTONUP:
     case WM_MBUTTONDOWN:
+    case WM_MOUSEMOVE:
         if (m_scene_manager) {
             m_scene_manager->Prcs_Input_Msg(hwnd, message, wparam, lparam);
         }

@@ -76,6 +76,10 @@ extern void print_error(const char* msg, int err_no);
 // fbx sdk
 #include "fbxsdk.h"
 
+// fmod
+#include <fmod.hpp>
+#include <fmod_errors.h>
+
 // constant
 constexpr int CLIENT_WIDTH = 1600;
 constexpr int CLIENT_HEIGHT = 900;
@@ -244,6 +248,12 @@ struct MathHelper {
 		return  DirectX::XMMatrixInverse(nullptr, m);
 	}
 
+	static DirectX::XMMATRIX Transpose(DirectX::XMMATRIX m) {
+		m.r[3] = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
+
+		return DirectX::XMMatrixTranspose(m);
+	}
+
 	static DirectX::XMFLOAT4X4 Identity_4x4() {
 		static DirectX::XMFLOAT4X4 identity{
 			1.0f, 0.0f, 0.0f, 0.0f,
@@ -283,11 +293,38 @@ struct MathHelper {
 		return result;
 	}
 
+	static DirectX::XMFLOAT3 Multiply(const DirectX::XMFLOAT3& xmfloat3, const DirectX::XMFLOAT4X4& xmfloat4x4) {
+		DirectX::XMVECTOR vector = DirectX::XMLoadFloat3(&xmfloat3);
+
+		DirectX::XMFLOAT3 result;
+		DirectX::XMStoreFloat3(&result, DirectX::XMVector3Transform(vector, DirectX::XMLoadFloat4x4(&xmfloat4x4)));
+
+		return result;
+	}
+
 	static DirectX::XMFLOAT3 Multiply(const DirectX::XMFLOAT3& xmfloat3, const DirectX::XMMATRIX& matrix) {
 		DirectX::XMVECTOR vector = DirectX::XMLoadFloat3(&xmfloat3);
 
 		DirectX::XMFLOAT3 result;
 		DirectX::XMStoreFloat3(&result, DirectX::XMVector3Transform(vector, matrix));
+
+		return result;
+	}
+
+	static DirectX::XMFLOAT4 Multiply(const DirectX::XMFLOAT4& xmfloat4, const DirectX::XMFLOAT4X4& xmfloat4x4) {
+		DirectX::XMVECTOR vector = DirectX::XMLoadFloat4(&xmfloat4);
+
+		DirectX::XMFLOAT4 result;
+		DirectX::XMStoreFloat4(&result, DirectX::XMVector4Transform(vector, DirectX::XMLoadFloat4x4(&xmfloat4x4)));
+
+		return result;
+	}
+
+	static DirectX::XMFLOAT4 Multiply(const DirectX::XMFLOAT4& xmfloat4, const DirectX::XMMATRIX& matrix) {
+		DirectX::XMVECTOR vector = DirectX::XMLoadFloat4(&xmfloat4);
+
+		DirectX::XMFLOAT4 result;
+		DirectX::XMStoreFloat4(&result, DirectX::XMVector4Transform(vector, matrix));
 
 		return result;
 	}

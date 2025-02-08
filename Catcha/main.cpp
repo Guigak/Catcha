@@ -2,12 +2,14 @@
 #include "WindowManager.h"
 #include "D3DManager.h"
 #include "SceneManager.h"
+#include "SoundManager.h"
 #include "Timer.h"
 #include "NetworkManager.h"
 
 WindowManager g_window_manager;
 D3DManager g_d3d_manager;
 SceneManager g_scene_manager;
+SoundManager* g_sound_manager = nullptr;
 Timer g_timer;
 
 
@@ -27,6 +29,8 @@ int WINAPI WinMain(HINSTANCE hinstance, HINSTANCE prev_hinstance, LPSTR command_
 			return 0;
 		}
 		g_d3d_manager.Set_SM(&g_scene_manager);
+
+		g_sound_manager = SoundManager::Get_Inst(64, 1.0f, 0.01f, 0.0001f);
 
 		g_scene_manager.Set_D3DM(&g_d3d_manager);
 

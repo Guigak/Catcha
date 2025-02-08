@@ -319,8 +319,14 @@ void D3DManager::Draw_Scene_With_FR() {
 	Throw_If_Failed(m_additional_command_list->Close());
 
 	//
-	ID3D12CommandList* command_lists[] = { m_command_list.Get(), *(scene_command_lists.get()), m_additional_command_list.Get()};
-	m_command_queue->ExecuteCommandLists(_countof(command_lists), command_lists);
+	if (scene_command_lists.get() == nullptr) {
+		ID3D12CommandList* command_lists[] = { m_command_list.Get(), m_additional_command_list.Get() };
+		m_command_queue->ExecuteCommandLists(_countof(command_lists), command_lists);
+	}
+	else {
+		ID3D12CommandList* command_lists[] = { m_command_list.Get(), *(scene_command_lists.get()), m_additional_command_list.Get() };
+		m_command_queue->ExecuteCommandLists(_countof(command_lists), command_lists);
+	}
 
 	Throw_If_Failed(m_swapchain->Present(0, 0));
 	m_current_back_buffer = (m_current_back_buffer + 1) % m_swapchain_buffer_count;

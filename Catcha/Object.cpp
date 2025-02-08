@@ -3,7 +3,7 @@
 #include "ObjectManager.h"
 #include "InputManager.h"
 
-Object::Object(ObjectManager* object_manager, std::wstring object_name, Mesh_Info* mesh, DirectX::XMMATRIX world_matrix, UINT constant_buffer_index, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, bool physics, bool visiable) {
+Object::Object(ObjectManager* object_manager, std::wstring object_name, Mesh_Info* mesh, DirectX::XMMATRIX world_matrix, UINT constant_buffer_index, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, bool physics, bool visible) {
 	Set_Object_Manager(object_manager);
 	Set_Name(object_name);
 	Set_CB_Index(constant_buffer_index);
@@ -11,17 +11,17 @@ Object::Object(ObjectManager* object_manager, std::wstring object_name, Mesh_Inf
 	Set_WM(world_matrix);
 	Set_PT(primitive_topology);
 	Set_Phys(physics);
-	Set_Visiable(visiable);
+	Set_Visible(visible);
 }
 
-Object::Object(ObjectManager* object_manager, std::wstring object_name, std::vector<Mesh>& mesh_array, UINT constant_buffer_index, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, bool physics, bool visiable) {
+Object::Object(ObjectManager* object_manager, std::wstring object_name, std::vector<Mesh>& mesh_array, UINT constant_buffer_index, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, bool physics, bool visible) {
 	Set_Object_Manager(object_manager);
 	Set_Name(object_name);
 	Set_CB_Index(constant_buffer_index);
 	Add_Mesh(mesh_array);
 	Set_PT(primitive_topology);
 	Set_Phys(physics);
-	Set_Visiable(visiable);
+	Set_Visible(visible);
 }
 
 DirectX::XMMATRIX Object::Get_OBB_WM() {
@@ -214,7 +214,8 @@ void Object::Update(float elapsed_time) {
 					// Rotate 서버로 안보내게
 					m_camera->Set_Camera_Need_Send(false);
 					m_camera->Set_Distance(100.0f);
-					Set_Visiable(true);
+					Set_Visible(true);
+					m_camera->Set_Lagging_Degree(10.0f);
 				}
 				break;
 			case Restriction_Option::Restrict_All:
@@ -224,7 +225,8 @@ void Object::Update(float elapsed_time) {
 				{
 					m_camera->Set_Camera_Need_Send(false);
 					m_camera->Set_Distance(100.0f);
-					Set_Visiable(true);
+					Set_Visible(true);
+					m_camera->Set_Lagging_Degree(10.0f);
 				}
 				break;
 				break;
@@ -291,7 +293,8 @@ void Object::Update(float elapsed_time) {
 void Object::Udt_WM() {
 	DirectX::XMMATRIX translate_matrix = DirectX::XMMatrixTranslation(m_position.x, m_position.y, m_position.z);
 	DirectX::XMMATRIX rotate_matrix = DirectX::XMMatrixRotationQuaternion(DirectX::XMLoadFloat4(&m_rotate));
-	DirectX::XMMATRIX scale_matrix = DirectX::XMMatrixScaling(m_scale.x, m_scale.y, m_scale.z);
+	DirectX::XMMATRIX scale_matrix = DirectX::XMMatrixScaling(
+		m_scale.x + m_additional_scale.x, m_scale.y + m_additional_scale.y, m_scale.z + m_additional_scale.z);
 
 	DirectX::XMStoreFloat4x4(&m_world_matrix, scale_matrix * rotate_matrix * translate_matrix);
 }
@@ -357,6 +360,12 @@ void Object::Set_Scale(float scale_x, float scale_y, float scale_z) {
 	m_dirty = true;
 }
 
+void Object::Set_Additional_Scale(float scale_x, float scale_y, float scale_z) {
+	m_additional_scale = DirectX::XMFLOAT3(scale_x, scale_y, scale_z);
+
+	m_dirty = true;
+}
+
 void Object::Set_Position(DirectX::XMFLOAT3 position) {
 	m_position = position;
 
@@ -371,6 +380,14 @@ void Object::Set_Rotate(DirectX::XMFLOAT4 rotate) {
 
 void Object::Set_Scale(DirectX::XMFLOAT3 scale) {
 	m_scale = scale;
+
+	m_dirty = true;
+}
+
+void Object::Rst_Rotate() {
+	m_rotate_roll_pitch_yaw = DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
+	m_rotate_look = 0.0f;
+	m_rotate_right = 0.0f;
 
 	m_dirty = true;
 }
@@ -698,15 +715,16 @@ void Object::Jump() {
 
 void Object::Act_One() {
 	//m_next_state = Object_State::STATE_ACTION_ONE;
-	if (false == m_camera->Get_Camera_Need_Send())
-	{
-		return;
-	}
+
 
 	NetworkManager& network_manager = NetworkManager::GetInstance();
 
 	if (m_camera)
 	{
+		if (false == m_camera->Get_Camera_Need_Send())
+		{
+			return;
+		}
 		if (m_character_number == NUM_CAT)	// 고양이 일때
 		{
 			Action action = Action::ACTION_ONE;

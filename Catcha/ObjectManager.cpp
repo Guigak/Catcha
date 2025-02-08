@@ -278,10 +278,10 @@ void ObjectManager::Ipt_From_FBX(std::wstring file_name, bool merge_mesh, bool a
 Object* ObjectManager::Add_Obj(std::wstring object_name, std::wstring mesh_name, std::wstring set_name,
     DirectX::XMMATRIX world_matrix,
     D3D12_PRIMITIVE_TOPOLOGY primitive_topology, ObjectType object_type,
-    bool physics, bool visiable)
+    bool physics, bool visible)
 {
     std::unique_ptr<Object> object;
-    object = std::make_unique<Object>(this, object_name, m_mesh_manager.Get_Mesh(mesh_name), world_matrix, m_object_count++, primitive_topology, physics, visiable);
+    object = std::make_unique<Object>(this, object_name, m_mesh_manager.Get_Mesh(mesh_name), world_matrix, m_object_count++, primitive_topology, physics, visible);
 
     m_object_map[object_name] = std::move(object);
 
@@ -310,10 +310,10 @@ Object* ObjectManager::Add_Obj(std::wstring object_name, std::wstring mesh_name,
 
 Object* ObjectManager::Add_Obj(std::wstring object_name, std::vector<Mesh>& mesh_array, std::wstring set_name,
     D3D12_PRIMITIVE_TOPOLOGY primitive_topology, ObjectType object_type,
-    bool physics, bool visiable)
+    bool physics, bool visible)
 {
     std::unique_ptr<Object> object;
-    object = std::make_unique<Object>(this, object_name, mesh_array, m_object_count++, primitive_topology, physics, visiable);
+    object = std::make_unique<Object>(this, object_name, mesh_array, m_object_count++, primitive_topology, physics, visible);
 
     m_object_map[object_name] = std::move(object);
 
@@ -377,7 +377,7 @@ Object* ObjectManager::Add_Col_OBB_Obj(std::wstring obb_object_name, DirectX::Bo
     return m_object_map[obb_object_name].get();
 }
 
-Object* ObjectManager::Add_Voxel_Cheese(std::wstring object_name, DirectX::XMFLOAT3 object_position, float scale, UINT detail_level) {
+Object* ObjectManager::Add_Voxel_Cheese(std::wstring object_name, DirectX::XMFLOAT3 object_position, float scale, UINT detail_level, bool visible) {
     std::unique_ptr<Object> object;
     object = std::make_unique<VoxelCheese>(object_position.x, object_position.y, object_position.z, scale, detail_level);
 
@@ -385,6 +385,7 @@ Object* ObjectManager::Add_Voxel_Cheese(std::wstring object_name, DirectX::XMFLO
     object->Add_Mesh(m_mesh_manager.Get_Mesh(L"cheese"));
     object->Set_PT(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     object->Set_CB_Index(m_object_count++);
+    object->Set_Visible(visible);
     
     ((InstanceObject*)object.get())->Set_Instance_Index((UINT)m_instance_objects.size());
 
@@ -413,7 +414,7 @@ UINT ObjectManager::Get_Max_Instc_Count() {
     return max_count;
 }
 
-Object* ObjectManager::Add_Text_UI_Obj(std::wstring object_name, float position_x, float position_y, float scale_x, float scale_y) {
+Object* ObjectManager::Add_Text_UI_Obj(std::wstring object_name, float position_x, float position_y, float scale_x, float scale_y, bool selectable, bool visible) {
     std::unique_ptr<Object> object;
     object = std::make_unique<TextUIObject>(position_x, position_y, scale_x, scale_y);
 
@@ -421,6 +422,8 @@ Object* ObjectManager::Add_Text_UI_Obj(std::wstring object_name, float position_
     object->Add_Mesh(m_mesh_manager.Get_Mesh(L"ui"));
     object->Set_PT(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     object->Set_CB_Index(m_object_count++);
+    object->Set_Visible(visible);
+    object->Set_Selectable(selectable);
 
     ((InstanceObject*)object.get())->Set_Instance_Index((UINT)(m_instance_objects.size()));
 
@@ -438,7 +441,7 @@ Object* ObjectManager::Add_Text_UI_Obj(std::wstring object_name, float position_
 }
 
 Object* ObjectManager::Add_UI_Obj(std::wstring object_name, float position_x, float position_y, float scale_x, float scale_y,
-    UINT texture_width, UINT texture_height, float top, float left, float bottom, float right
+    UINT texture_width, UINT texture_height, float top, float left, float bottom, float right, bool selectable, bool visible
 ) {
     std::unique_ptr<Object> object;
     object = std::make_unique<UIObject>(position_x, position_y, scale_x, scale_y,
@@ -448,6 +451,8 @@ Object* ObjectManager::Add_UI_Obj(std::wstring object_name, float position_x, fl
     object->Add_Mesh(m_mesh_manager.Get_Mesh(L"ui"));
     object->Set_PT(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     object->Set_CB_Index(m_object_count++);
+    object->Set_Visible(visible);
+    object->Set_Selectable(selectable);
 
     m_object_map[object_name] = std::move(object);
 
@@ -460,7 +465,7 @@ Object* ObjectManager::Add_UI_Obj(std::wstring object_name, float position_x, fl
     return m_object_map[object_name].get();
 }
 
-Object* ObjectManager::Add_Particle_Obj(std::wstring object_name) {
+Object* ObjectManager::Add_Particle_Obj(std::wstring object_name, bool visible) {
     std::unique_ptr<Object> object;
     object = std::make_unique<ParticleObject>();
 
@@ -468,6 +473,7 @@ Object* ObjectManager::Add_Particle_Obj(std::wstring object_name) {
     object->Add_Mesh(m_mesh_manager.Get_Mesh(L"point"));
     object->Set_PT(D3D_PRIMITIVE_TOPOLOGY_POINTLIST);
     object->Set_CB_Index(m_object_count++);
+    object->Set_Visible(visible);
 
     ((InstanceObject*)object.get())->Set_Instance_Index((UINT)(m_instance_objects.size()));
 
@@ -484,6 +490,29 @@ Object* ObjectManager::Add_Particle_Obj(std::wstring object_name) {
     m_object_set_map[L"Particle"].emplace_back(object_pointer);
 
     return m_object_map[object_name].get();
+}
+
+void ObjectManager::Rst_Selected_Obj_Arr() {
+    m_selected_object_array.clear();
+    m_selected_object_array.shrink_to_fit();
+}
+
+void ObjectManager::Add_Selected_Obj(std::wstring object_name) {
+    m_selected_object_array.emplace_back(Get_Obj(object_name));
+}
+
+void ObjectManager::Add_Selected_Obj(Object* object_pointer) {
+    m_selected_object_array.emplace_back(object_pointer);
+}
+
+void ObjectManager::Hide_All_UI() {
+    for (auto& o : m_text_UI_objects) {
+        o->Set_Visible(false);
+    }
+
+    for (auto& o : m_UI_objects) {
+        o->Set_Visible(false);
+    }
 }
 
 

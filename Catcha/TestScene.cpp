@@ -1,9 +1,12 @@
 #include "TestScene.h"
+#include "SceneManager.h"
 #include "D3DManager.h"
 #include "VoxelCheese.h"
 #include "MapData.h"
 #include "TextUIObject.h"
 #include "ParticleObject.h"
+
+#include "SoundManager.h"
 
 std::unordered_map<std::wstring, ObjectOBB> g_obbData;
 
@@ -13,6 +16,30 @@ UINT m_voxel_count = 0;
 bool m_render_silhouette = false;
 
 DirectX::BoundingSphere m_scene_sphere;
+
+//
+Scene_State m_scene_state = Scene_State::MAIN_STATE;
+Scene_State m_next_scene_state = Scene_State::MAIN_STATE;
+
+bool m_dissolve = false;
+
+constexpr float MAX_DISSOLVE_VALUE = 1.5f;
+float m_dissolve_value = 0.0f;
+
+//
+constexpr float MAX_PICKING_DISTANCE = 1.0f;
+
+// ui functions
+void Game_Start_UI_Function();
+void Game_End_UI_Function();
+void To_Main_UI_Function();
+void Select_Cat_UI_Function();
+void Select_Mouse_UI_Function();
+
+// test //
+void Result_Test_UI_Function() {
+	m_next_scene_state = Scene_State::END_STATE;
+}
 
 void TestScene::Enter(D3DManager* d3d_manager) {
 	m_total_time = 0.0f;
@@ -64,6 +91,15 @@ void TestScene::Enter(D3DManager* d3d_manager) {
 	//
 	m_scene_sphere.Center = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
 	m_scene_sphere.Radius = std::sqrtf(650.0f * 650.0f + 650.0f * 650.0f);
+
+	//
+	m_client_width = d3d_manager->Get_Client_Width();
+	m_client_height = d3d_manager->Get_Client_Height();
+
+	//
+	SoundManager* sound_manager = SoundManager::Get_Inst();
+	sound_manager->Add_Sound(L"Work_of_a_cat.mp3", FMOD_2D | FMOD_LOOP_NORMAL | FMOD_CREATESTREAM);
+	sound_manager->Play_Sound(L"bgm", L"Work_of_a_cat.mp3");
 }
 
 void TestScene::Exit(D3DManager* d3d_manager) {
@@ -74,34 +110,59 @@ void TestScene::Exit(D3DManager* d3d_manager) {
 }
 
 void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
+	if (m_dissolve == false) {
+		m_input_manager->Prcs_Input();
+	}
+
+	m_object_manager->Update(elapsed_time);
+
 	// test
 	//static int count = 0;
 
 	//count++;
 
-	//if (count == 20) {
-	//	((ParticleObject*)m_object_manager->Get_Obj(L"particle"))->Add_Particle(
-	//		DirectX::XMFLOAT3(0.0f, 100.0f, 0.0f), DirectX::XMFLOAT3(5.0f, 5.0f, 5.0f),
-	//		DirectX::XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f), 20, m_total_time);
-	//}
-	//else if (count == 40) {
-	//	((ParticleObject*)m_object_manager->Get_Obj(L"particle"))->Add_Particle(
-	//		DirectX::XMFLOAT3(0.0f, 100.0f, 0.0f), DirectX::XMFLOAT3(5.0f, 5.0f, 5.0f),
-	//		DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f), 20, m_total_time);
+/*	if (count == 400) {
+		m_next_scene_state = Scene_State::MAIN_STATE;
 
+	}
+	else *//*if (count == 200) {
+		Object* object = m_object_manager->Get_Obj(L"test_ui");
+		object->Call_Custom_Function_One();
 
-	//	count = 0;
-	//}
-
-	//((TextUIObject*)m_object_manager->Get_Obj(L"total_time"))->Set_Text(std::to_wstring((int)m_total_time));
+		count = 0;
+	}*/
+	
 	//
+	if (m_scene_state != m_next_scene_state) {
+		m_dissolve = true;
 
+		if (m_dissolve_value >= MAX_DISSOLVE_VALUE) {
+			m_scene_state = m_next_scene_state;
+			Chg_Scene_State(m_scene_state);
+		}
+	}
+	else {
+		m_dissolve = false;
+	}
+
+	if (m_dissolve) {
+		if (m_dissolve_value < MAX_DISSOLVE_VALUE) {
+			m_dissolve_value += elapsed_time;
+		}
+	}
+	else {
+		if (m_dissolve_value > 0) {
+			m_dissolve_value -= elapsed_time;
+		}
+	}
+
+	float dissolve_value = 1.0f - (float)m_dissolve_value / (float)MAX_DISSOLVE_VALUE;
+	m_object_manager->Get_Obj(L"dissolve")->Set_Color_Mul(dissolve_value, dissolve_value, dissolve_value, 1.0f - dissolve_value);
+	
+	//
 	Object* cat_object = m_object_manager->Get_Obj(L"cat");
 	cat_object->Set_Color_Alpha(
 		MathHelper::Min(1.0f, 1.0f - MathHelper::Length(MathHelper::Subtract(cat_object->Get_Position_3f(), m_object_manager->Get_Obj(L"player")->Get_Position_3f())) / 500.0f));
-
-	m_input_manager->Prcs_Input();
-	m_object_manager->Update(elapsed_time);
 
 	m_current_frameresource_index = (m_current_frameresource_index + 1) % FRAME_RESOURCES_NUMBER;
 	m_current_frameresource = m_frameresources[m_current_frameresource_index].get();
@@ -359,13 +420,13 @@ void TestScene::Draw(D3DManager* d3d_manager, ID3D12CommandList** command_lists)
 		frustum_OBB.Transform(frustum_OBB, MathHelper::Inverse(XMFLOAT4X4_2_XMMATRIX(m_light_view_matrix)));
 
 		for (auto& object : m_object_manager->Get_Opaque_Obj_Arr()) {
-			if (object->Get_Name() == L"Ceiling") {
-				continue;
-			}
-
-			//if (!object->Get_Visiable()) {
+			//if (object->Get_Name() == L"Ceiling") {
 			//	continue;
 			//}
+
+			if (!object->Get_Shade()) {
+				continue;
+			}
 
 			UINT object_CBV_index = m_current_frameresource_index * (UINT)m_object_manager->Get_Obj_Count() + object->Get_CB_Index();
 			auto object_CBV_gpu_descriptor_handle = D3D12_GPU_DESCRIPTOR_HANDLE_EX(m_CBV_heap->GetGPUDescriptorHandleForHeapStart());
@@ -399,6 +460,10 @@ void TestScene::Draw(D3DManager* d3d_manager, ID3D12CommandList** command_lists)
 		command_list->SetPipelineState(m_pipeline_state_map[L"instance_shadow"].Get());
 
 		for (auto& object : m_object_manager->Get_Voxel_Cheese_Obj_Arr()) {
+			if (!object->Get_Visible()) {
+				continue;
+			}
+
 			VoxelCheese* voxel_cheese_pointer = (VoxelCheese*)object;
 
 			UINT object_CBV_index = m_current_frameresource_index * (UINT)m_object_manager->Get_Obj_Count() + object->Get_CB_Index();
@@ -517,7 +582,7 @@ void TestScene::Draw(D3DManager* d3d_manager, ID3D12CommandList** command_lists)
 			continue;
 		}
 
-		if (!object->Get_Visiable()) {
+		if (!object->Get_Visible()) {
 			continue;
 		}
 
@@ -574,6 +639,10 @@ void TestScene::Draw(D3DManager* d3d_manager, ID3D12CommandList** command_lists)
 	}
 
 	for (auto& object : m_object_manager->Get_Voxel_Cheese_Obj_Arr()) {
+		if (!object->Get_Visible()) {
+			continue;
+		}
+
 		InstanceObject* instance_object_pointer = (InstanceObject*)object;
 
 		UINT object_CBV_index = m_current_frameresource_index * (UINT)m_object_manager->Get_Obj_Count() + object->Get_CB_Index();
@@ -651,6 +720,10 @@ void TestScene::Draw(D3DManager* d3d_manager, ID3D12CommandList** command_lists)
 	command_list->SetPipelineState(m_pipeline_state_map[L"particle"].Get());
 
 	for (auto& object : m_object_manager->Get_Particle_Obj_Arr()) {
+		if (!object->Get_Visible()) {
+			continue;
+		}
+
 		InstanceObject* instance_object_pointer = (InstanceObject*)object;
 
 		UINT object_CBV_index = m_current_frameresource_index * (UINT)m_object_manager->Get_Obj_Count() + object->Get_CB_Index();
@@ -730,6 +803,10 @@ void TestScene::Draw(D3DManager* d3d_manager, ID3D12CommandList** command_lists)
 		command_list->SetPipelineState(m_pipeline_state_map[L"ui"].Get());
 
 		for (auto& object : m_object_manager->Get_UI_Obj_Arr()) {
+			if (!object->Get_Visible()) {
+				continue;
+			}
+
 			UINT object_CBV_index = m_current_frameresource_index * (UINT)m_object_manager->Get_Obj_Count() + object->Get_CB_Index();
 			auto object_CBV_gpu_descriptor_handle = D3D12_GPU_DESCRIPTOR_HANDLE_EX(m_CBV_heap->GetGPUDescriptorHandleForHeapStart());
 			object_CBV_gpu_descriptor_handle.Get_By_Offset(object_CBV_index, d3d_manager->Get_CBV_SRV_UAV_Descritpor_Size());
@@ -764,6 +841,10 @@ void TestScene::Draw(D3DManager* d3d_manager, ID3D12CommandList** command_lists)
 	command_list->SetPipelineState(m_pipeline_state_map[L"text_ui"].Get());
 
 	for (auto& object : m_object_manager->Get_Text_UI_Obj_Arr()) {
+		if (!object->Get_Visible()) {
+			continue;
+		}
+
 		InstanceObject* instance_object_pointer = (InstanceObject*)object;
 
 		UINT object_CBV_index = m_current_frameresource_index * (UINT)m_object_manager->Get_Obj_Count() + object->Get_CB_Index();
@@ -827,7 +908,8 @@ void TestScene::Load_Texture(ID3D12Device* device, ID3D12GraphicsCommandList* co
 	//
 	auto ui_texture = std::make_unique<Texture_Info>();
 	ui_texture->name = L"test_ui";
-	ui_texture->file_name = L"test_ui.dds";
+	ui_texture->file_name = L"ui_sample.dds";
+	//ui_texture->file_name = L"test_ui.dds";
 	ui_texture->buffer_index = (UINT)m_texture_map.size();
 	Throw_If_Failed(TextureLoader::Create_DDS_Texture_From_File(
 		device, command_list,
@@ -965,6 +1047,8 @@ void TestScene::Build_Mesh(ID3D12Device* device, ID3D12GraphicsCommandList* comm
 	mesh_info = m_object_manager->Get_Mesh_Manager().Crt_Box_Mesh(L"cheese");
 	mesh_info->material = m_object_manager->Get_Material_Manager().Get_Material(L"cheese");
 
+	mesh_info = m_object_manager->Get_Mesh_Manager().Crt_Box_Mesh(L"zero_box", 0.0f, 0.0f, 0.0f);
+
 	mesh_info = m_object_manager->Get_Mesh_Manager().Crt_Wall_Plane_Mesh(L"ui");
 	mesh_info->material = m_object_manager->Get_Material_Manager().Get_Material(L"ui");
 
@@ -980,6 +1064,9 @@ void TestScene::Build_Mesh(ID3D12Device* device, ID3D12GraphicsCommandList* comm
 	m_object_manager->Ipt_From_FBX(L"cat_jump_test_start.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
 	m_object_manager->Ipt_From_FBX(L"cat_jump_test_idle.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
 	m_object_manager->Ipt_From_FBX(L"cat_jump_test_end.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
+	m_object_manager->Ipt_From_FBX(L"cat_damage.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
+	m_object_manager->Ipt_From_FBX(L"cat_win_0.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
+	m_object_manager->Ipt_From_FBX(L"cat_lose_0.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
 
 	m_object_manager->Ipt_From_FBX(L"mouse_mesh_edit.fbx", true, false, true, MESH_INFO | SKELETON_INFO | MATERIAL_INFO);
 	m_object_manager->Ipt_From_FBX(L"mouse_death.fbx", true, false, true, ANIMATION_INFO, L"mouse_mesh_edit.fbx");
@@ -991,20 +1078,57 @@ void TestScene::Build_Mesh(ID3D12Device* device, ID3D12GraphicsCommandList* comm
 	m_object_manager->Ipt_From_FBX(L"mouse_jump_start.fbx", true, false, true, ANIMATION_INFO, L"mouse_mesh_edit.fbx");
 	m_object_manager->Ipt_From_FBX(L"mouse_jump_idle.fbx", true, false, true, ANIMATION_INFO, L"mouse_mesh_edit.fbx");
 	m_object_manager->Ipt_From_FBX(L"mouse_jump_end.fbx", true, false, true, ANIMATION_INFO, L"mouse_mesh_edit.fbx");
+	m_object_manager->Ipt_From_FBX(L"mouse_win_0.fbx", true, false, true, ANIMATION_INFO, L"mouse_mesh_edit.fbx");
+	m_object_manager->Ipt_From_FBX(L"mouse_lose_0.fbx", true, false, true, ANIMATION_INFO, L"mouse_mesh_edit.fbx");
 
 	m_object_manager->Ipt_From_FBX(L"housee.fbx", false, true, false, MESH_INFO | MATERIAL_INFO);
+	m_object_manager->Get_Obj(L"Ceiling")->Set_Shade(false);
 
 	m_object_manager->Build_BV(device, command_list);
 }
 
 void TestScene::Build_Material() {
 	//
-	m_object_manager->Get_Material_Manager().Add_Material(L"boundingbox", Material_Factor(DirectX::XMFLOAT4(DirectX::Colors::Red)));
+	m_object_manager->Get_Mesh_Manager().Crt_Default_Box();
+	m_object_manager->Get_Material_Manager().Add_Material(L"boundingbox", Material_Factor(DirectX::XMFLOAT4(DirectX::Colors::LightGreen)));
 	m_object_manager->Get_Material_Manager().Add_Material(L"cheese", Material_Factor(DirectX::XMFLOAT4(DirectX::Colors::Yellow)));
 	m_object_manager->Get_Material_Manager().Add_Material(L"ui", Material_Factor(DirectX::XMFLOAT4(DirectX::Colors::White)));
 }
 
 void TestScene::Build_O() {
+	Object* object;
+
+	object = m_object_manager->Add_Obj(L"main_scene_object", L"zero_box");
+	object->Set_Position(50.0f, -61.592f, 140.0f);
+	object->Set_Visible(false);
+
+	object = m_object_manager->Add_Obj(L"end_scene_object", L"zero_box");
+	object->Set_Position(-70.0f, 20.0f, -450.0f);
+	object->Set_Visible(false);
+
+	// main scene character
+	m_object_manager->Add_Obj(L"cat_main", L"cat_mesh_edit.fbx");
+	m_object_manager->Set_Sklt_2_Obj(L"cat_main", L"cat_mesh_edit.fbx");
+
+	m_object_manager->Add_Obj(L"mouse_main", L"mouse_mesh_edit.fbx");
+	m_object_manager->Set_Sklt_2_Obj(L"mouse_main", L"mouse_mesh_edit.fbx");
+
+	object = m_object_manager->Get_Obj(L"mouse_main");
+	object->TP_Down(61.592f);
+	object->TP_Forward(200.0f);
+	object->TP_Right(80.0f);
+	object->Rotate_Pitch(4.0f);
+	object->Bind_Anim_2_State(Object_State::STATE_IDLE, Animation_Binding_Info(L"mouse_lose_0.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
+	object->Set_Animated(true);
+
+	object = m_object_manager->Get_Obj(L"cat_main");
+	object->TP_Down(61.592f);
+	object->TP_Forward(200.0f);
+	object->TP_Right(100.0f);
+	object->Rotate_Pitch(4.0f);
+	object->Bind_Anim_2_State(Object_State::STATE_IDLE, Animation_Binding_Info(L"cat_win_0.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
+	object->Set_Animated(true);
+
 
 	m_object_manager->Add_Obj(L"mouse0", L"mouse_mesh_edit.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
 	m_object_manager->Add_Obj(L"mouse1", L"mouse_mesh_edit.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
@@ -1027,7 +1151,7 @@ void TestScene::Build_O() {
 	m_object_manager->Set_Sklt_2_Obj(L"mouse7", L"mouse_mesh_edit.fbx");
 	m_object_manager->Set_Sklt_2_Obj(L"cat", L"cat_mesh_edit.fbx");
 
-	Object* object;
+
 	for (int i = 0; i < 8; i++)
 	{
 		object = m_object_manager->Get_Obj(L"mouse" + std::to_wstring(i));
@@ -1043,6 +1167,7 @@ void TestScene::Build_O() {
 		object->TP_Down(999.0f);
 		if (i > NUM_MOUSE4)
 		{
+			object->TP_Up(999.0f + FLOOR_Y);
 			object->SetLerpDegree(50.0f);
 		}
 	}
@@ -1061,7 +1186,7 @@ void TestScene::Build_O() {
 	m_object_manager->Add_Obj(L"player", L"mouse_mesh_edit.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
 	m_object_manager->Set_Sklt_2_Obj(L"player", L"mouse_mesh_edit.fbx");
 
-	m_object_manager->Get_Obj(L"player")->Set_Visiable(false);
+	m_object_manager->Get_Obj(L"player")->Set_Visible(false);
 
 
 	
@@ -1105,20 +1230,88 @@ void TestScene::Build_O() {
 	m_object_manager->Add_Voxel_Cheese(L"cheese" + std::to_wstring(cheese_count++),
 		DirectX::XMFLOAT3(-540.713f, -61.436f + 1.0f, -448.526f), 1.0f, 1);
 
-	//
-	object = m_object_manager->Add_Text_UI_Obj(L"aim_circle", 0.0f, 0.0f, 0.02f, 0.02f);
+	// main scene ui
+	object = m_object_manager->Add_Text_UI_Obj(L"game_start", -0.8f, -0.3f, 0.2f, 0.2f, true, true);
+	object->Set_Color_Mul(1.0f, 1.0f, 0.0f, 1.0f);
+	object->Set_Custom_Fuction_One(Game_Start_UI_Function);
+	((TextUIObject*)object)->Set_Text(L"게임 시작");
+
+	object = m_object_manager->Add_Text_UI_Obj(L"game_end", -0.8f, -0.7f, 0.2f, 0.2f, true, true);
+	object->Set_Color_Mul(1.0f, 1.0f, 0.0f, 1.0f);
+	object->Set_Custom_Fuction_One(Game_End_UI_Function);
+	((TextUIObject*)object)->Set_Text(L"게임 종료");
+
+	object = m_object_manager->Add_UI_Obj(L"catcha_title", -0.3f, 0.4f, 1.0f, 0.75f,
+		2880, 1755, 0.0f, 1920.0f, 405.0f, 2880.0f, false, true);
+
+	// matching scene
+	object = m_object_manager->Add_Text_UI_Obj(L"select_animal", -0.85f, 0.8f, 0.2f, 0.2f, false, false);
+	object->Set_Color_Mul(1.0f, 1.0f, 0.0f, 1.0f);
+	((TextUIObject*)object)->Set_Text(L"동물 선택");
+
+	object = m_object_manager->Add_Text_UI_Obj(L"to_main", -0.9f, -0.85f, 0.1f, 0.1f, true, false);
+	object->Set_Color_Mul(1.0f, 1.0f, 0.0f, 1.0f);
+	object->Set_Custom_Fuction_One(To_Main_UI_Function);
+	((TextUIObject*)object)->Set_Text(L"메인으로");
+
+	object = m_object_manager->Add_UI_Obj(L"select_cat", -0.5f, -0.05f, 0.75f, 1.25f,
+		2880, 1755, 405.0f, 1920.0f, 1080.0f, 2640.0f, true, false);
+	object->Set_Custom_Fuction_One(Select_Cat_UI_Function);
+
+	object = m_object_manager->Add_UI_Obj(L"select_mouse", 0.5f, -0.05f, 0.75f, 1.25f,
+		2880, 1755, 1080.0f, 1920.0f, 1755.0f, 2640.0f, true, false);
+	object->Set_Custom_Fuction_One(Select_Mouse_UI_Function);
+
+	// game play scene ui
+	object = m_object_manager->Add_Text_UI_Obj(L"aim_circle", 0.0f, 0.0f, 0.02f, 0.02f, false, false);
 	object->Set_Color_Mul(1.0f, 1.0f, 0.0f, 1.0f);
 	((TextUIObject*)object)->Set_Text(L"○");
-	//((TextUIObject*)object)->Set_Text(std::wstring(1, (wchar_t)0x263A));
 
-	object = m_object_manager->Add_Text_UI_Obj(L"total_time", -0.95f, 0.93f, 0.1f, 0.1f);
-	object->Set_Color_Mul(1.0f, 1.0f, 0.0f, 1.0f);
-	((TextUIObject*)object)->Set_Text(L"다른 플레이어 기다리는 중..");
+	object = m_object_manager->Add_Text_UI_Obj(L"timer", -0.1f, 0.9f, 0.1f, 0.09f, false, false);
+	object->Set_Color_Mul(0.0f, 0.0f, 0.0f, 1.0f);
+	((TextUIObject*)object)->Set_Text(L"대기중..");
 	NetworkManager::GetInstance().SetTimeObject(*(TextUIObject*)object);
 
-	//
-	object = m_object_manager->Add_UI_Obj(L"test_ui", 0.0f, 0.0f, 2.0f, 2.0f,
-		2040, 1200, 0.0f, 0.0f, 1080.0f, 1920.0f);
+	object = m_object_manager->Add_UI_Obj(L"game_play_ui", 0.0f, 0.0f, 2.0f, 2.0f,
+		2880, 1755, 0.0f, 0.0f, 1080.0f, 1920.0f, false, false);
+
+	object = m_object_manager->Add_UI_Obj(L"portrait", -1.0f + (100.0f / 960.0f), -1.0f + (100.0f / 540.0f), 250.0f / 960.0f, 250.0f / 540.0f,
+		2880, 1755, 1080.0f, 960.0f, 1330.0f, 1210.0f, false, false);
+
+	for (int i = 0; i < 4; ++i) {
+		object = m_object_manager->Add_UI_Obj(L"mouse_icon_" + std::to_wstring(i), -(0.675f - (float)i * 0.125f), 1.0f - (50.0f / 540.0f), 100.0f / 960.0f, 100.0f / 540.0f,
+			2880, 1755, 1330.0f, 960.0f, 1580.0f, 1210.0f, false, false);
+	}
+
+	for (int i = 0; i < 4; ++i) {
+		object = m_object_manager->Add_UI_Obj(L"mouse_icon_" + std::to_wstring(i + 4), 0.3f + (float)i * 0.125f, 1.0f - (50.0f / 540.0f), 100.0f / 960.0f, 100.0f / 540.0f,
+			2880, 1755, 1330.0f, 1210.0f, 1580.0f, 1460.0f, false, false);
+	}
+
+	for (int i = 0; i < 4; ++i) {
+		object = m_object_manager->Add_UI_Obj(L"cheese_icon_" + std::to_wstring(i), -0.12f + (float)i * 0.08f, 0.75f, 100.0f / 960.0f, 100.0f / 540.0f,
+			2880, 1755, 1080.0f, 1460.0f, 1180.0f, 1560.0f, false, false);
+	}
+
+	// test //
+	object = m_object_manager->Add_Text_UI_Obj(L"result_test", 0.0f, 0.0f, 0.1f, 0.1f, true, true);
+	object->Set_Color_Mul(1.0f, 1.0f, 0.0f, 1.0f);
+	object->Set_Custom_Fuction_One(Result_Test_UI_Function);
+	((TextUIObject*)object)->Set_Text(L"결과 테스트");
+
+	// game end scene
+	object = m_object_manager->Add_Text_UI_Obj(L"winner_is", -0.9f, 0.85f, 0.15f, 0.15f, false, false);
+	object->Set_Color_Mul(1.0f, 1.0f, 0.0f, 1.0f);
+	((TextUIObject*)object)->Set_Text(L"승자는..");
+
+	object = m_object_manager->Add_Text_UI_Obj(L"winner", -0.75f, 0.4f, 0.4f, 0.4f, false, false);
+	object->Set_Color_Mul(1.0f, 1.0f, 0.0f, 1.0f);
+	((TextUIObject*)object)->Set_Text(L"고양이");
+
+	// dissolve
+	object = m_object_manager->Add_Text_UI_Obj(L"dissolve", 0.0f, 0.0f, 5.0f, 5.0f, false);
+	object->Set_Color_Mul(0.0f, 0.0f, 0.0f, 1.0f);
+	((TextUIObject*)object)->Set_Text(L"■");
 
 	//
 	object = m_object_manager->Add_Particle_Obj(L"particle");
@@ -1128,10 +1321,20 @@ void TestScene::Build_O() {
 }
 
 void TestScene::Build_C(D3DManager* d3d_manager) {
+	auto main_camera = reinterpret_cast<Camera*>(m_object_manager->Add_Cam(L"maincamera", L"camera", L"main_scene_object",
+		0.0f, 5.0f, 0.0f, 0.1f, ROTATE_SYNC_NONE));
+	main_camera->Rotate_Pitch(0.25f);
+	main_camera->Rotate_Right(-0.25f);
+	
+	//auto main_camera = reinterpret_cast<Camera*>(m_object_manager->Add_Cam(L"maincamera", L"camera", L"end_scene_object",
+	//	0.0f, 5.0f, 0.0f, 0.1f, ROTATE_SYNC_NONE));
+	//main_camera->Rotate_Pitch(0.25f);
+	//main_camera->Rotate_Right(0.25f);
+
 	//auto main_camera = reinterpret_cast<Camera*>(m_object_manager->Add_Cam(L"maincamera", L"camera", L"player",
 	//	0.0f, 50.0f, 0.0f, 150.0f, ROTATE_SYNC_RPY));
-	auto main_camera = reinterpret_cast<Camera*>(m_object_manager->Add_Cam(L"maincamera", L"camera", L"player",
-		0.0f, 10.0f, 0.0f, 0.1f, ROTATE_SYNC_RPY));
+	//auto main_camera = reinterpret_cast<Camera*>(m_object_manager->Add_Cam(L"maincamera", L"camera", L"player",
+	//	0.0f, 10.0f, 0.0f, 0.1f, ROTATE_SYNC_RPY));
 	main_camera->Set_Frustum(0.25f * MathHelper::Pi(), d3d_manager->Get_Aspect_Ratio(), 1.0f, 2000.0f);
 	main_camera->Set_Limit_Rotate_Right(true, -RIGHT_ANGLE_RADIAN + 0.01f, RIGHT_ANGLE_RADIAN - 0.01f);
 	//main_camera->Set_Limit_Rotate_Right(true, DirectX::XMConvertToRadians(1.0f), DirectX::XMConvertToRadians(60.0f));
@@ -1146,6 +1349,9 @@ void TestScene::Build_FR(ID3D12Device* device) {
 			(UINT)m_object_manager->Get_Obj_Count(), (UINT)m_object_manager->Get_Material_Manager().Get_Material_Count(),
 			(UINT)m_object_manager->Get_Instc_Obj_Arr().size(), m_object_manager->Get_Max_Instc_Count()));
 	}
+
+	m_current_frameresource_index = (m_current_frameresource_index + 1) % FRAME_RESOURCES_NUMBER;
+	m_current_frameresource = m_frameresources[m_current_frameresource_index].get();
 }
 
 void TestScene::Build_DH(ID3D12Device* device) {
@@ -1321,6 +1527,19 @@ void TestScene::Build_CBV(D3DManager* d3d_manager) {
 void TestScene::Build_PSO(D3DManager* d3d_manager) {
 	ID3D12Device* device = d3d_manager->Get_Device();
 
+	//
+	D3D12_RENDER_TARGET_BLEND_DESC render_target_blend_desc;
+	render_target_blend_desc.BlendEnable = true;
+	render_target_blend_desc.LogicOpEnable = false;
+	render_target_blend_desc.SrcBlend = D3D12_BLEND_SRC_ALPHA;
+	render_target_blend_desc.DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
+	render_target_blend_desc.BlendOp = D3D12_BLEND_OP_ADD;
+	render_target_blend_desc.SrcBlendAlpha = D3D12_BLEND_ONE;
+	render_target_blend_desc.DestBlendAlpha = D3D12_BLEND_ZERO;
+	render_target_blend_desc.BlendOpAlpha = D3D12_BLEND_OP_ADD;
+	render_target_blend_desc.LogicOp = D3D12_LOGIC_OP_NOOP;
+	render_target_blend_desc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC opaque_PSO_desc;
 	ZeroMemory(&opaque_PSO_desc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
 	opaque_PSO_desc.InputLayout = { m_input_layouts.data(), (UINT)m_input_layouts.size() };
@@ -1356,6 +1575,7 @@ void TestScene::Build_PSO(D3DManager* d3d_manager) {
 	Throw_If_Failed(device->CreateGraphicsPipelineState(&opaque_PSO_desc, IID_PPV_ARGS(&m_pipeline_state_map[L"particle"])));
 
 	//
+	opaque_PSO_desc.BlendState.RenderTarget[0] = render_target_blend_desc;
 	opaque_PSO_desc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 	opaque_PSO_desc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_ALWAYS;
 	opaque_PSO_desc.VS = { reinterpret_cast<BYTE*>(m_shader_map[L"text_ui_VS"]->GetBufferPointer()), m_shader_map[L"text_ui_VS"]->GetBufferSize() };
@@ -1365,6 +1585,7 @@ void TestScene::Build_PSO(D3DManager* d3d_manager) {
 	Throw_If_Failed(device->CreateGraphicsPipelineState(&opaque_PSO_desc, IID_PPV_ARGS(&m_pipeline_state_map[L"text_ui"])));
 
 	//
+	opaque_PSO_desc.BlendState = D3D12_BLEND_DESC_EX(D3D12_DEFAULT());
 	opaque_PSO_desc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
 	opaque_PSO_desc.VS = { reinterpret_cast<BYTE*>(m_shader_map[L"instance_VS"]->GetBufferPointer()), m_shader_map[L"instance_VS"]->GetBufferSize() };
 	opaque_PSO_desc.PS = { reinterpret_cast<BYTE*>(m_shader_map[L"opaque_PS"]->GetBufferPointer()), m_shader_map[L"opaque_PS"]->GetBufferSize() };
@@ -1382,18 +1603,6 @@ void TestScene::Build_PSO(D3DManager* d3d_manager) {
 	Throw_If_Failed(device->CreateGraphicsPipelineState(&opaque_PSO_desc, IID_PPV_ARGS(&m_pipeline_state_map[L"opaque_wireframe"])));
 
 	//
-	D3D12_RENDER_TARGET_BLEND_DESC render_target_blend_desc;
-	render_target_blend_desc.BlendEnable = true;
-	render_target_blend_desc.LogicOpEnable = false;
-	render_target_blend_desc.SrcBlend = D3D12_BLEND_SRC_ALPHA;
-	render_target_blend_desc.DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
-	render_target_blend_desc.BlendOp = D3D12_BLEND_OP_ADD;
-	render_target_blend_desc.SrcBlendAlpha = D3D12_BLEND_ONE;
-	render_target_blend_desc.DestBlendAlpha = D3D12_BLEND_ZERO;
-	render_target_blend_desc.BlendOpAlpha = D3D12_BLEND_OP_ADD;
-	render_target_blend_desc.LogicOp = D3D12_LOGIC_OP_NOOP;
-	render_target_blend_desc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
-
 	opaque_PSO_desc.BlendState.RenderTarget[0] = render_target_blend_desc;
 	opaque_PSO_desc.PS = { reinterpret_cast<BYTE*>(m_shader_map[L"silhouette_PS"]->GetBufferPointer()), m_shader_map[L"silhouette_PS"]->GetBufferSize() };
 	opaque_PSO_desc.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
@@ -1432,20 +1641,6 @@ void TestScene::Build_PSO(D3DManager* d3d_manager) {
 }
 
 void TestScene::Binding_Key() {
-	m_input_manager->Bind_Key_First_Down(VK_W, BindingInfo(L"player", Action::MOVE_FORWARD, MOVE_ONLY_XZ));
-	m_input_manager->Bind_Key_First_Down(VK_S, BindingInfo(L"player", Action::MOVE_BACK, MOVE_ONLY_XZ));
-	m_input_manager->Bind_Key_First_Down(VK_A, BindingInfo(L"player", Action::MOVE_LEFT, MOVE_ONLY_XZ));
-	m_input_manager->Bind_Key_First_Down(VK_D, BindingInfo(L"player", Action::MOVE_RIGHT, MOVE_ONLY_XZ));
-
-	m_input_manager->Bind_Key_Down(VK_W, BindingInfo(L"player", Action::MOVE_FORWARD, MOVE_ONLY_XZ));
-	m_input_manager->Bind_Key_Down(VK_S, BindingInfo(L"player", Action::MOVE_BACK, MOVE_ONLY_XZ));
-	m_input_manager->Bind_Key_Down(VK_A, BindingInfo(L"player", Action::MOVE_LEFT, MOVE_ONLY_XZ));
-	m_input_manager->Bind_Key_Down(VK_D, BindingInfo(L"player", Action::MOVE_RIGHT, MOVE_ONLY_XZ));
-
-	m_input_manager->Bind_Key_Up(VK_W, BindingInfo(L"player", Action::MOVE_FORWARD, MOVE_ONLY_XZ));
-	m_input_manager->Bind_Key_Up(VK_S, BindingInfo(L"player", Action::MOVE_BACK, MOVE_ONLY_XZ));
-	m_input_manager->Bind_Key_Up(VK_A, BindingInfo(L"player", Action::MOVE_LEFT, MOVE_ONLY_XZ));
-	m_input_manager->Bind_Key_Up(VK_D, BindingInfo(L"player", Action::MOVE_RIGHT, MOVE_ONLY_XZ));
 
 
 	m_input_manager->Bind_Key_First_Down(VK_NUM1, BindingInfo(L"player", Action::CHANGE_MOUSE));
@@ -1454,8 +1649,10 @@ void TestScene::Binding_Key() {
 	m_input_manager->Bind_Key_First_Down(VK_SPACE, BindingInfo(L"player", Action::ACTION_JUMP));
 	m_input_manager->Bind_Key_First_Down(VK_LBUTTON, BindingInfo(L"player", Action::ACTION_ONE));
 
-	m_input_manager->Bind_Mouse_Move(BindingInfo(L"maincamera", Action::ROTATE_PITCH, 0.01f),
-		BindingInfo(L"maincamera", Action::ROTATE_RIGHT, 0.01f));
+	m_input_manager->Bind_Key_Up(VK_LBUTTON, BindingInfo(L"", Action::CUSTOM_FUNCTION_TWO));
+
+	m_input_manager->Bind_Mouse_Move(BindingInfo(L"", Action::PICKING, POINTF(0.0f, 0.0f)),
+		BindingInfo(), BindingInfo());
 
 	m_input_manager->Bind_Key_First_Down(VK_F1, BindingInfo(L"", Action::CHANGE_WIREFRAME_FLAG));
 	m_input_manager->Bind_Key_First_Down(VK_F2, BindingInfo(L"", Action::CHANGE_BOUNDINGBOX_FLAG));
@@ -1477,7 +1674,13 @@ void TestScene::Pairing_Collision_Set() {
 void TestScene::Custom_Function_One() {
 	m_render_silhouette = !m_render_silhouette;
 }
-// 1048 * 8 ^ detail_level
+
+void TestScene::Custom_Function_Two() {
+	for (auto& o : m_object_manager->Get_Selected_Obj_Arr()) {
+		o->Call_Custom_Function_One();
+	}
+}
+
 void TestScene::Crt_Voxel(DirectX::XMFLOAT3 position, float scale, UINT detail_level) {
 	if (detail_level == 0) {
 		Object* object = m_object_manager->Add_Obj(L"voxel_" + std::to_wstring(m_voxel_count++), L"cheese", L"Object",
@@ -1551,9 +1754,237 @@ void TestScene::Del_Voxel(int cheese_index, int voxel_index) {
 	voxel_cheese_pointer->Remove_Voxel(voxel_index);
 }
 
+void TestScene::Chg_Scene_State(Scene_State scene_state) {
+	m_object_manager->Hide_All_UI();
+	m_object_manager->Get_Obj(L"dissolve")->Set_Visible(true);
+
+	m_input_manager->Rst_Manager();
+
+	switch (scene_state) {
+	case Scene_State::MAIN_STATE:
+		m_object_manager->Get_Obj(L"cat_main")->Set_Visible(true);
+		m_object_manager->Get_Obj(L"cat_main")->Set_Shade(true);
+		m_object_manager->Get_Obj(L"mouse_main")->Set_Visible(true);
+		m_object_manager->Get_Obj(L"mouse_main")->Set_Shade(true);
+
+		m_object_manager->Get_Obj(L"game_start")->Set_Visible(true);
+		m_object_manager->Get_Obj(L"game_end")->Set_Visible(true);
+		m_object_manager->Get_Obj(L"catcha_title")->Set_Visible(true);
+
+		//
+		m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"main_scene_object",
+			0.0f, 5.0f, 0.0f, 0.1f, ROTATE_SYNC_NONE);
+		m_main_camera->Rst_Rotate();
+		m_main_camera->Rotate_Pitch(0.25f);
+		m_main_camera->Rotate_Right(-0.25f);
+
+		//
+		m_input_manager->Bind_Key_Up(VK_LBUTTON, BindingInfo(L"", Action::CUSTOM_FUNCTION_TWO));
+
+		m_input_manager->Bind_Mouse_Move(BindingInfo(L"", Action::PICKING, POINTF(0.0f, 0.0f)),
+			BindingInfo(), BindingInfo());
+
+		m_input_manager->Bind_Key_First_Down(VK_F1, BindingInfo(L"", Action::CHANGE_WIREFRAME_FLAG));
+		break;
+	case Scene_State::MATCHING_STATE:
+		m_object_manager->Get_Obj(L"cat_main")->Set_Visible(false);
+		m_object_manager->Get_Obj(L"cat_main")->Set_Shade(false);
+		m_object_manager->Get_Obj(L"mouse_main")->Set_Visible(false);
+		m_object_manager->Get_Obj(L"mouse_main")->Set_Shade(false);
+
+		m_object_manager->Get_Obj(L"select_animal")->Set_Visible(true);
+		m_object_manager->Get_Obj(L"to_main")->Set_Visible(true);
+		m_object_manager->Get_Obj(L"select_cat")->Set_Visible(true);
+		m_object_manager->Get_Obj(L"select_mouse")->Set_Visible(true);
+
+		//
+		m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"main_scene_object",
+			0.0f, 5.0f, 0.0f, 0.1f, ROTATE_SYNC_NONE);
+		m_main_camera->Rst_Rotate();
+		m_main_camera->Rotate_Pitch(0.25f);
+		m_main_camera->Rotate_Right(-0.25f);
+
+		//
+		m_input_manager->Bind_Key_Up(VK_LBUTTON, BindingInfo(L"", Action::CUSTOM_FUNCTION_TWO));
+
+		m_input_manager->Bind_Mouse_Move(BindingInfo(L"", Action::PICKING, POINTF(0.0f, 0.0f)),
+			BindingInfo(), BindingInfo());
+
+		m_input_manager->Bind_Key_First_Down(VK_F1, BindingInfo(L"", Action::CHANGE_WIREFRAME_FLAG));
+		break;
+	case Scene_State::PLAY_STATE:
+		m_object_manager->Get_Obj(L"cat_main")->Set_Visible(false);
+		m_object_manager->Get_Obj(L"cat_main")->Set_Shade(false);
+		m_object_manager->Get_Obj(L"mouse_main")->Set_Visible(false);
+		m_object_manager->Get_Obj(L"mouse_main")->Set_Shade(false);
+
+		m_object_manager->Get_Obj(L"aim_circle")->Set_Visible(true);
+		m_object_manager->Get_Obj(L"timer")->Set_Visible(true);
+		m_object_manager->Get_Obj(L"game_play_ui")->Set_Visible(true);
+		m_object_manager->Get_Obj(L"portrait")->Set_Visible(true);
+
+		for (int i = 0; i < 8; ++i) {
+			m_object_manager->Get_Obj(L"mouse_icon_" + std::to_wstring(i))->Set_Visible(true);
+		}
+
+		for (int i = 0; i < 4; ++i) {
+			m_object_manager->Get_Obj(L"cheese_icon_" + std::to_wstring(i))->Set_Visible(true);
+		}
+
+		m_object_manager->Get_Obj(L"timer")->Set_Position(-0.1f, 0.9f, 0.0f);
+		m_object_manager->Get_Obj(L"timer")->Set_Scale(0.06f, 0.08f, 0.0f);
+		((TextUIObject*)m_object_manager->Get_Obj(L"timer"))->Set_Text(L"대기중..");
+
+		//
+		/*m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"player",
+			0.0f, 50.0f, 0.0f, 150.0f, ROTATE_SYNC_RPY);
+		m_main_camera->Rst_Rotate();*/
+
+		//
+		m_input_manager->Bind_Key_Down(VK_W, BindingInfo(L"player", Action::MOVE_FORWARD, MOVE_ONLY_XZ));
+		m_input_manager->Bind_Key_Down(VK_S, BindingInfo(L"player", Action::MOVE_BACK, MOVE_ONLY_XZ));
+		m_input_manager->Bind_Key_Down(VK_A, BindingInfo(L"player", Action::MOVE_LEFT, MOVE_ONLY_XZ));
+		m_input_manager->Bind_Key_Down(VK_D, BindingInfo(L"player", Action::MOVE_RIGHT, MOVE_ONLY_XZ));
+
+		m_input_manager->Bind_Key_First_Down(VK_W, BindingInfo(L"player", Action::MOVE_FORWARD, MOVE_ONLY_XZ));
+		m_input_manager->Bind_Key_First_Down(VK_S, BindingInfo(L"player", Action::MOVE_BACK, MOVE_ONLY_XZ));
+		m_input_manager->Bind_Key_First_Down(VK_A, BindingInfo(L"player", Action::MOVE_LEFT, MOVE_ONLY_XZ));
+		m_input_manager->Bind_Key_First_Down(VK_D, BindingInfo(L"player", Action::MOVE_RIGHT, MOVE_ONLY_XZ));
+
+		m_input_manager->Bind_Key_First_Down(VK_SPACE, BindingInfo(L"player", Action::ACTION_JUMP));
+		m_input_manager->Bind_Key_First_Down(VK_LBUTTON, BindingInfo(L"player", Action::ACTION_ONE));
+
+		m_input_manager->Bind_Key_Up(VK_W, BindingInfo(L"player", Action::MOVE_FORWARD, MOVE_ONLY_XZ));
+		m_input_manager->Bind_Key_Up(VK_S, BindingInfo(L"player", Action::MOVE_BACK, MOVE_ONLY_XZ));
+		m_input_manager->Bind_Key_Up(VK_A, BindingInfo(L"player", Action::MOVE_LEFT, MOVE_ONLY_XZ));
+		m_input_manager->Bind_Key_Up(VK_D, BindingInfo(L"player", Action::MOVE_RIGHT, MOVE_ONLY_XZ));
+
+		m_input_manager->Bind_Mouse_Move(BindingInfo(), BindingInfo(L"maincamera", Action::ROTATE_PITCH, 0.01f),
+			BindingInfo(L"maincamera", Action::ROTATE_RIGHT, 0.01f));
+
+		m_input_manager->Bind_Key_First_Down(VK_F1, BindingInfo(L"", Action::CHANGE_WIREFRAME_FLAG));
+		m_input_manager->Bind_Key_First_Down(VK_F2, BindingInfo(L"", Action::CHANGE_BOUNDINGBOX_FLAG));
+		break;
+	case Scene_State::END_STATE:
+		m_object_manager->Get_Obj(L"winner_is")->Set_Visible(true);
+		m_object_manager->Get_Obj(L"winner")->Set_Visible(true);
+		m_object_manager->Get_Obj(L"to_main")->Set_Visible(true);
+
+		//
+		m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"end_scene_object",
+			0.0f, 5.0f, 0.0f, 0.1f, ROTATE_SYNC_NONE);
+		m_main_camera->Rst_Rotate();
+		m_main_camera->Rotate_Pitch(0.25f);
+		m_main_camera->Rotate_Right(0.25f);
+
+		//
+		m_input_manager->Bind_Key_Up(VK_LBUTTON, BindingInfo(L"", Action::CUSTOM_FUNCTION_TWO));
+
+		m_input_manager->Bind_Mouse_Move(BindingInfo(L"", Action::PICKING, POINTF(0.0f, 0.0f)),
+			BindingInfo(), BindingInfo());
+
+		m_input_manager->Bind_Key_First_Down(VK_F1, BindingInfo(L"", Action::CHANGE_WIREFRAME_FLAG));
+		break;
+	default:
+		break;
+	}
+}
+
+void TestScene::Picking(POINTF screen_position) {
+	for (auto& o : m_object_manager->Get_Selected_Obj_Arr()) {
+		o->Set_Additional_Scale(0.0f, 0.0f, 0.0f);
+	}
+
+	m_object_manager->Rst_Selected_Obj_Arr();
+
+	DirectX::XMFLOAT4X4 projection_matrix = m_main_camera->Get_PM_4x4f();
+
+	float view_position_x_ui = +(2.0f * screen_position.x / (float)m_client_width - 1.0f);
+	float view_position_y_ui = -(2.0f * screen_position.y / (float)m_client_height - 1.0f);
+
+	float view_position_x = view_position_x_ui / projection_matrix._11;
+	float view_position_y = view_position_y_ui / projection_matrix._22;
+
+	DirectX::XMFLOAT4 origin_ray = DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
+	DirectX::XMFLOAT4 ray_direction = DirectX::XMFLOAT4(view_position_x, view_position_y, 1.0f, 0.0f);
+	DirectX::XMFLOAT4 ray_direction_ui = DirectX::XMFLOAT4(view_position_x_ui, view_position_y_ui, 1.0f, 0.0f);
+
+	DirectX::XMMATRIX view_matrix = m_main_camera->Get_VM_M();
+	DirectX::XMFLOAT4X4 inverse_view_matrix;
+	DirectX::XMStoreFloat4x4(&inverse_view_matrix, DirectX::XMMatrixInverse(&DirectX::XMMatrixDeterminant(view_matrix), view_matrix));
+
+	for (auto& o : m_object_manager->Get_UI_Obj_Arr()) {
+		if (o->Get_Selectable() == false) {
+			continue;
+		}
+
+		if (o->Get_Visible()) {
+			if (o->Picking(origin_ray, ray_direction_ui, inverse_view_matrix, MAX_PICKING_DISTANCE)) {
+				m_object_manager->Add_Selected_Obj(o);
+				//OutputDebugStringW((o->Get_Name() + L" Selected\n").c_str());
+			}
+		}
+	}
+
+	for (auto& o : m_object_manager->Get_Text_UI_Obj_Arr()) {
+		if (o->Get_Selectable() == false) {
+			continue;
+		}
+
+		if (o->Get_Visible()) {
+			if (o->Picking(origin_ray, ray_direction_ui, inverse_view_matrix, MAX_PICKING_DISTANCE)) {
+				m_object_manager->Add_Selected_Obj(o);
+				//OutputDebugStringW((o->Get_Name() + L" Selected\n").c_str());
+			}
+		}
+	}
+
+	for (auto& o : m_object_manager->Get_Selected_Obj_Arr()) {
+		o->Set_Additional_Scale(0.02f, 0.02f, 0.02f);
+	}
+}
+
+
+
+//
+void Game_Start_UI_Function() {
+	m_next_scene_state = Scene_State::MATCHING_STATE;
+}
+
+void Game_End_UI_Function() {
+	PostQuitMessage(0);
+}
+
+void To_Main_UI_Function() {
+	m_next_scene_state = Scene_State::MAIN_STATE;
+}
+
+void Select_Cat_UI_Function() {
+	m_next_scene_state = Scene_State::PLAY_STATE;
+
+	NetworkManager& network_manager = NetworkManager::GetInstance();
+	if (false == network_manager.Choose)
+	{
+		network_manager.ChooseCharacter(true);
+		network_manager.Choose = true;
+	}
+}
+
+void Select_Mouse_UI_Function() {
+	m_next_scene_state = Scene_State::PLAY_STATE;
+
+	NetworkManager& network_manager = NetworkManager::GetInstance();
+	if (false == network_manager.Choose)
+	{
+		network_manager.ChooseCharacter(false);
+		network_manager.Choose = true;
+	}
+}
+
 void TestScene::CharacterChange(bool is_cat, const std::wstring& key1, const std::wstring& key2)
 {
 	Camera* main_camera = reinterpret_cast<Camera*>(m_object_manager->Get_Obj(L"maincamera"));
+	main_camera->Set_Freezing_Time(0.9f);
 	TextUIObject* Aim = (TextUIObject*)m_object_manager->Get_Obj(L"aim_circle");
 	if (true == is_cat)
 	{

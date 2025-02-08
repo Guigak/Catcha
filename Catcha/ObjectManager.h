@@ -62,6 +62,9 @@ private:
 	//
 	Scene* m_scene = nullptr;
 
+	//
+	std::vector<Object*> m_selected_object_array;
+
 public:
 	ObjectManager(Scene* scene) { m_scene = scene; }
 	~ObjectManager() {}
@@ -126,10 +129,10 @@ public:
 	Object* Add_Obj(std::wstring object_name, std::wstring mesh_name, std::wstring set_name = L"Object",
 		DirectX::XMMATRIX world_matrix = DirectX::XMMatrixIdentity(),
 		D3D12_PRIMITIVE_TOPOLOGY primitive_topology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType object_type = ObjectType::OPAQUE_OBJECT,
-		bool physics = false, bool visiable = true);
+		bool physics = false, bool visible = true);
 	Object* Add_Obj(std::wstring object_name, std::vector<Mesh>& mesh_array, std::wstring set_name = L"Object",
 		D3D12_PRIMITIVE_TOPOLOGY primitive_topology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType object_type = ObjectType::OPAQUE_OBJECT,
-		bool physics = false, bool visiable = true);
+		bool physics = false, bool visible = true);
 
 	//
 	void Build_BV(ID3D12Device* device, ID3D12GraphicsCommandList* command_list);
@@ -145,17 +148,26 @@ public:
 	Object* Add_Col_OBB_Obj(std::wstring obb_object_name, DirectX::BoundingOrientedBox obb, std::wstring object_name = L"");
 
 	//
-	Object* Add_Voxel_Cheese(std::wstring object_name, DirectX::XMFLOAT3 object_position, float scale, UINT detail_level);
+	Object* Add_Voxel_Cheese(std::wstring object_name, DirectX::XMFLOAT3 object_position, float scale, UINT detail_level, bool visible = true);
 
 	UINT Get_Max_Instc_Count();
 
 	//
-	Object* Add_Text_UI_Obj(std::wstring object_name, float position_x, float position_y, float scale_x, float scale_y);
+	Object* Add_Text_UI_Obj(std::wstring object_name, float position_x, float position_y, float scale_x, float scale_y, bool selectable = false, bool visible = true);
 	Object* Add_UI_Obj(std::wstring object_name, float position_x, float position_y, float scale_x, float scale_y,
-		UINT texture_width, UINT texture_height, float top, float left, float bottom, float right);
+		UINT texture_width, UINT texture_height, float top, float left, float bottom, float right, bool selectable = false, bool visible = true);
 
 	//
-	Object* Add_Particle_Obj(std::wstring object_name);
+	Object* Add_Particle_Obj(std::wstring object_name, bool visible = true);
+
+	//
+	void Rst_Selected_Obj_Arr();
+	void Add_Selected_Obj(std::wstring object_name);
+	void Add_Selected_Obj(Object* object_pointer);
+	std::vector<Object*> Get_Selected_Obj_Arr() { return m_selected_object_array; }
+
+	//
+	void Hide_All_UI();
 
 	// player 전환을 위한 object swap
 	void Swap_Object(const std::wstring& key1, const std::wstring& key2);

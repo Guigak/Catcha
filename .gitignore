@@ -1,5 +1,6 @@
 /Catcha/.vs/*
 /Catcha/x64/*
 /Catcha/FBXSDK/*
+/Catcha/FMOD/*
 /Catcha/Catcha/*
 *.zip

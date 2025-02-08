@@ -84,18 +84,24 @@ void Camera::Update(float elapsed_time) {
 	}
 
 	if (m_object) {
-		Calc_Rotate();
-		Udt_LUR();
+		if (m_freezing_time > 0.001f)
+		{
+			m_freezing_time -= elapsed_time;
+		}
+		else
+		{
+			Calc_Rotate();
+			Udt_LUR();
 
-		m_bind_position = m_object->Get_Position_3f();
-		m_bind_position = MathHelper::Add(m_bind_position, m_object->Get_Look(), m_bind_offset_look);
-		m_bind_position = MathHelper::Add(m_bind_position, m_object->Get_Up(), m_bind_offset_up);
-		m_bind_position = MathHelper::Add(m_bind_position, m_object->Get_Right(), m_bind_offset_right);
+			m_bind_position = m_object->Get_Position_3f();
+			m_bind_position = MathHelper::Add(m_bind_position, m_object->Get_Look(), m_bind_offset_look);
+			m_bind_position = MathHelper::Add(m_bind_position, m_object->Get_Up(), m_bind_offset_up);
+			m_bind_position = MathHelper::Add(m_bind_position, m_object->Get_Right(), m_bind_offset_right);
 
-		m_target_position = MathHelper::Add(m_bind_position, Get_Look(), -m_distance);
-		//m_position = MathHelper::Add(m_position, MathHelper::Multiply(MathHelper::Subtract(m_target_position, m_position), 1.0f / m_lagging_degree));
-		DirectX::XMStoreFloat3(&m_position, DirectX::XMVectorLerp(DirectX::XMLoadFloat3(&m_position), DirectX::XMLoadFloat3(&m_target_position), 1.0f / m_lagging_degree));
-
+			m_target_position = MathHelper::Add(m_bind_position, Get_Look(), -m_distance);
+			//m_position = MathHelper::Add(m_position, MathHelper::Multiply(MathHelper::Subtract(m_target_position, m_position), 1.0f / m_lagging_degree));
+			DirectX::XMStoreFloat3(&m_position, DirectX::XMVectorLerp(DirectX::XMLoadFloat3(&m_position), DirectX::XMLoadFloat3(&m_target_position), 1.0f / m_lagging_degree));
+		}
 		m_dirty = true;
 	}
 

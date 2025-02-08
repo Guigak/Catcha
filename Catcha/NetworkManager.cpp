@@ -104,29 +104,6 @@ void NetworkManager::InitSocket()
 	strcpy_s(p.name, m_name.c_str());
 	strcpy_s(p.password, m_password.c_str());
 	DoSend(&p);
-
-	// UDP 소켓 Initialize
-	m_udp_socket = WSASocket(AF_INET, SOCK_DGRAM, IPPROTO_UDP, NULL, 0, WSA_FLAG_OVERLAPPED);
-	if (m_udp_socket == INVALID_SOCKET)
-	{
-		print_error("UDP socket creation failed", WSAGetLastError());
-		WSACleanup();
-		exit(0);
-	}
-
-	// UDP 소켓 비동기 모드 설정
-	u_long mode = 1;
-	ioctlsocket(m_udp_socket, FIONBIO, &mode);
-
-	m_udp_addr.sin_family = AF_INET;
-	inet_pton(AF_INET, SERVER_ADDR, &m_udp_addr.sin_addr);
-	m_udp_addr.sin_port = htons(UDPPORT);
-
-	CS_TIME_PACKET time;
-	time.size = sizeof(time);
-	time.type = CS_TIME;
-	time.time = 0;
-	//DoSendUDP(&time);
 }
 
 
@@ -177,6 +154,7 @@ void NetworkManager::SendActionOne(const DirectX::XMFLOAT3& look)
 
 void NetworkManager::ChooseCharacter(bool IsCat)
 {
+	
 	CS_CHOOSE_CHARACTER_PACKET p;
 	p.size = sizeof(p);
 	p.type = CS_CHOOSE_CHARACTER;
@@ -184,24 +162,6 @@ void NetworkManager::ChooseCharacter(bool IsCat)
 	DoSend(&p);
 }
 
-void NetworkManager::DoSendUDP(void* packet)
-{
-	DWORD BytesSent = 0;
-	DWORD Flags = 0;
-	CHAR* p = reinterpret_cast<CHAR*>(packet);
-
-	WSABUF wsabuf;
-	wsabuf.buf = p;
-	wsabuf.len = p[0];
-	ZeroMemory(&m_overlapped, sizeof(m_overlapped));
-
-	int res = WSASendTo(m_udp_socket, &wsabuf, 1, &BytesSent, Flags, 
-		reinterpret_cast<SOCKADDR*>(&m_udp_addr), sizeof(m_udp_addr), &m_overlapped, nullptr);
-	if (0 != res)
-	{
-		print_error("WSASendTo", WSAGetLastError());
-	}
-}
 
 void NetworkManager::DoRecv()
 {
@@ -239,36 +199,6 @@ void NetworkManager::DoRecv()
 		ProcessData(wsabuf.buf, bytes_received);
 	}
 
-	// UDP
-	//sockaddr_in sender_addr;
-	//int sender_addr_size = sizeof(sender_addr);
-
-	//res = WSARecvFrom(
-	//	m_udp_socket, &wsabuf, 1, &bytes_received, &recv_flags, 
-	//	(SOCKADDR*)&sender_addr, &sender_addr_size, nullptr, nullptr);
-	//if (res == SOCKET_ERROR)
-	//{
-	//	int err = WSAGetLastError();
-	//	if (err == WSA_IO_PENDING || err == WSAEWOULDBLOCK)
-	//	{
-	//		// NON-Blocking 패킷 안받음
-	//	}
-	//	else if (err == WSAECONNRESET || err == WSAENOTCONN)
-	//	{
-	//		// Disconnect
-	//		closesocket(m_server_socket);
-	//		exit(0);
-	//	}
-	//	else
-	//	{
-	//		print_error("WSARecv", err);
-	//		exit(0);
-	//	}
-	//}
-	//else
-	//{
-	//	ProcessData(wsabuf.buf, bytes_received);
-	//}
 }
 
 void NetworkManager::ProcessData(char* net_buf, size_t io_byte)
@@ -340,7 +270,7 @@ void NetworkManager::ProcessPacket(char* ptr)
 		else
 		{
 			// 다른 유저 추가
-			m_objects[characters[id].character_id]->Set_Visiable(true);
+			m_objects[characters[id].character_id]->Set_Visible(true);
 		}
 		break;
 	}
@@ -474,7 +404,20 @@ void NetworkManager::ProcessPacket(char* ptr)
 	{
 		SC_TIME_PACKET* p = reinterpret_cast<SC_TIME_PACKET*>(ptr);
 		m_game_time = p->time;
-		m_time_object->Set_Text(std::to_wstring((int)m_game_time % 300));
+		
+
+		if (m_game_time != 0)
+		{
+			m_time_object->Set_Position(-0.05f, 0.9f, 0.0f);
+			m_time_object->Set_Scale(0.1f, 0.1f, 0.0f);
+			m_time_object->Set_Text(std::to_wstring((int)m_game_time % 300));
+		}
+		else
+		{
+			m_time_object->Set_Position(-0.15f, 0.9f, 0.0f);
+			m_time_object->Set_Scale(0.06f, 0.08f, 0.0f);
+			m_time_object->Set_Text(L"게임 종료!");
+		}
 		break;
 	}
 	case SC_RANDOM_VOXEL_SEED:
@@ -598,7 +541,7 @@ void NetworkManager::ChangeOwnCharacter(int character_id, int new_number)
 			// 접속전 기본 캐릭터 안보이게 설정
 			if (m_objects[character_id]->Get_Character_Number() == NUM_GHOST)
 			{
-				m_objects[character_id]->Set_Visiable(false);
+				m_objects[character_id]->Set_Visible(false);
 				m_objects[character_id]->Set_Position(-999.0f, -999.0f, -999.0f);
 			}
 
@@ -607,7 +550,7 @@ void NetworkManager::ChangeOwnCharacter(int character_id, int new_number)
 			// 쥐 1인칭이라 자기 캐릭터 안그리게 설정
 			if (!is_cat) 
 			{
-				character->Set_Visiable(false);
+				character->Set_Visible(false);
 				character->SetLerpDegree(4.0f);
 				character->SetTargetQuat(DirectX::XMFLOAT4{ 0.0f, 0.0f, 0.0f, 1.0f });
 			}

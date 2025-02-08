@@ -19,5 +19,6 @@ public:
 	void Remove_Voxel(int voxel_index);
 	void Remove_Random_Voxel(int random_seed);
 	void Remove_Sphere_Voxel(const DirectX::XMFLOAT3& center, float radius);
+	void Remove_All_Voexl();
 };
 

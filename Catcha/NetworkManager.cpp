@@ -1,6 +1,7 @@
 #include "NetworkManager.h"
 #include "VoxelCheese.h"
 #include "ParticleObject.h"
+#include "TextUIObject.h"
 
 constexpr DirectX::XMFLOAT3 CHARACTER_POS[9] =
 {
@@ -398,6 +399,10 @@ void NetworkManager::ProcessPacket(char* ptr)
 			characters[m_myid].Location = coord;
 			m_objects[characters[m_myid].character_id]->SetTargetPosition(coord);
 			m_objects[characters[m_myid].character_id]->Set_Rotate(quat);
+			for (auto& observer : m_observers)
+			{
+				observer->InitCamera(quat);
+			}
 
 			// 다시 서버로 동기화 패킷 전송
 			CS_SYNC_PLAYER_PACKET sync;
@@ -467,9 +472,9 @@ void NetworkManager::ProcessPacket(char* ptr)
 	}
 	case SC_TIME:
 	{
-		SC_TIME_PACKET* time = reinterpret_cast<SC_TIME_PACKET*>(ptr);
-		unsigned short game_time = time->time;
-		DoSend(time);
+		SC_TIME_PACKET* p = reinterpret_cast<SC_TIME_PACKET*>(ptr);
+		m_game_time = p->time;
+		m_time_object->Set_Text(std::to_wstring((int)m_game_time % 300));
 		break;
 	}
 	case SC_RANDOM_VOXEL_SEED:
@@ -486,10 +491,21 @@ void NetworkManager::ProcessPacket(char* ptr)
 	case SC_REMOVE_VOXEL_SPHERE:
 	{
 		SC_REMOVE_VOXEL_SPHERE_PACKET* p = reinterpret_cast<SC_REMOVE_VOXEL_SPHERE_PACKET*>(ptr);
-		int cheese_num = p->cheese_num;
+		int cheese_num = static_cast<int>(p->cheese_num >> 1);
+		bool is_removed_all = (p->cheese_num & 1) != 0;
 		DirectX::XMFLOAT3 sphere_center {p->center_x, p->center_y, p->center_z};
-		float radius = 5.0f;
-		m_cheeses[cheese_num]->Remove_Sphere_Voxel(sphere_center, radius);
+		float radius = 10.0f;
+
+		// 치즈 전부 삭제되었을시
+		if (true == is_removed_all)
+		{
+			m_cheeses[cheese_num]->Remove_All_Voexl();
+		}
+		// 치즈 일부 삭제시
+		else
+		{
+			m_cheeses[cheese_num]->Remove_Sphere_Voxel(sphere_center, radius);
+		}
 		m_particle_object->Add_Particle(
 			sphere_center,
 			DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f),
@@ -543,6 +559,19 @@ void NetworkManager::ProcessPacket(char* ptr)
 	case SC_GAME_START:
 	{
 		InitialzeCharacters();
+		break;
+	}
+	case SC_GAME_OPEN_DOOR:
+	{
+		// TODO : 문열기
+		break;
+	}
+	case SC_GAME_WIN_CAT:
+	{
+		break;
+	}
+	case SC_GAME_WIN_MOUSE:
+	{
 		break;
 	}
 	default:

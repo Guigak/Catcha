@@ -132,3 +132,16 @@ void VoxelCheese::Remove_Sphere_Voxel(const DirectX::XMFLOAT3& center, float rad
 	}
 }
 
+void VoxelCheese::Remove_All_Voexl()
+{
+	for (auto& voxel : m_instance_data_array)
+	{
+		if (0.0001f < voxel.additional_info.x)
+		{
+			voxel.additional_info.x = 0.0f;
+			--m_instance_count;
+			Rst_Instc_Dirty_Cnt();
+		}
+	}
+}
+

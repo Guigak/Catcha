@@ -93,7 +93,7 @@ void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
 	//	count = 0;
 	//}
 
-	((TextUIObject*)m_object_manager->Get_Obj(L"total_time"))->Set_Text(std::to_wstring((int)m_total_time));
+	//((TextUIObject*)m_object_manager->Get_Obj(L"total_time"))->Set_Text(std::to_wstring((int)m_total_time));
 	//
 
 	Object* cat_object = m_object_manager->Get_Obj(L"cat");
@@ -1094,16 +1094,16 @@ void TestScene::Build_O() {
 	//}
 
 	int cheese_count = 0;
+	//m_object_manager->Add_Voxel_Cheese(L"cheese" + std::to_wstring(cheese_count++),
+	//	DirectX::XMFLOAT3(169.475f, 10.049f, 230.732f), 1.0f, 1);
 	m_object_manager->Add_Voxel_Cheese(L"cheese" + std::to_wstring(cheese_count++),
-		DirectX::XMFLOAT3(169.475f, 10.049f, 230.732f), 1.0f, 2);
+		DirectX::XMFLOAT3(441.877f, 15.263f + 1.0f, 466.983f), 1.0f, 1);
 	m_object_manager->Add_Voxel_Cheese(L"cheese" + std::to_wstring(cheese_count++),
-		DirectX::XMFLOAT3(441.877f, 15.263f, 466.983f), 1.0f, 2);
+		DirectX::XMFLOAT3(135.288f, 21.432f + 1.0f, -504.089f), 1.0f, 1);
 	m_object_manager->Add_Voxel_Cheese(L"cheese" + std::to_wstring(cheese_count++),
-		DirectX::XMFLOAT3(135.288f, 21.432f, -504.089f), 1.0f, 2);
+		DirectX::XMFLOAT3(-550.68f, -8.712f + 1.0f, 468.083f), 1.0f, 1);
 	m_object_manager->Add_Voxel_Cheese(L"cheese" + std::to_wstring(cheese_count++),
-		DirectX::XMFLOAT3(-550.68f, -8.712f, 468.083f), 1.0f, 2);
-	m_object_manager->Add_Voxel_Cheese(L"cheese" + std::to_wstring(cheese_count++),
-		DirectX::XMFLOAT3(-540.713f, -61.436f, -448.526f), 1.0f, 2);
+		DirectX::XMFLOAT3(-540.713f, -61.436f + 1.0f, -448.526f), 1.0f, 1);
 
 	//
 	object = m_object_manager->Add_Text_UI_Obj(L"aim_circle", 0.0f, 0.0f, 0.02f, 0.02f);
@@ -1113,7 +1113,8 @@ void TestScene::Build_O() {
 
 	object = m_object_manager->Add_Text_UI_Obj(L"total_time", -0.95f, 0.93f, 0.1f, 0.1f);
 	object->Set_Color_Mul(1.0f, 1.0f, 0.0f, 1.0f);
-	((TextUIObject*)object)->Set_Text(std::to_wstring((int)m_total_time));
+	((TextUIObject*)object)->Set_Text(L"다른 플레이어 기다리는 중..");
+	NetworkManager::GetInstance().SetTimeObject(*(TextUIObject*)object);
 
 	//
 	object = m_object_manager->Add_UI_Obj(L"test_ui", 0.0f, 0.0f, 2.0f, 2.0f,

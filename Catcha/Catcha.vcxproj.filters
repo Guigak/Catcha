@@ -200,4 +200,12 @@
       <Filter>리소스 파일</Filter>
     </FxCompile>
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="Map.txt">
+      <Filter>리소스 파일</Filter>
+    </Text>
+    <Text Include="networkip.txt">
+      <Filter>리소스 파일</Filter>
+    </Text>
+  </ItemGroup>
 </Project>

@@ -18,6 +18,7 @@ struct Client
 class Object;
 class VoxelCheese;
 class ParticleObject;
+class TextUIObject;
 
 class NetworkManager {
 private:
@@ -39,7 +40,10 @@ private:
 	std::vector<Object*> m_objects;						// *캐릭터 오브젝트[character_id]
 	std::vector<VoxelCheese*> m_cheeses;
 	ParticleObject* m_particle_object;					// *파티클 오브젝트
-	float* m_total_time = 0;								// 파티클 시간
+	float* m_total_time = 0;							// 파티클 시간
+
+	TextUIObject* m_time_object;						// 시간 오브젝트
+	short m_game_time = 0;								// 게임 시간
 
 	// 카메라 바인딩을 위한 오브젝트 매니져
 	std::vector<NetworkObserver*> m_observers;
@@ -92,6 +96,10 @@ public:
 
 	void SetTotalTime(float& total_time) {
 		m_total_time = &total_time;
+	}
+
+	void SetTimeObject(TextUIObject& time) {
+		m_time_object = &time;
 	}
 
 	// 옵저버 등록 함수

@@ -26,7 +26,10 @@ constexpr char SC_RANDOM_VOXEL_SEED = 18;
 constexpr char SC_REMOVE_VOXEL_SPHERE = 19;
 constexpr char SC_SET_MY_ID = 20;
 constexpr char SC_GAME_START = 21;
-constexpr char SC_AI_MOVE = 22;
+constexpr char SC_GAME_OPEN_DOOR = 22;
+constexpr char SC_GAME_WIN_CAT = 23;
+constexpr char SC_GAME_WIN_MOUSE = 24;
+constexpr char SC_AI_MOVE = 25;
 
 #pragma pack (push, 1)
 ///////////////////////////////////////////////
@@ -94,7 +97,7 @@ struct SC_LOGIN_INFO_PACKET {
 struct SC_TIME_PACKET {
 	unsigned char	size;
 	char			type;
-	unsigned short	time;
+	short			time;
 };
 
 // 클라이언트 개인 서버에 접속한 플레이어 정보
@@ -149,7 +152,7 @@ struct SC_RANDOM_VOXEL_SEED_PACKET {
 struct SC_REMOVE_VOXEL_SPHERE_PACKET {
 	unsigned char	size;
 	char			type;
-	unsigned char	cheese_num;						// 치즈 번호
+	unsigned char	cheese_num;						// 치즈 번호, 치즈 전부 삭제 여부
 	float			center_x, center_y, center_z;	// 삭제할 복셀 중심
 };
 
@@ -159,9 +162,10 @@ struct SC_SET_MY_ID_PACKET {
 	unsigned char	my_id;							// 자신의 아이디 번호
 };
 
-struct SC_GAME_START_PACKET {
+struct SC_GAME_STATE_PACKET {
 	unsigned char	size;
 	char			type;
+	unsigned char	winner;
 };
 
 struct SC_AI_MOVE_PACKET {

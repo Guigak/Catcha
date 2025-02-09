@@ -23,8 +23,13 @@ Scene_State m_next_scene_state = Scene_State::MAIN_STATE;
 
 bool m_dissolve = false;
 
+bool m_door_open = false;
+
 constexpr float MAX_DISSOLVE_VALUE = 1.5f;
 float m_dissolve_value = 0.0f;
+
+constexpr float DOOR_OPEN_TIME = 10.0f;
+float m_door_open_time_value = 0.0f;
 
 //
 constexpr float MAX_PICKING_DISTANCE = 1.0f;
@@ -155,6 +160,30 @@ void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
 			m_dissolve_value -= elapsed_time;
 		}
 	}
+
+	// 문 여는 이벤트
+	if (true == m_door_open)
+	{
+		if (m_door_open_time_value < DOOR_OPEN_TIME / 2.0f)
+		{
+			m_door_open_time_value += elapsed_time;
+		}
+		else
+		{
+			//m_object_manager->Get_Obj(L"Door_003")->Rotate_Pitch(180.0f);
+			m_object_manager->Get_Obj(L"Door_003")->Set_Visible(false);
+			((ParticleObject*)m_object_manager->Get_Obj(L"particle"))->Add_Particle(
+				m_object_manager->Get_Obj(L"Door_003")->Get_Position_3f(),
+				DirectX::XMFLOAT3(3.0f, 3.0f, 3.0f),
+				DirectX::XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f),
+				100,
+				m_total_time
+			);
+			m_door_open = false;
+			m_door_open_time_value = 0.0f;
+		}
+	}
+
 
 	float dissolve_value = 1.0f - (float)m_dissolve_value / (float)MAX_DISSOLVE_VALUE;
 	m_object_manager->Get_Obj(L"dissolve")->Set_Color_Mul(dissolve_value, dissolve_value, dissolve_value, 1.0f - dissolve_value);
@@ -1201,22 +1230,8 @@ void TestScene::Build_O() {
 	}
 
 	
+	NetworkManager& network = NetworkManager::GetInstance();
 
-	//
-	DirectX::BoundingOrientedBox obj_obb;
-	int count = 0;
-	//for (auto& o : m_object_manager->Get_Opaque_Obj_Arr()) {
-	//	for (auto& m : o->Get_Mesh_Array()) {
-	//		m.mesh_info->Get_OBB().Transform(obj_obb, o->Get_WM_M());
-
-	//int count = 0;
-	//for (auto& o : m_object_manager->Get_Opaque_Obj_Arr()) {
-	//	for (auto& m : o->Get_Mesh_Array()) {
-	//		m.mesh_info->Get_OBB().Transform(obj_obb, o->Get_WM_M());
-
-	//		m_object_manager->Add_Col_OBB_Obj(L"obb_" + std::to_wstring(count++), obj_obb);
-	//	}
-	//}
 
 	int cheese_count = 0;
 	//m_object_manager->Add_Voxel_Cheese(L"cheese" + std::to_wstring(cheese_count++),
@@ -1270,7 +1285,7 @@ void TestScene::Build_O() {
 	object = m_object_manager->Add_Text_UI_Obj(L"timer", -0.1f, 0.9f, 0.1f, 0.09f, false, false);
 	object->Set_Color_Mul(0.0f, 0.0f, 0.0f, 1.0f);
 	((TextUIObject*)object)->Set_Text(L"대기중..");
-	NetworkManager::GetInstance().SetTimeObject(*(TextUIObject*)object);
+	network.SetTimeObject(*(TextUIObject*)object);
 
 	object = m_object_manager->Add_UI_Obj(L"game_play_ui", 0.0f, 0.0f, 2.0f, 2.0f,
 		2880, 1755, 0.0f, 0.0f, 1080.0f, 1920.0f, false, false);
@@ -1281,16 +1296,19 @@ void TestScene::Build_O() {
 	for (int i = 0; i < 4; ++i) {
 		object = m_object_manager->Add_UI_Obj(L"mouse_icon_" + std::to_wstring(i), -(0.675f - (float)i * 0.125f), 1.0f - (50.0f / 540.0f), 100.0f / 960.0f, 100.0f / 540.0f,
 			2880, 1755, 1330.0f, 960.0f, 1580.0f, 1210.0f, false, false);
+		network.AddMouseUIObject(*(UIObject*)object);
 	}
 
 	for (int i = 0; i < 4; ++i) {
 		object = m_object_manager->Add_UI_Obj(L"mouse_icon_" + std::to_wstring(i + 4), 0.3f + (float)i * 0.125f, 1.0f - (50.0f / 540.0f), 100.0f / 960.0f, 100.0f / 540.0f,
 			2880, 1755, 1330.0f, 1210.0f, 1580.0f, 1460.0f, false, false);
+		network.AddMouseUIObject(*(UIObject*)object);
 	}
 
 	for (int i = 0; i < 4; ++i) {
 		object = m_object_manager->Add_UI_Obj(L"cheese_icon_" + std::to_wstring(i), -0.12f + (float)i * 0.08f, 0.75f, 100.0f / 960.0f, 100.0f / 540.0f,
 			2880, 1755, 1080.0f, 1460.0f, 1180.0f, 1560.0f, false, false);
+		network.AddCheeseUIObject(*(UIObject*)object);
 	}
 
 	// test //
@@ -1317,7 +1335,12 @@ void TestScene::Build_O() {
 	object = m_object_manager->Add_Particle_Obj(L"particle");
 
 	// [CS] total 타임 추가
-	NetworkManager::GetInstance().SetTotalTime(m_total_time);
+	network.SetTotalTime(m_total_time);
+
+	object = m_object_manager->Add_Obj(L"Door_Camera", L"zero_box");
+	object->Set_Position(507.157806f, 42.9769135f, -122.538284f);
+	object->Set_Visible(false);
+	network.SetDoorObject(*object);
 }
 
 void TestScene::Build_C(D3DManager* d3d_manager) {
@@ -1825,11 +1848,15 @@ void TestScene::Chg_Scene_State(Scene_State scene_state) {
 
 		for (int i = 0; i < 8; ++i) {
 			m_object_manager->Get_Obj(L"mouse_icon_" + std::to_wstring(i))->Set_Visible(true);
+			m_object_manager->Get_Obj(L"mouse_icon_" + std::to_wstring(i))->Set_Color_Mul(1.0f, 1.0f, 1.0f, 1.0f);
 		}
 
 		for (int i = 0; i < 4; ++i) {
 			m_object_manager->Get_Obj(L"cheese_icon_" + std::to_wstring(i))->Set_Visible(true);
+			m_object_manager->Get_Obj(L"cheese_icon_" + std::to_wstring(i))->Set_Color_Mul(1.0f, 1.0f, 1.0f, 1.0f);
 		}
+
+		m_object_manager->Get_Obj(L"Door_003")->Set_Visible(true);
 
 		m_object_manager->Get_Obj(L"timer")->Set_Position(-0.1f, 0.9f, 0.0f);
 		m_object_manager->Get_Obj(L"timer")->Set_Scale(0.06f, 0.08f, 0.0f);
@@ -2009,4 +2036,35 @@ void TestScene::CharacterChange(bool is_cat, const std::wstring& key1, const std
 void TestScene::InitCamera(DirectX::XMFLOAT4 rotate_quat)
 {
 	m_object_manager->Set_Camera_Init_4_Server(L"maincamera", rotate_quat);
+}
+
+void TestScene::OpenDoorEvent()
+{	
+	m_door_open = true;
+	
+	Camera* main_camera = reinterpret_cast<Camera*>(m_object_manager->Get_Obj(L"maincamera"));
+	
+	Object* obj = main_camera->Get_Bind_Obj();
+	DirectX::XMFLOAT3 LUR = main_camera->Get_Bind_Offset_LUR();
+	float distance = main_camera->Get_Distance();
+	float lagging_degree = main_camera->Get_Lagging_Degree();
+	DirectX::XMFLOAT4 quat = main_camera->Get_Rotate_RPY_4f();
+	float right = main_camera->Get_Rotate_Right();
+
+	// Door Scene
+	main_camera->Set_Lagging_Degree(1.0f);
+	main_camera->Bind_Obj(m_object_manager->Get_Obj(L"Door_Camera"), 0.0f, 20.0f, 0.0f, -300.0f);
+	main_camera->Rst_Rotate();
+	main_camera->Rotate_Right(0.5f);
+	main_camera->Set_Rotate(DirectX::XMFLOAT4(0.0f, -0.7071f, 0.0f, 0.7071f));
+	main_camera->Update(0.0f);
+	main_camera->Set_Freezing_Time(DOOR_OPEN_TIME);
+
+	// DOOR_OPEN_TIME 지나고, 원래 시점으로 변경
+	main_camera->Bind_Obj(obj, LUR.x, LUR.y, LUR.z, distance);
+	main_camera->Set_Lagging_Degree(lagging_degree);
+	main_camera->Rst_Rotate();
+	main_camera->Rotate_Right(right);
+	main_camera->Set_Rotate(quat);
+	
 }

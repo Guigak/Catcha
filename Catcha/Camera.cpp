@@ -83,13 +83,14 @@ void Camera::Update(float elapsed_time) {
 		}
 	}
 
-	if (m_object) {
-		if (m_freezing_time > 0.001f)
-		{
-			m_freezing_time -= elapsed_time;
-		}
-		else
-		{
+	if (m_freezing_time > 0.001f)
+	{
+		m_freezing_time -= elapsed_time;
+	}
+	else
+	{
+		if (m_object) {
+
 			Calc_Rotate();
 			Udt_LUR();
 
@@ -101,27 +102,28 @@ void Camera::Update(float elapsed_time) {
 			m_target_position = MathHelper::Add(m_bind_position, Get_Look(), -m_distance);
 			//m_position = MathHelper::Add(m_position, MathHelper::Multiply(MathHelper::Subtract(m_target_position, m_position), 1.0f / m_lagging_degree));
 			DirectX::XMStoreFloat3(&m_position, DirectX::XMVectorLerp(DirectX::XMLoadFloat3(&m_position), DirectX::XMLoadFloat3(&m_target_position), 1.0f / m_lagging_degree));
-		}
-		m_dirty = true;
-	}
 
-	if (m_dirty) {
-		Calc_Rotate();
-		Udt_WM();
-		Udt_LUR();
-
-		if (m_object) {
-			Look_At(Get_Position_3f(), m_bind_position, DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f));
-		}
-		else {
-			Look_At(Get_Position_3f(), MathHelper::Add(Get_Position_3f(), Get_Look(), 300.0f), Get_Up());
+			m_dirty = true;
 		}
 
-		Rst_Dirty_Count();
+		if (m_dirty) {
+			Calc_Rotate();
+			Udt_WM();
+			Udt_LUR();
 
-		Udt_VM();
+			if (m_object) {
+				Look_At(Get_Position_3f(), m_bind_position, DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f));
+			}
+			else {
+				Look_At(Get_Position_3f(), MathHelper::Add(Get_Position_3f(), Get_Look(), 300.0f), Get_Up());
+			}
 
-		m_dirty = false;
+			Rst_Dirty_Count();
+
+			Udt_VM();
+
+			m_dirty = false;
+		}
 	}
 }
 

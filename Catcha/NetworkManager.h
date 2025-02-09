@@ -19,6 +19,7 @@ class Object;
 class VoxelCheese;
 class ParticleObject;
 class TextUIObject;
+class UIObject;
 
 class NetworkManager {
 private:
@@ -41,7 +42,10 @@ private:
 	float* m_total_time = 0;							// 파티클 시간
 
 	TextUIObject* m_time_object;						// 시간 오브젝트
+	std::vector<UIObject*> m_mouse_ui_objects;			// mouse ui 오브젝트	- [character_id]
+	std::vector<UIObject*> m_cheese_ui_objects;			// 치즈 ui 오브젝트	- 치즈 번호
 	short m_game_time = 0;								// 게임 시간
+	Object* m_door_camera;								// 열리는 문 오브젝트
 
 	// 카메라 바인딩을 위한 오브젝트 매니져
 	std::vector<NetworkObserver*> m_observers;
@@ -97,6 +101,18 @@ public:
 
 	void SetTimeObject(TextUIObject& time) {
 		m_time_object = &time;
+	}
+
+	void AddMouseUIObject(UIObject& mouse) {
+		m_mouse_ui_objects.emplace_back(&mouse);
+	}
+
+	void AddCheeseUIObject(UIObject& cheese) {
+		m_cheese_ui_objects.emplace_back(&cheese);
+	}
+
+	void SetDoorObject(Object& door) {
+		m_door_camera = &door;
 	}
 
 	// 옵저버 등록 함수

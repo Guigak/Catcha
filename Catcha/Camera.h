@@ -65,6 +65,10 @@ public:
 
 	void Set_Frustum(float FOV_y, float aspect_ratio, float near_z, float far_z);
 	void Set_Distance(float distance) { m_distance = distance; }
+	float Get_Distance() { return m_distance; }
+
+	Object* Get_Bind_Obj() { return m_object; }
+	DirectX::XMFLOAT3 Get_Bind_Offset_LUR() { return DirectX::XMFLOAT3(m_bind_offset_look, m_bind_offset_up, m_bind_offset_right); }
 
 	void Look_At(DirectX::FXMVECTOR position, DirectX::FXMVECTOR target, DirectX::FXMVECTOR up_vector);
 	void Look_At(const DirectX::XMFLOAT3 position, const DirectX::XMFLOAT3 target, const DirectX::XMFLOAT3 up_vector);
@@ -85,6 +89,7 @@ public:
 	void Set_Target_Position(float target_position_x, float target_position_y, float target_position_z);
 
 	void Set_Lagging_Degree(float lagging_degree) { m_lagging_degree = lagging_degree; }
+	float Get_Lagging_Degree() { return m_lagging_degree; }
 
 	void Set_Freezing_Time(float time) { m_freezing_time = time; }
 };

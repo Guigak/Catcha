@@ -2,6 +2,7 @@
 #include "VoxelCheese.h"
 #include "ParticleObject.h"
 #include "TextUIObject.h"
+#include "UIObject.h"
 
 constexpr DirectX::XMFLOAT3 CHARACTER_POS[9] =
 {
@@ -291,6 +292,10 @@ void NetworkManager::ProcessPacket(char* ptr)
 		if (m_objects[characters[id].character_id]->Get_State() != state)
 		{
 			m_objects[characters[id].character_id]->Set_Next_State(state);
+			if (state == Object_State::STATE_DEAD)
+			{
+				m_mouse_ui_objects[characters[id].character_id]->Set_Color_Mul(0.1f, 0.1f, 0.1f, 1.0f);
+			}
 		}
 
 		// 타격시 색 변화 정보
@@ -443,6 +448,7 @@ void NetworkManager::ProcessPacket(char* ptr)
 		if (true == is_removed_all)
 		{
 			m_cheeses[cheese_num]->Remove_All_Voexl();
+			m_cheese_ui_objects[cheese_num]->Set_Color_Mul(0.1f, 0.1f, 0.1f, 1.0f);
 		}
 		// 치즈 일부 삭제시
 		else
@@ -506,7 +512,11 @@ void NetworkManager::ProcessPacket(char* ptr)
 	}
 	case SC_GAME_OPEN_DOOR:
 	{
-		// TODO : 문열기
+		for (auto& observer : m_observers)
+		{
+			observer->OpenDoorEvent();
+		}
+		
 		break;
 	}
 	case SC_GAME_WIN_CAT:

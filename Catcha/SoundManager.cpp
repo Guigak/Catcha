@@ -106,6 +106,15 @@ void SoundManager::Set_Channel_Volume(std::wstring channel_name, float volume) {
 	m_named_channel_info_array[channel_name].channel_pointer->setVolume(volume);
 }
 
+void SoundManager::Set_Channel_Paused(std::wstring channel_name, bool paused) {
+	m_named_channel_info_array[channel_name].channel_pointer->setPaused(paused);
+}
+
+void SoundManager::Restart_Channel(std::wstring channel_name) {
+	m_named_channel_info_array[channel_name].channel_pointer->setPosition(0, FMOD_TIMEUNIT_MS);
+	m_named_channel_info_array[channel_name].channel_pointer->setPaused(false);
+}
+
 void SoundManager::Set_Listener(DirectX::XMFLOAT3 position, DirectX::XMFLOAT3 look, DirectX::XMFLOAT3 up, DirectX::XMFLOAT3 velocity) {
 	m_listener_linked = false;
 

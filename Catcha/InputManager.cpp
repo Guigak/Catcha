@@ -20,10 +20,11 @@ void InputManager::Rst_Manager() {
 	//
 	m_captured = false;
 
-	m_client_width = 0;
-	m_client_height = 0;
+	//m_client_width = 0;
+	//m_client_height = 0;
 
 	m_hide_cursor = false;
+	m_cursor = true;
 	m_fix_cursor = false;
 
 	//
@@ -88,11 +89,14 @@ void InputManager::Prcs_Input() {
 			ReleaseCapture();
 			m_captured = false;
 		}
+
+		m_fix_cursor = false;
+		m_hide_cursor = false;
 		return;
 	}
 	else {
 		if (!m_captured) {
-			//SetCapture(GetActiveWindow());
+			SetCapture(GetActiveWindow());
 			m_captured = true;
 		}
 	}
@@ -175,7 +179,16 @@ void InputManager::Prcs_Input() {
 	}
 
 	if (m_hide_cursor) {
-		SetCursor(nullptr);
+		if (m_cursor) {
+			while (ShowCursor(false) >= 0);
+			m_cursor = false;
+		}
+	}
+	else {
+		if (!m_cursor) {
+			while (ShowCursor(true) < 0);
+			m_cursor = true;
+		}
 	}
 }
 
@@ -228,6 +241,11 @@ void InputManager::Prcs_Binding_Info(BindingInfo binding_info) {
 			break;
 		case Action::FIX_CURSOR:
 			Set_Fix_Cursor(!m_fix_cursor);
+			break;
+		case Action::HIDE_AND_FIX_CURSOR:
+			Set_Hide_Cursor(!m_hide_cursor);
+			Set_Fix_Cursor(!m_fix_cursor);
+			break;
 		case Action::CUSTOM_FUNCTION_ONE:
 			m_scene->Custom_Function_One();
 			break;

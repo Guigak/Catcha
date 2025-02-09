@@ -25,7 +25,16 @@ constexpr float MAX_DISSOLVE_VALUE = 1.5f;
 float m_dissolve_value = 0.0f;
 
 //
+bool m_attacked = false;
+
+constexpr float MAX_ATTACKED_VALUE = 0.5f;
+float m_attacked_value = 0.0f;
+
+//
 constexpr float MAX_PICKING_DISTANCE = 1.0f;
+
+//
+SoundManager* m_sound_manager = nullptr;
 
 // ui functions
 void Game_Start_UI_Function();
@@ -83,9 +92,9 @@ void TestScene::Enter(D3DManager* d3d_manager) {
 	m_client_height = d3d_manager->Get_Client_Height();
 
 	//
-	SoundManager* sound_manager = SoundManager::Get_Inst();
-	sound_manager->Add_Sound(L"Work_of_a_cat.mp3", FMOD_2D | FMOD_LOOP_NORMAL | FMOD_CREATESTREAM);
-	sound_manager->Play_Sound(L"bgm", L"Work_of_a_cat.mp3");
+	m_sound_manager = SoundManager::Get_Inst();
+	m_sound_manager->Add_Sound(L"Work_of_a_cat.mp3", FMOD_2D | FMOD_LOOP_NORMAL | FMOD_CREATESTREAM);
+	m_sound_manager->Play_Sound(L"bgm", L"Work_of_a_cat.mp3");
 }
 
 void TestScene::Exit(D3DManager* d3d_manager) {
@@ -104,16 +113,11 @@ void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
 
 	count++;
 
-/*	if (count == 400) {
-		m_next_scene_state = Scene_State::MAIN_STATE;
-
-	}
-	else *//*if (count == 200) {
-		Object* object = m_object_manager->Get_Obj(L"test_ui");
-		object->Call_Custom_Function_One();
+	if (count == 200) {
+		m_attacked = true;
 
 		count = 0;
-	}*/
+	}
 	
 	//
 	if (m_scene_state != m_next_scene_state) {
@@ -131,17 +135,40 @@ void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
 	if (m_dissolve) {
 		if (m_dissolve_value < MAX_DISSOLVE_VALUE) {
 			m_dissolve_value += elapsed_time;
+
+			m_sound_manager->Set_Master_Volume(1.0f - m_dissolve_value / MAX_DISSOLVE_VALUE);
 		}
 	}
 	else {
-		if (m_dissolve_value > 0) {
+		if (m_dissolve_value > 0.0f) {
 			m_dissolve_value -= elapsed_time;
+
+			m_sound_manager->Set_Master_Volume(1.0f - m_dissolve_value / MAX_DISSOLVE_VALUE);
 		}
 	}
 
 	float dissolve_value = 1.0f - (float)m_dissolve_value / (float)MAX_DISSOLVE_VALUE;
 	m_object_manager->Get_Obj(L"dissolve")->Set_Color_Mul(dissolve_value, dissolve_value, dissolve_value, 1.0f - dissolve_value);
 	
+	//
+	if (m_attacked) {
+		if (m_attacked_value < MAX_ATTACKED_VALUE) {
+			m_attacked_value += elapsed_time;
+		}
+		else {
+			m_attacked = false;
+			m_attacked_value -= elapsed_time;
+		}
+	}
+	else {
+		if (m_attacked_value > 0.0f) {
+			m_attacked_value -= elapsed_time;
+		}
+	}
+
+	float alpha = (float)m_attacked_value / (float)MAX_ATTACKED_VALUE;
+	m_object_manager->Get_Obj(L"attacked_ui")->Set_Color_Mul(1.0f, 1.0f, 1.0f, alpha);
+
 	//
 	Object* cat_object = m_object_manager->Get_Obj(L"cat_test");
 	cat_object->Set_Color_Alpha(
@@ -891,8 +918,9 @@ void TestScene::Load_Texture(ID3D12Device* device, ID3D12GraphicsCommandList* co
 	//
 	auto ui_texture = std::make_unique<Texture_Info>();
 	ui_texture->name = L"test_ui";
-	ui_texture->file_name = L"ui_sample.dds";
-	//ui_texture->file_name = L"test_ui.dds";
+	ui_texture->file_name = L"ui_texture_r.dds";
+	//ui_texture->file_name = L"ui_texture.dds";
+	//ui_texture->file_name = L"ui_sample.dds";
 	ui_texture->buffer_index = (UINT)m_texture_map.size();
 	Throw_If_Failed(TextureLoader::Create_DDS_Texture_From_File(
 		device, command_list,
@@ -1044,6 +1072,7 @@ void TestScene::Build_Mesh(ID3D12Device* device, ID3D12GraphicsCommandList* comm
 	m_object_manager->Ipt_From_FBX(L"cat_jump_test.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
 	m_object_manager->Ipt_From_FBX(L"cat_bite.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
 	m_object_manager->Ipt_From_FBX(L"cat_paw.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
+	m_object_manager->Ipt_From_FBX(L"cat_jump_ready.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
 	m_object_manager->Ipt_From_FBX(L"cat_jump_test_start.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
 	m_object_manager->Ipt_From_FBX(L"cat_jump_test_idle.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
 	m_object_manager->Ipt_From_FBX(L"cat_jump_test_end.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
@@ -1134,7 +1163,7 @@ void TestScene::Build_O() {
 	object->TP_Forward(200.0f);
 	object->TP_Right(100.0f);
 	object->Rotate_Pitch(4.0f);
-	object->Bind_Anim_2_State(Object_State::STATE_IDLE, Animation_Binding_Info(L"cat_win_0.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
+	object->Bind_Anim_2_State(Object_State::STATE_IDLE, Animation_Binding_Info(L"cat_jump_ready.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
 	object->Set_Animated(true);
 
 	int cheese_count = 0;
@@ -1182,25 +1211,31 @@ void TestScene::Build_O() {
 	object->Set_Color_Mul(0.0f, 0.0f, 0.0f, 1.0f);
 	((TextUIObject*)object)->Set_Text(L"300");
 
+	object = m_object_manager->Add_UI_Obj(L"attacked_ui", 0.0f, 0.0f, 2.0f, 2.0f,
+		2880, 1755, 1080.0f, 0.0f, 1620, 960, false, true);
+
 	object = m_object_manager->Add_UI_Obj(L"game_play_ui", 0.0f, 0.0f, 2.0f, 2.0f,
 		2880, 1755, 0.0f, 0.0f, 1080.0f, 1920.0f, false, false);
 
-	object = m_object_manager->Add_UI_Obj(L"portrait", -1.0f + (100.0f / 960.0f), -1.0f + (100.0f / 540.0f), 250.0f / 960.0f, 250.0f / 540.0f,
-		2880, 1755, 1080.0f, 960.0f, 1330.0f, 1210.0f, false, false);
+	//object = m_object_manager->Add_UI_Obj(L"portrait", -1.0f + (100.0f / 960.0f), -1.0f + (100.0f / 540.0f), 300.0f / 960.0f, 300.0f / 540.0f,
+	//	2880, 1755, 1080.0f, 960.0f, 1380.0f, 1260.0f, false, false);
+
+	object = m_object_manager->Add_UI_Obj(L"portrait", -1.0f + (100.0f / 960.0f), -1.0f + (100.0f / 540.0f), 300.0f / 960.0f, 300.0f / 540.0f,
+		2880, 1755, 1080.0f, 1260.0f, 1380.0f, 1560.0f, false, false);
 
 	for (int i = 0; i < 4; ++i) {
 		object = m_object_manager->Add_UI_Obj(L"mouse_icon_" + std::to_wstring(i), -(0.675f - (float)i * 0.125f), 1.0f - (50.0f / 540.0f), 100.0f / 960.0f, 100.0f / 540.0f,
-			2880, 1755, 1330.0f, 960.0f, 1580.0f, 1210.0f, false, false);
+			2880, 1755, 1380.0f, 961.0f, 1680.0f, 1260.0f, false, false);
 	}
 
 	for (int i = 0; i < 4; ++i) {
 		object = m_object_manager->Add_UI_Obj(L"mouse_icon_" + std::to_wstring(i + 4), 0.3f + (float)i * 0.125f, 1.0f - (50.0f / 540.0f), 100.0f / 960.0f, 100.0f / 540.0f,
-			2880, 1755, 1330.0f, 1210.0f, 1580.0f, 1460.0f, false, false);
+			2880, 1755, 1380.0f, 1260.0f, 1680.0f, 1560.0f, false, false);
 	}
 
 	for (int i = 0; i < 4; ++i) {
 		object = m_object_manager->Add_UI_Obj(L"cheese_icon_" + std::to_wstring(i), -0.12f + (float)i * 0.08f, 0.75f, 100.0f / 960.0f, 100.0f / 540.0f,
-			2880, 1755, 1080.0f, 1460.0f, 1180.0f, 1560.0f, false, false);
+			2880, 1755, 1080.0f, 1560.0f, 1180.0f, 1660.0f, false, false);
 	}
 
 	// test //
@@ -1651,6 +1686,9 @@ void TestScene::Chg_Scene_State(Scene_State scene_state) {
 
 	switch (scene_state) {
 	case Scene_State::MAIN_STATE:
+		//
+		m_sound_manager->Restart_Channel(L"bgm");
+
 		m_object_manager->Get_Obj(L"game_start")->Set_Visible(true);
 		m_object_manager->Get_Obj(L"game_end")->Set_Visible(true);
 		m_object_manager->Get_Obj(L"catcha_title")->Set_Visible(true);
@@ -1671,6 +1709,10 @@ void TestScene::Chg_Scene_State(Scene_State scene_state) {
 		m_input_manager->Bind_Key_First_Down(VK_F1, BindingInfo(L"", Action::CHANGE_WIREFRAME_FLAG));
 		break;
 	case Scene_State::MATCHING_STATE:
+		//
+		m_sound_manager->Restart_Channel(L"bgm");
+
+		//
 		m_object_manager->Get_Obj(L"select_animal")->Set_Visible(true);
 		m_object_manager->Get_Obj(L"to_main")->Set_Visible(true);
 		m_object_manager->Get_Obj(L"select_cat")->Set_Visible(true);
@@ -1692,8 +1734,17 @@ void TestScene::Chg_Scene_State(Scene_State scene_state) {
 		m_input_manager->Bind_Key_First_Down(VK_F1, BindingInfo(L"", Action::CHANGE_WIREFRAME_FLAG));
 		break;
 	case Scene_State::PLAY_STATE:
+		//
+		m_sound_manager->Set_Channel_Paused(L"bgm", true);
+
+		//
+		m_input_manager->Set_Fix_Cursor(true);
+		m_input_manager->Set_Hide_Cursor(true);
+
+		//
 		m_object_manager->Get_Obj(L"aim_circle")->Set_Visible(true);
 		m_object_manager->Get_Obj(L"timer")->Set_Visible(true);
+		m_object_manager->Get_Obj(L"attacked_ui")->Set_Visible(true);
 		m_object_manager->Get_Obj(L"game_play_ui")->Set_Visible(true);
 		m_object_manager->Get_Obj(L"portrait")->Set_Visible(true);
 
@@ -1724,8 +1775,14 @@ void TestScene::Chg_Scene_State(Scene_State scene_state) {
 
 		m_input_manager->Bind_Key_First_Down(VK_F1, BindingInfo(L"", Action::CHANGE_WIREFRAME_FLAG));
 		m_input_manager->Bind_Key_First_Down(VK_F2, BindingInfo(L"", Action::CHANGE_BOUNDINGBOX_FLAG));
+
+		m_input_manager->Bind_Key_First_Down(VK_TAB, BindingInfo(L"", Action::HIDE_AND_FIX_CURSOR));
 		break;
 	case Scene_State::END_STATE:
+		//
+		m_sound_manager->Set_Channel_Paused(L"bgm", true);
+
+		//
 		m_object_manager->Get_Obj(L"winner_is")->Set_Visible(true);
 		m_object_manager->Get_Obj(L"winner")->Set_Visible(true);
 		m_object_manager->Get_Obj(L"to_main")->Set_Visible(true);

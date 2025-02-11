@@ -271,6 +271,7 @@ Object* ObjectManager::Add_Cam(std::wstring camera_name, std::wstring set_name, 
 
     object->Set_CB_Index(m_object_count++);
     object->Add_Mesh(m_mesh_manager.Get_Mesh(L"default_box"));
+    object->Set_Name(camera_name);
 
     m_object_map[camera_name] = std::move(object);
 

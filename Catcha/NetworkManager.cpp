@@ -527,6 +527,55 @@ void NetworkManager::ProcessPacket(char* ptr)
 	{
 		break;
 	}
+	case SC_PLAYER_ESCAPE:
+	{
+		SC_PLAYER_STATE_PACKET* p = reinterpret_cast<SC_PLAYER_STATE_PACKET*>(ptr);
+		int id = p->id;
+
+		// 안보이게
+		m_objects[characters[id].character_id]->Set_Visible(false);
+		m_objects[characters[id].character_id]->Set_Shade(false);
+		m_mouse_ui_objects[characters[id].character_id]->Set_Color_Mul(0.1f, 0.1f, 0.1f, 1.0f);
+
+		m_particle_object->Add_Particle(
+			m_door_camera->Get_Position_3f(),
+			DirectX::XMFLOAT3(3.0f, 3.0f, 3.0f),
+			DirectX::XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f),
+			1000,
+			*m_total_time
+		);
+		
+
+		// 자신이 탈출한 경우 카메라 문으로 보이게
+		if (m_myid == id)
+		{
+			for (auto& observer : m_observers)
+			{
+				observer->SetEscape();
+			}
+		}
+
+		break;
+	}
+	case SC_PLAYER_REBORN:
+	{
+		// TODO : 텍스트 띄우기
+		break;
+	}
+	case SC_PLAYER_DEAD:
+	{
+		SC_PLAYER_STATE_PACKET* p = reinterpret_cast<SC_PLAYER_STATE_PACKET*>(ptr);
+		int id = p->id;
+
+		if (m_myid == id)
+		{
+			for (auto& observer : m_observers)
+			{
+				observer->ObservingMode();
+			}
+		}
+		break;
+	}
 	default:
 	{
 		printf("Unknown PACKET type [%d]\n", ptr[1]);
@@ -546,7 +595,7 @@ void NetworkManager::ChangeOwnCharacter(int character_id, int new_number)
 
 			// 객체 이름 및 포인터 swap
 			// enum의 순서를 보장하기 위해 오브젝트 순서를 enum 순서에 맞춘다
-			m_objects[character_id]->Set_Name(L"free_mode");
+			//m_objects[character_id]->Set_Name(L"free_mode");
 
 			// 접속전 기본 캐릭터 안보이게 설정
 			if (m_objects[character_id]->Get_Character_Number() == NUM_GHOST)

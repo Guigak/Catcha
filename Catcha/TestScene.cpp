@@ -23,13 +23,19 @@ Scene_State m_next_scene_state = Scene_State::MAIN_STATE;
 
 bool m_dissolve = false;
 
-bool m_door_open = false;
-
 constexpr float MAX_DISSOLVE_VALUE = 1.5f;
 float m_dissolve_value = 0.0f;
 
-constexpr float DOOR_OPEN_TIME = 10.0f;
+bool m_door_open = false;
+constexpr float DOOR_OPEN_TIME = 3.0f;
 float m_door_open_time_value = 0.0f;
+
+bool m_Need_Lagging = false;
+float Camera_Lagging_Time = 0.0f;
+float m_camera_lagging_value = 0.0f;
+float m_camera_target_lagging = 1.0f;
+
+int m_observing_num = 0;
 
 //
 constexpr float MAX_PICKING_DISTANCE = 1.0f;
@@ -40,6 +46,7 @@ void Game_End_UI_Function();
 void To_Main_UI_Function();
 void Select_Cat_UI_Function();
 void Select_Mouse_UI_Function();
+void Observing_Function();
 
 // test //
 void Result_Test_UI_Function() {
@@ -181,6 +188,24 @@ void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
 			);
 			m_door_open = false;
 			m_door_open_time_value = 0.0f;
+		}
+	}
+
+	// 카메라 레깅 설정 예약
+	if (true == m_Need_Lagging)
+	{
+		if (m_camera_lagging_value < Camera_Lagging_Time)
+		{
+			m_camera_lagging_value += elapsed_time;
+		}
+		else
+		{
+			((Camera*)m_object_manager->Get_Obj(L"maincamera"))->Set_Lagging_Degree(m_camera_target_lagging);
+			
+			m_Need_Lagging = false;
+			Camera_Lagging_Time = 0.0f;
+			m_camera_lagging_value = 0.0f;
+			m_camera_target_lagging = 1.0f;
 		}
 	}
 
@@ -1704,6 +1729,24 @@ void TestScene::Custom_Function_Two() {
 	}
 }
 
+void TestScene::Custom_Function_Three()
+{
+	for (int i = m_observing_num; i < 8; i++) {
+		if (false == m_object_manager->Get_Selected_Obj_Arr()[i]->Get_Visible()) {
+			m_observing_num = (m_observing_num % 7) + 1;
+			i = m_observing_num;
+			continue;
+		}
+		else {
+			m_object_manager->Bind_Cam_2_Obj(L"maincamera", m_object_manager->Get_Selected_Obj_Arr()[i]->Get_Name(),
+				0.0f, 0.0f, 0.0f, 100.0f, ROTATE_SYNC_NONE);
+			m_main_camera->Rst_Rotate();
+			m_observing_num = (m_observing_num % 7) + 1;
+			break;
+		}
+	}
+}
+
 void TestScene::Crt_Voxel(DirectX::XMFLOAT3 position, float scale, UINT detail_level) {
 	if (detail_level == 0) {
 		Object* object = m_object_manager->Add_Obj(L"voxel_" + std::to_wstring(m_voxel_count++), L"cheese", L"Object",
@@ -1862,6 +1905,7 @@ void TestScene::Chg_Scene_State(Scene_State scene_state) {
 		m_object_manager->Get_Obj(L"timer")->Set_Scale(0.06f, 0.08f, 0.0f);
 		((TextUIObject*)m_object_manager->Get_Obj(L"timer"))->Set_Text(L"대기중..");
 
+		Custom_Function_One();
 		//
 		/*m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"player",
 			0.0f, 50.0f, 0.0f, 150.0f, ROTATE_SYNC_RPY);
@@ -2008,6 +2052,10 @@ void Select_Mouse_UI_Function() {
 	}
 }
 
+void Observing_Function() {
+
+}
+
 void TestScene::CharacterChange(bool is_cat, const std::wstring& key1, const std::wstring& key2)
 {
 	Camera* main_camera = reinterpret_cast<Camera*>(m_object_manager->Get_Obj(L"maincamera"));
@@ -2025,11 +2073,12 @@ void TestScene::CharacterChange(bool is_cat, const std::wstring& key1, const std
 	}
 	else
 	{
+		main_camera->Set_Lagging_Degree(10.0f);
 		m_object_manager->Swap_Object(key1, key2);
 		m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"player", 0.0f, 4.0f, 0.0f, 0.1f, ROTATE_SYNC_RPY);
 		m_object_manager->Set_Camera_4_Server(L"maincamera", true);
-		main_camera->Set_Lagging_Degree(1.0f);
 
+		SetCameraLagging(1.0f, 2.0f);
 	}
 }
 
@@ -2067,4 +2116,42 @@ void TestScene::OpenDoorEvent()
 	main_camera->Rotate_Right(right);
 	main_camera->Set_Rotate(quat);
 	
+}
+
+void TestScene::SetCameraLagging(float target_lagging, float time)
+{
+	m_Need_Lagging = true;
+	m_camera_target_lagging = target_lagging;
+	Camera_Lagging_Time = time;
+}
+
+void TestScene::SetEscape()
+{
+	Camera* main_camera = reinterpret_cast<Camera*>(m_object_manager->Get_Obj(L"maincamera"));
+	main_camera->Set_Lagging_Degree(1.0f);
+	main_camera->Bind_Obj(m_object_manager->Get_Obj(L"Door_Camera"), 0.0f, 20.0f, 0.0f, -300.0f);
+	main_camera->Rst_Rotate();
+	main_camera->Rotate_Right(0.5f);
+	main_camera->Set_Rotate(DirectX::XMFLOAT4(0.0f, -0.7071f, 0.0f, 0.7071f));
+	main_camera->Update(0.0f);
+	main_camera->Set_Freezing_Time(DOOR_OPEN_TIME);
+
+	ObservingMode();
+}
+
+void TestScene::ObservingMode()
+{
+	m_object_manager->Rst_Selected_Obj_Arr();
+	for (int i = 0; i < 8; ++i)
+	{
+		m_object_manager->Add_Selected_Obj(L"mouse" + std::to_wstring(i));
+	}
+
+	m_input_manager->Rst_Manager();
+	//m_input_manager->Set_Fix_Cursor(true);
+	//m_input_manager->Set_Hide_Cursor(true);
+	m_input_manager->Bind_Key_First_Down(VK_UP, BindingInfo(L"", Action::CUSTOM_FUNCTION_THREE));
+	m_input_manager->Bind_Key_First_Down(VK_DOWN, BindingInfo(L"", Action::CUSTOM_FUNCTION_THREE));
+
+	m_main_camera->Set_Lagging_Degree(10.0f);
 }

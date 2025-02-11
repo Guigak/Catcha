@@ -42,7 +42,7 @@ public:
 	//
 	virtual void Custom_Function_One();
 	virtual void Custom_Function_Two();
-	virtual void Custom_Function_Three() {}
+	virtual void Custom_Function_Three();
 
 	//
 	void Crt_Voxel(DirectX::XMFLOAT3 position, float scale, UINT detail_level);
@@ -60,5 +60,11 @@ public:
 	void CharacterChange(bool is_cat, const std::wstring& key1, const std::wstring& key2) override;		// 옵저버를 이용한 캐릭터 변경
 	void InitCamera(DirectX::XMFLOAT4 rotate_quat = DirectX::XMFLOAT4{ 0.0f, 0.0f, 0.0f, 1.0f }) override;	// 접속시 카메라 값 초기화
 	void OpenDoorEvent() override;	// 옵저버를 이용한 문 여는 이벤트 실행
+	// 카메라 래깅 시간차 설정을 위한 함수 (카메라 오브젝트 바인딩시 보간되어 이동하도록)
+	void SetCameraLagging(float target_lagging, float time) override;
+	// 탈출시 키 재바인딩 및 카메라 설정 
+	void SetEscape() override;
+	// 죽거나 탈출 후 관전 모드
+	void ObservingMode() override;
 };
 

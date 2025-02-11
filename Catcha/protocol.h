@@ -30,6 +30,9 @@ constexpr char SC_GAME_OPEN_DOOR = 22;
 constexpr char SC_GAME_WIN_CAT = 23;
 constexpr char SC_GAME_WIN_MOUSE = 24;
 constexpr char SC_AI_MOVE = 25;
+constexpr char SC_PLAYER_ESCAPE = 26;
+constexpr char SC_PLAYER_REBORN = 27;
+constexpr char SC_PLAYER_DEAD = 28;
 
 #pragma pack (push, 1)
 ///////////////////////////////////////////////
@@ -173,5 +176,11 @@ struct SC_AI_MOVE_PACKET {
 	char			type;
 	int				id;
 	float			x, z;
+};
+
+struct SC_PLAYER_STATE_PACKET {
+	unsigned char	size;
+	char			type;
+	int				id;
 };
 #pragma pack (pop)

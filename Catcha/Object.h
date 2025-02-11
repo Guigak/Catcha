@@ -117,7 +117,7 @@ protected:
 
 	//////////////////////////////////////////////////////////////////
 	// [SC] 위치 보간을 위한 변수
-	DirectX::XMFLOAT3 m_target_position{ 0, 999.0f, 0 };				// 서버에서 받은 Position
+	DirectX::XMFLOAT3 m_target_position{ 0, -999.0f, 0 };					// 서버에서 받은 Position
 	float m_lerp_degree = 4.0f;											// 보간 수준 (작을수록 빠름) - 플레이어 기준 4.0f, AI 기준 50.0f
 
 	// [SC] 회전 변화각 보낼때 사용하는 변수

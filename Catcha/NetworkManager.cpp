@@ -263,6 +263,7 @@ void NetworkManager::ProcessPacket(char* ptr)
 		m_objects[characters[id].character_id]->Set_Look(quat);
 		m_objects[characters[id].character_id]->Set_Position(coord);
 		m_objects[characters[id].character_id]->SetTargetPosition(coord);
+		m_objects[characters[id].character_id]->Set_Shade(true);
 
 		if (id == m_myid)
 		{
@@ -521,10 +522,20 @@ void NetworkManager::ProcessPacket(char* ptr)
 	}
 	case SC_GAME_WIN_CAT:
 	{
+		for (auto& observer : m_observers)
+		{
+			observer->ShowingResultScene(true);
+		}
+		EndSceneInitCharacters();
 		break;
 	}
 	case SC_GAME_WIN_MOUSE:
 	{
+		for (auto& observer : m_observers)
+		{
+			observer->ShowingResultScene(false);
+		}
+		EndSceneInitCharacters();
 		break;
 	}
 	case SC_PLAYER_ESCAPE:
@@ -633,8 +644,10 @@ void NetworkManager::InitialzeCharacters()
 	{
 		m_objects[i]->SetTargetPosition(CHARACTER_POS[i]);
 		m_objects[i]->Set_Position(CHARACTER_POS[i]);
+		m_objects[i]->Rst_Rotate();
 		m_objects[i]->SetTargetQuat(CHARACTER_ROTATION[i]);
-		m_objects[i]->Set_Rotate(CHARACTER_ROTATION[i++]);
+		m_objects[i]->Set_Rotate(CHARACTER_ROTATION[i]);
+		m_objects[i]->Update(0.0f);
 	}
 
 	for (auto& observer : m_observers)
@@ -642,4 +655,23 @@ void NetworkManager::InitialzeCharacters()
 		observer->InitCamera(CHARACTER_ROTATION[characters[m_myid].character_id]);
 	}
 
+}
+
+void NetworkManager::EndSceneInitCharacters()
+{
+	for (int i = NUM_MOUSE1; i <= NUM_CAT; ++i)
+	{
+		m_objects[i]->SetTargetPosition(DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f));
+		m_objects[i]->Set_Position(DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f));
+		m_objects[i]->SetTargetQuat(DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f));
+		m_objects[i]->Rst_Rotate();
+		m_objects[i]->TP_Down(999.0f);
+		m_objects[i]->Set_Visible(false);
+		m_objects[i]->Set_Shade(false);
+		if (i > NUM_MOUSE4)
+		{
+			m_objects[i]->TP_Up(999.0f + FLOOR_Y);
+			m_objects[i]->SetLerpDegree(50.0f);
+		}
+	}
 }

@@ -82,6 +82,7 @@ public:
 	void ChangeOwnCharacter(int character_id, int new_number);
 
 	void InitialzeCharacters();
+	void EndSceneInitCharacters();
 
 	void AddCharacter(Object& object) {
 		m_objects.emplace_back(&object);

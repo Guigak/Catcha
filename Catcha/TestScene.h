@@ -66,5 +66,7 @@ public:
 	void SetEscape() override;
 	// 죽거나 탈출 후 관전 모드
 	void ObservingMode() override;
+	// 게임 결과창 띄우기
+	void ShowingResultScene(bool is_cat_winner) override;
 };
 

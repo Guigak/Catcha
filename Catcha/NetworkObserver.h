@@ -22,4 +22,7 @@ public:
 
     // 죽거나 탈출 후 관전 모드
     virtual void ObservingMode() = 0;
+
+    // 게임 결과창 띄우기
+    virtual void ShowingResultScene(bool is_cat_winner) = 0;
 };

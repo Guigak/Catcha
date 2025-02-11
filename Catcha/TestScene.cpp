@@ -37,6 +37,8 @@ float m_camera_target_lagging = 1.0f;
 
 int m_observing_num = 0;
 
+bool m_is_cat_winner = false;		// true - cat win / false - mouse win
+
 //
 bool m_attacked = false;
 
@@ -1266,7 +1268,8 @@ void TestScene::Build_O() {
 		object->TP_Down(999.0f);
 		if (i > NUM_MOUSE4)
 		{
-			object->TP_Up(999.0f + FLOOR_Y);
+			object->TP_Up(999.0f + FLOOR_Y - 10.0f);
+			object->SetTargetPosition(DirectX::XMFLOAT3(0.0f, FLOOR_Y - 10.0f, 0.0f));
 			object->SetLerpDegree(50.0f);
 		}
 	}
@@ -1406,7 +1409,7 @@ void TestScene::Build_O() {
 
 	object = m_object_manager->Add_Text_UI_Obj(L"winner", -0.75f, 0.4f, 0.4f, 0.4f, false, false);
 	object->Set_Color_Mul(1.0f, 1.0f, 0.0f, 1.0f);
-	((TextUIObject*)object)->Set_Text(L"∞ÌæÁ¿Ã");
+	((TextUIObject*)object)->Set_Text(L"ª˝¡„!");
 
 	// dissolve
 	object = m_object_manager->Add_Text_UI_Obj(L"dissolve", 0.0f, 0.0f, 5.0f, 5.0f, false);
@@ -1983,7 +1986,7 @@ void TestScene::Chg_Scene_State(Scene_State scene_state) {
 		/*m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"player",
 			0.0f, 50.0f, 0.0f, 150.0f, ROTATE_SYNC_RPY);
 		m_main_camera->Rst_Rotate();*/
-		m_main_camera->Rst_Rotate();
+		//m_main_camera->Rst_Rotate();
 
 		//
 		m_input_manager->Bind_Key_Down(VK_W, BindingInfo(L"player", Action::MOVE_FORWARD, MOVE_ONLY_XZ));
@@ -2026,17 +2029,27 @@ void TestScene::Chg_Scene_State(Scene_State scene_state) {
 		object->Set_Visible(false);
 		object->Set_Shade(false);
 
-		for (int i = 1; i < 2; ++i) {
-			object = m_object_manager->Get_Obj(L"cat_model_" + std::to_wstring(i));
-			object->Set_Visible(true);
-			object->Set_Shade(true);
+
+		if (true == m_is_cat_winner)
+		{
+			for (int i = 1; i < 2; ++i) {
+				object = m_object_manager->Get_Obj(L"cat_model_" + std::to_wstring(i));
+				object->Set_Visible(true);
+				object->Set_Shade(true);
+			}
+			((TextUIObject*)m_object_manager->Get_Obj(L"winner"))->Set_Text(L"∞ÌæÁ¿Ã!");
+		}
+		else
+		{
+			for (int i = 1; i < 9; ++i) {
+				object = m_object_manager->Get_Obj(L"mouse_model_" + std::to_wstring(i));
+				object->Set_Visible(true);
+				object->Set_Shade(true);
+			}
+			((TextUIObject*)m_object_manager->Get_Obj(L"winner"))->Set_Text(L"¡„!");
 		}
 
-		/*for (int i = 1; i < 9; ++i) {
-			object = m_object_manager->Get_Obj(L"mouse_model_" + std::to_wstring(i));
-			object->Set_Visible(true);
-			object->Set_Shade(true);
-		}*/
+		
 
 		//
 		m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"end_scene_object",
@@ -2149,10 +2162,6 @@ void Select_Mouse_UI_Function() {
 	}
 }
 
-void Observing_Function() {
-
-}
-
 void TestScene::CharacterChange(bool is_cat, const std::wstring& key1, const std::wstring& key2)
 {
 	Camera* main_camera = reinterpret_cast<Camera*>(m_object_manager->Get_Obj(L"maincamera"));
@@ -2253,4 +2262,11 @@ void TestScene::ObservingMode()
 		BindingInfo(L"maincamera", Action::ROTATE_RIGHT, 0.01f));
 
 	m_main_camera->Set_Lagging_Degree(10.0f);
+}
+
+void TestScene::ShowingResultScene(bool is_cat_winner)
+{
+	m_is_cat_winner = is_cat_winner;
+	m_main_camera->Set_Lagging_Degree(1.0f);
+	Result_Test_UI_Function();
 }

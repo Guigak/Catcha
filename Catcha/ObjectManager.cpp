@@ -543,5 +543,8 @@ void ObjectManager::Set_Camera_4_Server(std::wstring camera_name, bool NeedSend)
 void ObjectManager::Set_Camera_Init_4_Server(std::wstring camera_name, DirectX::XMFLOAT4 rotate_quat)
 {
 	Camera* camera = (Camera*)Get_Obj(camera_name);
+    camera->Rst_Rotate();
     camera->Set_Rotate(rotate_quat);
+    camera->SetTargetQuat(rotate_quat);
+    camera->Update(0.0f);
 }

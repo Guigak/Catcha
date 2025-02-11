@@ -110,15 +110,15 @@ void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
 	m_object_manager->Update(elapsed_time);
 
 	// test
-	static int count = 0;
+	//static int count = 0;
 
-	count++;
+	//count++;
 
-	if (count == 200) {
-		m_sound_manager->Play_Sound(L"", L"hit_sound.mp3", DirectX::XMFLOAT3(-1000.0f, 0.0f, 0.0f));
+	//if (count == 200) {
+	//	m_sound_manager->Play_Sound(L"", L"hit_sound.mp3", DirectX::XMFLOAT3(-1000.0f, 0.0f, 0.0f));
 
-		count = 0;
-	}
+	//	count = 0;
+	//}
 	
 	//
 	if (m_scene_state != m_next_scene_state) {
@@ -333,26 +333,23 @@ void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
 	m_main_pass_constant_buffer.delta_time = 0.0f;
 	m_main_pass_constant_buffer.ambient_light = { 0.25f, 0.25f, 0.35f, 1.0f };
 	//
-	//m_main_pass_constant_buffer.lights[0].direction = { 0.57735f, -0.57735f, 1.0f };
 	m_main_pass_constant_buffer.lights[0].direction = { 0.2f, -1.0f, 0.2f };
-	//m_main_pass_constant_buffer.lights[0].direction = { 0.5f, -1.0f, 0.5f };
 	m_main_pass_constant_buffer.lights[0].strength = { 0.6f, 0.6f, 0.6f };
-	//m_main_pass_constant_buffer.lights[0].strength = { 1.0f, 1.0f, 1.0f };
-	//m_main_pass_constant_buffer.lights[0].strength = { 0.0f, 0.0f, 0.0f };
 	//
-	m_main_pass_constant_buffer.lights[1].position = { 0.0f, 100.0f, -300.0f };
-	//m_main_pass_constant_buffer.lights[1].strength = { 0.6f, 0.6f, 0.6f };
-	m_main_pass_constant_buffer.lights[1].strength = { 0.0f, 0.0f, 0.0f };
-	m_main_pass_constant_buffer.lights[1].falloff_start = 500.0f;
-	m_main_pass_constant_buffer.lights[1].falloff_end = 1000.0f;
+	DirectX::XMFLOAT3 light_position;
+	m_main_pass_constant_buffer.lights[1].position = m_object_manager->Get_Obj(L"maincamera")->Get_Position_3f();
+	m_main_pass_constant_buffer.lights[1].direction = m_object_manager->Get_Obj(L"maincamera")->Get_Look();
+	m_main_pass_constant_buffer.lights[1].strength = { 0.75f, 0.75f, 0.75f };
+	m_main_pass_constant_buffer.lights[1].falloff_start = 50.0f;
+	m_main_pass_constant_buffer.lights[1].falloff_end = 200.0f;
+	m_main_pass_constant_buffer.lights[1].spot_power = 64;
 	//
-	m_main_pass_constant_buffer.lights[2].position = { 0.0f, 100.0f, -500.0f };
+	m_main_pass_constant_buffer.lights[2].position = { 0.0f, 0.0f, 0.0f };
 	m_main_pass_constant_buffer.lights[2].direction = { 0.0f, 0.0f, 1.0f };
-	//m_main_pass_constant_buffer.lights[2].strength = { 0.6f, 0.6f, 0.6f };
-	m_main_pass_constant_buffer.lights[2].strength = { 0.0f, 0.0f, 0.0f };
+	m_main_pass_constant_buffer.lights[2].strength = { 0.5f, 0.0f, 0.0f };
 	m_main_pass_constant_buffer.lights[2].falloff_start = 500.0f;
 	m_main_pass_constant_buffer.lights[2].falloff_end = 1000.0f;
-	m_main_pass_constant_buffer.lights[2].spot_power = 256.0f;
+	m_main_pass_constant_buffer.lights[2].spot_power = 16.0f;
 
 	auto current_pass_constant_buffer = m_current_frameresource->pass_constant_buffer.get();
 	current_pass_constant_buffer->Copy_Data(0, m_main_pass_constant_buffer);
@@ -1813,7 +1810,7 @@ void TestScene::Chg_Scene_State(Scene_State scene_state) {
 		//m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"player",
 		//	0.0f, 50.0f, 0.0f, 150.0f, ROTATE_SYNC_RPY);
 		m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"player",
-			0.0f, 10.0f, 0.0f, 0.1f, ROTATE_SYNC_RPY);
+			0.0f, 4.0f, 0.0f, 0.1f, ROTATE_SYNC_RPY);
 		m_main_camera->Rst_Rotate();
 
 		//

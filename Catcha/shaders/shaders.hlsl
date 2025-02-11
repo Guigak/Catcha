@@ -7,7 +7,7 @@
 #endif
 
 #ifndef SPOT_LIGHTS_NUMBER
-    #define SPOT_LIGHTS_NUMBER 0
+    #define SPOT_LIGHTS_NUMBER 1
 #endif
 
 #define MAX_WEIGHT_BONE_COUNT 4

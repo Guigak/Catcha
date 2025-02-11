@@ -47,7 +47,7 @@ void SoundManager::Update() {
 			bool playing = false;
 			data.channel_pointer->isPlaying(&playing);
 
-			return playing;
+			return playing == false;
 		});
 
 	m_channel_info_array.erase(target_iterator, m_channel_info_array.end());

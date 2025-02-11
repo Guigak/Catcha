@@ -65,6 +65,9 @@ int WINAPI WinMain(HINSTANCE hinstance, HINSTANCE prev_hinstance, LPSTR command_
 
 				g_scene_manager.Update(g_timer.Get_Elapsed_Time());
 				g_d3d_manager.Draw_Scene_With_FR();
+
+				//
+				g_sound_manager->Update();
 			}
 		}
 

@@ -94,7 +94,8 @@ void TestScene::Enter(D3DManager* d3d_manager) {
 	//
 	m_sound_manager = SoundManager::Get_Inst();
 	m_sound_manager->Add_Sound(L"Work_of_a_cat.mp3", FMOD_2D | FMOD_LOOP_NORMAL | FMOD_CREATESTREAM);
-	m_sound_manager->Play_Sound(L"bgm", L"Work_of_a_cat.mp3");
+	m_sound_manager->Add_Sound(L"hit_sound.mp3", FMOD_3D);
+	//m_sound_manager->Play_Sound(L"bgm", L"Work_of_a_cat.mp3");
 }
 
 void TestScene::Exit(D3DManager* d3d_manager) {
@@ -111,13 +112,13 @@ void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
 	// test
 	static int count = 0;
 
-	//count++;
+	count++;
 
-	//if (count == 200) {
-	//	m_attacked = true;
+	if (count == 200) {
+		m_sound_manager->Play_Sound(L"", L"hit_sound.mp3", DirectX::XMFLOAT3(-1000.0f, 0.0f, 0.0f));
 
-	//	count = 0;
-	//}
+		count = 0;
+	}
 	
 	//
 	if (m_scene_state != m_next_scene_state) {

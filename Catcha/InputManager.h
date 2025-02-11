@@ -8,7 +8,7 @@ class ObjectManager;
 
 enum class Action {
 	ACTION_NONE,
-	HIDE_CURSOR, FIX_CURSOR,
+	HIDE_CURSOR, FIX_CURSOR, HIDE_AND_FIX_CURSOR,
 	CHANGE_WIREFRAME_FLAG, CHANGE_BOUNDINGBOX_FLAG,
 	PICKING,
 	CUSTOM_FUNCTION_ONE, CUSTOM_FUNCTION_TWO, CUSTOM_FUNCTION_THREE,
@@ -49,6 +49,7 @@ private:
 	int m_client_height = 0;
 
 	bool m_hide_cursor = false;
+	bool m_cursor = true;
 	bool m_fix_cursor = false;
 
 	//

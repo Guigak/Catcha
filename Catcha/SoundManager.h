@@ -39,6 +39,8 @@ public:
 
 	void Set_Master_Volume(float volume);
 	void Set_Channel_Volume(std::wstring channel_name, float volume);
+	void Set_Channel_Paused(std::wstring channel_name, bool paused);
+	void Restart_Channel(std::wstring channel_name);
 
 	void Set_Listener(DirectX::XMFLOAT3 position, DirectX::XMFLOAT3 look,
 		DirectX::XMFLOAT3 up = { 0.0f,1.0f,0.0f }, DirectX::XMFLOAT3 velocity = { 0.0f, 0.0f, 0.0f });

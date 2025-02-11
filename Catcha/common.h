@@ -211,10 +211,24 @@ struct MathHelper {
 		return  DirectX::XMMatrixInverse(nullptr, m);
 	}
 
+	static DirectX::XMFLOAT4X4 Inverse(const DirectX::XMFLOAT4X4& xmfloat4x4) {
+		DirectX::XMFLOAT4X4 result;
+		DirectX::XMStoreFloat4x4(&result, DirectX::XMMatrixInverse(nullptr, DirectX::XMLoadFloat4x4(&xmfloat4x4)));
+
+		return result;
+	}
+
 	static DirectX::XMMATRIX Transpose(DirectX::XMMATRIX m) {
 		m.r[3] = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
 
 		return DirectX::XMMatrixTranspose(m);
+	}
+
+	static DirectX::XMFLOAT4X4 Transpose(const DirectX::XMFLOAT4X4& xmfloat4x4) {
+		DirectX::XMFLOAT4X4 result;
+		DirectX::XMStoreFloat4x4(&result, DirectX::XMMatrixTranspose(DirectX::XMLoadFloat4x4(&xmfloat4x4)));
+
+		return result;
 	}
 
 	static DirectX::XMFLOAT4X4 Identity_4x4() {
@@ -299,6 +313,14 @@ struct MathHelper {
 		return result;
 	}
 
+	static DirectX::XMFLOAT4X4 Multiply(const DirectX::XMFLOAT4X4& xmfloat4x4_a, const DirectX::XMFLOAT4X4& xmfloat4x4_b) {
+		DirectX::XMFLOAT4X4 result;
+		DirectX::XMStoreFloat4x4(&result, DirectX::XMMatrixMultiply(
+			DirectX::XMLoadFloat4x4(&xmfloat4x4_a), DirectX::XMLoadFloat4x4(&xmfloat4x4_b)));
+
+		return result;
+	}
+
 	//
 	static DirectX::XMFLOAT3 Add(const DirectX::XMFLOAT3& xmfloat3_a, const DirectX::XMFLOAT3 xmfloat3_b) {
 		DirectX::XMFLOAT3 result;
@@ -332,6 +354,13 @@ struct MathHelper {
 	static DirectX::XMFLOAT3 Normalize(const DirectX::XMFLOAT3& xmfloat3) {
 		DirectX::XMFLOAT3 result;
 		DirectX::XMStoreFloat3(&result, DirectX::XMVector3Normalize(DirectX::XMLoadFloat3(&xmfloat3)));
+
+		return result;
+	}
+
+	static DirectX::XMFLOAT4 Normalize(const DirectX::XMFLOAT4& xmfloat4) {
+		DirectX::XMFLOAT4 result;
+		DirectX::XMStoreFloat4(&result, DirectX::XMVector4Normalize(DirectX::XMLoadFloat4(&xmfloat4)));
 
 		return result;
 	}

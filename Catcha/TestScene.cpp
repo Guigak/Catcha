@@ -336,7 +336,6 @@ void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
 	m_main_pass_constant_buffer.lights[0].direction = { 0.2f, -1.0f, 0.2f };
 	m_main_pass_constant_buffer.lights[0].strength = { 0.6f, 0.6f, 0.6f };
 	//
-	DirectX::XMFLOAT3 light_position;
 	m_main_pass_constant_buffer.lights[1].position = m_object_manager->Get_Obj(L"maincamera")->Get_Position_3f();
 	m_main_pass_constant_buffer.lights[1].direction = m_object_manager->Get_Obj(L"maincamera")->Get_Look();
 	m_main_pass_constant_buffer.lights[1].strength = { 0.75f, 0.75f, 0.75f };
@@ -344,12 +343,33 @@ void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
 	m_main_pass_constant_buffer.lights[1].falloff_end = 200.0f;
 	m_main_pass_constant_buffer.lights[1].spot_power = 64;
 	//
-	m_main_pass_constant_buffer.lights[2].position = { 0.0f, 0.0f, 0.0f };
-	m_main_pass_constant_buffer.lights[2].direction = { 0.0f, 0.0f, 1.0f };
-	m_main_pass_constant_buffer.lights[2].strength = { 0.5f, 0.0f, 0.0f };
+	Skeleton_Info* skeleton_info = m_object_manager->Get_Skeleton_Manager().Get_Skeleton(L"cat_mesh_edit.fbx");
+	DirectX::XMFLOAT4 light_position;
+	DirectX::XMFLOAT4 light_direction;
+	cat_object = m_object_manager->Get_Obj(L"cat_model_0");
+	DirectX::XMFLOAT4X4 transform_matrix = MathHelper::Multiply(MathHelper::Multiply(
+		MathHelper::Inverse(skeleton_info->bone_offset_matrix_array[23]), MathHelper::Transpose(cat_object->Get_Animation_Matrix()[23])), cat_object->Get_WM_4x4f());
+	light_position = MathHelper::Multiply(DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f), transform_matrix);
+	light_direction = MathHelper::Normalize(MathHelper::Multiply(DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 0.0f), transform_matrix));
+
+	m_main_pass_constant_buffer.lights[2].position = { light_position.x, light_position.y, light_position.z };
+	m_main_pass_constant_buffer.lights[2].direction = { light_direction.x, light_direction.y, light_direction.z };
+	m_main_pass_constant_buffer.lights[2].strength = { 1.0f, 0.0f, 0.0f };
 	m_main_pass_constant_buffer.lights[2].falloff_start = 500.0f;
 	m_main_pass_constant_buffer.lights[2].falloff_end = 1000.0f;
 	m_main_pass_constant_buffer.lights[2].spot_power = 16.0f;
+	//
+	transform_matrix = MathHelper::Multiply(MathHelper::Multiply(
+		MathHelper::Inverse(skeleton_info->bone_offset_matrix_array[24]), MathHelper::Transpose(cat_object->Get_Animation_Matrix()[24])), cat_object->Get_WM_4x4f());
+	light_position = MathHelper::Multiply(DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f), transform_matrix);
+	light_direction = MathHelper::Normalize(MathHelper::Multiply(DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 0.0f), transform_matrix));
+
+	m_main_pass_constant_buffer.lights[3].position = { light_position.x, light_position.y, light_position.z };
+	m_main_pass_constant_buffer.lights[3].direction = { light_direction.x, light_direction.y, light_direction.z };
+	m_main_pass_constant_buffer.lights[3].strength = { 1.0f, 0.0f, 0.0f };
+	m_main_pass_constant_buffer.lights[3].falloff_start = 500.0f;
+	m_main_pass_constant_buffer.lights[3].falloff_end = 1000.0f;
+	m_main_pass_constant_buffer.lights[3].spot_power = 16.0f;
 
 	auto current_pass_constant_buffer = m_current_frameresource->pass_constant_buffer.get();
 	current_pass_constant_buffer->Copy_Data(0, m_main_pass_constant_buffer);
@@ -1686,6 +1706,12 @@ void TestScene::Del_Voxel(int cheese_index, int voxel_index) {
 }
 
 void TestScene::Chg_Scene_State(Scene_State scene_state) {
+	//
+	for (auto& o : m_object_manager->Get_Selected_Obj_Arr()) {
+		o->Set_Additional_Scale(0.0f, 0.0f, 0.0f);
+	}
+
+	m_object_manager->Rst_Selected_Obj_Arr();
 	m_object_manager->Hide_All_UI();
 	m_object_manager->Get_Obj(L"dissolve")->Set_Visible(true);
 
@@ -1694,17 +1720,17 @@ void TestScene::Chg_Scene_State(Scene_State scene_state) {
 	//
 	Object* object = nullptr;
 
-	for (int i = 0; i < 2; ++i) {
-		object = m_object_manager->Get_Obj(L"cat_model_" + std::to_wstring(i));
-		object->Set_Visible(false);
-		object->Set_Shade(false);
-	}
+	//for (int i = 0; i < 2; ++i) {
+	//	object = m_object_manager->Get_Obj(L"cat_model_" + std::to_wstring(i));
+	//	object->Set_Visible(false);
+	//	object->Set_Shade(false);
+	//}
 
-	for (int i = 0; i < 9; ++i) {
-		object = m_object_manager->Get_Obj(L"mouse_model_" + std::to_wstring(i));
-		object->Set_Visible(false);
-		object->Set_Shade(false);
-	}
+	//for (int i = 0; i < 9; ++i) {
+	//	object = m_object_manager->Get_Obj(L"mouse_model_" + std::to_wstring(i));
+	//	object->Set_Visible(false);
+	//	object->Set_Shade(false);
+	//}
 
 	switch (scene_state) {
 	case Scene_State::MAIN_STATE:

@@ -33,14 +33,19 @@ Object* ObjectManager::Get_Transparent_Obj(UINT object_number) {
 void ObjectManager::RestorObjectMap()
 {
     std::unordered_map<std::wstring, std::unique_ptr<Object>> temp_map;
-
-    for (auto& [key, obj] : m_object_map)
+   
+    for (Object* obj : m_objects)
     {
-
-        std::wstring curr_key = obj->Get_Name();
-        temp_map[curr_key] = std::move(obj);
+        std::wstring key = obj->Get_Name();
+        for (auto it = m_object_map.begin(); it != m_object_map.end(); ++it)
+        {
+            if (it->second.get() == obj)
+            {
+                temp_map[key] = std::move(it->second);
+                break;
+            }
+        }
     }
-
     m_object_map = std::move(temp_map);
 }
 

@@ -309,6 +309,15 @@ void NetworkManager::ProcessPacket(char* ptr)
 				20,
 				*m_total_time
 			);
+
+			// 내 플레이어 타격시, 타격 효과 재생
+			if (id == m_myid)
+			{
+				for (auto& observer : m_observers)
+				{
+					observer->AttackedUI();
+				}
+			}
 		}
 		else
 		{
@@ -521,7 +530,7 @@ void NetworkManager::ProcessPacket(char* ptr)
 	}
 	case SC_GAME_WIN_CAT:
 	{
-		EndSceneInitCharacters();
+		//EndSceneInitCharacters();
 		for (auto& observer : m_observers)
 		{
 			observer->ShowingResultScene(true);
@@ -530,7 +539,7 @@ void NetworkManager::ProcessPacket(char* ptr)
 	}
 	case SC_GAME_WIN_MOUSE:
 	{
-		EndSceneInitCharacters();
+		//EndSceneInitCharacters();
 		for (auto& observer : m_observers)
 		{
 			observer->ShowingResultScene(false);
@@ -685,6 +694,7 @@ void NetworkManager::EndSceneInitCharacters()
 		m_objects[i]->Set_Camera_Need_Send(false);
 		m_objects[i]->SetLerpDegree(4.0f);
 		m_objects[i]->Set_Color_Mul(1.0f, 1.0f, 1.0f, 1.0f);
+		m_objects[i]->Set_Character_Number(i);
 
 		if (i < NUM_CAT)
 		{
@@ -706,4 +716,6 @@ void NetworkManager::EndSceneInitCharacters()
 		m_objects[i]->SetTargetPosition(DirectX::XMFLOAT3(0.0f, FLOOR_Y - 10.0f, 0.0f));
 		m_objects[i]->SetLerpDegree(50.0f);
 	}
+
+	characters.clear();
 }

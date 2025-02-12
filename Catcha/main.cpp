@@ -20,7 +20,7 @@ int WINAPI WinMain(HINSTANCE hinstance, HINSTANCE prev_hinstance, LPSTR command_
 #endif
 
 	try {
-		if (!g_window_manager.Initialize(hinstance, CLIENT_WIDTH, CLIENT_HEIGHT, L"windowtest")) {
+		if (!g_window_manager.Initialize(hinstance, CLIENT_WIDTH, CLIENT_HEIGHT, L"Catcha")) {
 			return 0;
 		}
 		Set_SM(&g_scene_manager);
@@ -74,6 +74,9 @@ int WINAPI WinMain(HINSTANCE hinstance, HINSTANCE prev_hinstance, LPSTR command_
 				network_manager.DoRecv();
 				g_scene_manager.Update(g_timer.Get_Elapsed_Time());
 				g_d3d_manager.Draw_Scene_With_FR();
+
+				//
+				g_sound_manager->Update();
 			}
 		}
 

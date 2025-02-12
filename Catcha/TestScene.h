@@ -70,5 +70,7 @@ public:
 	void ShowingResultScene(bool is_cat_winner) override;
 	// 환생 ui 이벤트
 	void RebornUICount() override;
+	// 타격시 효과
+	void AttackedUI() override;
 };
 

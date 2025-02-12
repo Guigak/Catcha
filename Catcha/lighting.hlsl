@@ -47,7 +47,7 @@ float3 Blinn_Phong(float3 light_strength, float3 light_vector, float3 normal, fl
 	brightness = floor(brightness * levels) / levels;
 	//brightness = lerp(0.2, 1.0, brightness);
 
-	return (material.diffuse_albedo.rgb + specular_albedo) * brightness * 1.5;
+	return (material.diffuse_albedo.rgb * light_strength + specular_albedo) * brightness * 2.0;
 }
 
 float3 Cpt_DL(Light light, Material material, float3 normal, float3 to_eye) {	// Compute Directional Light

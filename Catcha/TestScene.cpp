@@ -15,13 +15,14 @@ std::unordered_map<std::wstring, ObjectOBB> g_obbData;
 UINT m_voxel_count = 0;
 bool m_render_silhouette = false;
 
-DirectX::BoundingSphere m_scene_sphere;
-
 //
 Scene_State m_scene_state = Scene_State::MAIN_STATE;
 Scene_State m_next_scene_state = Scene_State::MAIN_STATE;
 
 Camera* camera;
+
+bool is_player_cat = false;		// 고양이 조명을 위한 변수 true - cat / false - mouse
+
 
 bool m_dissolve = false;
 
@@ -47,7 +48,6 @@ float m_reborn_timer_value = 0.0f;
 
 //
 bool m_attacked = false;
-
 constexpr float MAX_ATTACKED_VALUE = 0.5f;
 float m_attacked_value = 0.0f;
 
@@ -117,8 +117,8 @@ void TestScene::Enter(D3DManager* d3d_manager) {
 	d3d_manager->Flush_Cmd_Q();
 
 	//
-	m_scene_sphere.Center = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
-	m_scene_sphere.Radius = std::sqrtf(650.0f * 650.0f + 650.0f * 650.0f);
+	m_shadow_bounding_sphere.Center = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
+	m_shadow_bounding_sphere.Radius = std::sqrtf(650.0f * 650.0f + 650.0f * 650.0f);
 
 	//
 	m_client_width = d3d_manager->Get_Client_Width();
@@ -126,8 +126,15 @@ void TestScene::Enter(D3DManager* d3d_manager) {
 
 	//
 	m_sound_manager = SoundManager::Get_Inst();
-	m_sound_manager->Add_Sound(L"Work_of_a_cat.mp3", FMOD_2D | FMOD_LOOP_NORMAL | FMOD_CREATESTREAM);
-	m_sound_manager->Play_Sound(L"bgm", L"Work_of_a_cat.mp3");
+	m_sound_manager->Add_Sound(L"bgm.mp3", FMOD_2D | FMOD_LOOP_NORMAL | FMOD_CREATESTREAM);
+	m_sound_manager->Add_Sound(L"victory_sound.mp3", FMOD_2D);
+	m_sound_manager->Add_Sound(L"hit_sound.mp3", FMOD_3D);
+	m_sound_manager->Add_Sound(L"bell_sound.wav", FMOD_3D);
+	m_sound_manager->Add_Sound(L"eating_sound.wav", FMOD_3D);
+	m_sound_manager->Add_Sound(L"swing_sound.wav", FMOD_3D);
+	//m_sound_manager->Play_Sound(L"bgm", L"Work_of_a_cat.mp3");
+
+	m_sound_manager->Set_Listener(m_main_camera->Get_Position_Addr(), m_main_camera->Get_Look_Addr(), m_main_camera->Get_Up_Addr(), nullptr);
 }
 
 void TestScene::Exit(D3DManager* d3d_manager) {
@@ -141,17 +148,6 @@ void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
 
 	m_object_manager->Update(elapsed_time);
 
-	// test
-	//static int count = 0;
-
-	//count++;
-
-	//if (count == 200) {
-	//	m_attacked = true;
-
-	//	count = 0;
-	//}
-	
 	//
 	if (m_scene_state != m_next_scene_state) {
 		m_dissolve = true;
@@ -353,8 +349,8 @@ void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
 	// shadow transform matrix
 	{
 		DirectX::XMVECTOR light_direction = DirectX::XMVectorSet(0.2f, -1.0f, 0.2f, 0.0f);
-		DirectX::XMVECTOR light_position = DirectX::XMVectorScale(light_direction, -2.0f * m_scene_sphere.Radius);
-		DirectX::XMVECTOR target_position = DirectX::XMLoadFloat3(&m_scene_sphere.Center);
+		DirectX::XMVECTOR light_position = DirectX::XMVectorScale(light_direction, -2.0f * m_shadow_bounding_sphere.Radius);
+		DirectX::XMVECTOR target_position = DirectX::XMLoadFloat3(&m_shadow_bounding_sphere.Center);
 		DirectX::XMVECTOR light_up = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 		DirectX::XMMATRIX light_view_matrix = DirectX::XMMatrixLookAtLH(light_position, target_position, light_up);
 
@@ -363,12 +359,12 @@ void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
 		DirectX::XMFLOAT3 sphere_center_lightspace;
 		DirectX::XMStoreFloat3(&sphere_center_lightspace, DirectX::XMVector3TransformCoord(target_position, light_view_matrix));
 
-		float left_x = sphere_center_lightspace.x - m_scene_sphere.Radius;
-		float bottom_y = sphere_center_lightspace.y - m_scene_sphere.Radius;
-		float near_z = sphere_center_lightspace.z - m_scene_sphere.Radius;
-		float right_x = sphere_center_lightspace.x + m_scene_sphere.Radius;
-		float top_y = sphere_center_lightspace.y + m_scene_sphere.Radius;
-		float far_z = sphere_center_lightspace.z + m_scene_sphere.Radius;
+		float left_x = sphere_center_lightspace.x - m_shadow_bounding_sphere.Radius;
+		float bottom_y = sphere_center_lightspace.y - m_shadow_bounding_sphere.Radius;
+		float near_z = sphere_center_lightspace.z - m_shadow_bounding_sphere.Radius;
+		float right_x = sphere_center_lightspace.x + m_shadow_bounding_sphere.Radius;
+		float top_y = sphere_center_lightspace.y + m_shadow_bounding_sphere.Radius;
+		float far_z = sphere_center_lightspace.z + m_shadow_bounding_sphere.Radius;
 
 		m_light_near_z = near_z;
 		m_light_far_z = far_z;
@@ -432,26 +428,55 @@ void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
 	m_main_pass_constant_buffer.delta_time = 0.0f;
 	m_main_pass_constant_buffer.ambient_light = { 0.25f, 0.25f, 0.35f, 1.0f };
 	//
-	//m_main_pass_constant_buffer.lights[0].direction = { 0.57735f, -0.57735f, 1.0f };
 	m_main_pass_constant_buffer.lights[0].direction = { 0.2f, -1.0f, 0.2f };
-	//m_main_pass_constant_buffer.lights[0].direction = { 0.5f, -1.0f, 0.5f };
 	m_main_pass_constant_buffer.lights[0].strength = { 0.6f, 0.6f, 0.6f };
-	//m_main_pass_constant_buffer.lights[0].strength = { 1.0f, 1.0f, 1.0f };
-	//m_main_pass_constant_buffer.lights[0].strength = { 0.0f, 0.0f, 0.0f };
 	//
-	m_main_pass_constant_buffer.lights[1].position = { 0.0f, 100.0f, -300.0f };
-	//m_main_pass_constant_buffer.lights[1].strength = { 0.6f, 0.6f, 0.6f };
-	m_main_pass_constant_buffer.lights[1].strength = { 0.0f, 0.0f, 0.0f };
-	m_main_pass_constant_buffer.lights[1].falloff_start = 500.0f;
-	m_main_pass_constant_buffer.lights[1].falloff_end = 1000.0f;
+	m_main_pass_constant_buffer.lights[1].position = m_object_manager->Get_Obj(L"maincamera")->Get_Position_3f();
+	m_main_pass_constant_buffer.lights[1].direction = m_object_manager->Get_Obj(L"maincamera")->Get_Look();
+
+	m_main_pass_constant_buffer.lights[1].falloff_start = 50.0f;
+	m_main_pass_constant_buffer.lights[1].falloff_end = 200.0f;
+	m_main_pass_constant_buffer.lights[1].spot_power = 64;
 	//
-	m_main_pass_constant_buffer.lights[2].position = { 0.0f, 100.0f, -500.0f };
-	m_main_pass_constant_buffer.lights[2].direction = { 0.0f, 0.0f, 1.0f };
-	//m_main_pass_constant_buffer.lights[2].strength = { 0.6f, 0.6f, 0.6f };
-	m_main_pass_constant_buffer.lights[2].strength = { 0.0f, 0.0f, 0.0f };
-	m_main_pass_constant_buffer.lights[2].falloff_start = 500.0f;
-	m_main_pass_constant_buffer.lights[2].falloff_end = 1000.0f;
-	m_main_pass_constant_buffer.lights[2].spot_power = 256.0f;
+	Skeleton_Info* skeleton_info = m_object_manager->Get_Skeleton_Manager().Get_Skeleton(L"cat_mesh_edit.fbx");
+	DirectX::XMFLOAT4 light_position;
+	DirectX::XMFLOAT4 light_direction;
+
+	if (true == is_player_cat)
+	{
+		cat_object = m_object_manager->Get_Obj(L"player");
+		m_main_pass_constant_buffer.lights[1].strength = { 0.0f, 0.0f, 0.0f };
+	}
+	else
+	{
+		cat_object = m_object_manager->Get_Obj(L"cat");
+		m_main_pass_constant_buffer.lights[1].strength = { 0.75f, 0.75f, 0.75f };
+	}
+
+
+	DirectX::XMFLOAT4X4 transform_matrix = MathHelper::Multiply(MathHelper::Multiply(
+		MathHelper::Inverse(skeleton_info->bone_offset_matrix_array[23]), MathHelper::Transpose(cat_object->Get_Animation_Matrix()[23])), cat_object->Get_WM_4x4f());
+	light_position = MathHelper::Multiply(DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f), transform_matrix);
+	light_direction = MathHelper::Normalize(MathHelper::Multiply(DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 0.0f), transform_matrix));
+
+	m_main_pass_constant_buffer.lights[2].position = { light_position.x, light_position.y, light_position.z };
+	m_main_pass_constant_buffer.lights[2].direction = { light_direction.x, light_direction.y, light_direction.z };
+	m_main_pass_constant_buffer.lights[2].strength = { 1.0f, 0.0f, 0.0f };
+	m_main_pass_constant_buffer.lights[2].falloff_start = 100.0f;
+	m_main_pass_constant_buffer.lights[2].falloff_end = 500.0f;
+	m_main_pass_constant_buffer.lights[2].spot_power = 16.0f;
+	//
+	transform_matrix = MathHelper::Multiply(MathHelper::Multiply(
+		MathHelper::Inverse(skeleton_info->bone_offset_matrix_array[24]), MathHelper::Transpose(cat_object->Get_Animation_Matrix()[24])), cat_object->Get_WM_4x4f());
+	light_position = MathHelper::Multiply(DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f), transform_matrix);
+	light_direction = MathHelper::Normalize(MathHelper::Multiply(DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 0.0f), transform_matrix));
+
+	m_main_pass_constant_buffer.lights[3].position = { light_position.x, light_position.y, light_position.z };
+	m_main_pass_constant_buffer.lights[3].direction = { light_direction.x, light_direction.y, light_direction.z };
+	m_main_pass_constant_buffer.lights[3].strength = { 1.0f, 0.0f, 0.0f };
+	m_main_pass_constant_buffer.lights[3].falloff_start = 100.0f;
+	m_main_pass_constant_buffer.lights[3].falloff_end = 500.0f;
+	m_main_pass_constant_buffer.lights[3].spot_power = 16.0f;
 
 	auto current_pass_constant_buffer = m_current_frameresource->pass_constant_buffer.get();
 	current_pass_constant_buffer->Copy_Data(0, m_main_pass_constant_buffer);
@@ -1900,6 +1925,12 @@ void TestScene::Del_Voxel(int cheese_index, int voxel_index) {
 }
 
 void TestScene::Chg_Scene_State(Scene_State scene_state) {
+	//
+	for (auto& o : m_object_manager->Get_Selected_Obj_Arr()) {
+		o->Set_Additional_Scale(0.0f, 0.0f, 0.0f);
+	}
+
+	m_object_manager->Rst_Selected_Obj_Arr();
 	m_object_manager->Hide_All_UI();
 	m_object_manager->Get_Obj(L"dissolve")->Set_Visible(true);
 
@@ -1931,6 +1962,22 @@ void TestScene::Chg_Scene_State(Scene_State scene_state) {
 
 		m_main_camera->Set_Lagging_Degree(1.0f);
 
+
+		NetworkManager::GetInstance().EndSceneInitCharacters();
+		m_object_manager->RestorObjectMap();
+
+		for (int i = 0; i < CHEESE_NUM; ++i)
+		{
+			((VoxelCheese*)m_object_manager->Get_Obj(
+				L"cheese" + std::to_wstring(i)))->Rst_Voxel(
+					CHEESE_POS[i].x,
+					CHEESE_POS[i].y,
+					CHEESE_POS[i].z,
+					1.0f,
+					1
+				);
+		}
+
 		//
 		object = m_object_manager->Get_Obj(L"cat_model_0");
 		object->Set_Visible(true);
@@ -1939,6 +1986,8 @@ void TestScene::Chg_Scene_State(Scene_State scene_state) {
 		object = m_object_manager->Get_Obj(L"mouse_model_0");
 		object->Set_Visible(true);
 		object->Set_Shade(true);
+
+		is_player_cat = false;
 
 		//
 		m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"main_scene_object",
@@ -1998,6 +2047,14 @@ void TestScene::Chg_Scene_State(Scene_State scene_state) {
 
 		//
 	case Scene_State::PLAY_STATE:
+		object = m_object_manager->Get_Obj(L"cat_model_0");
+		object->Set_Visible(false);
+		object->Set_Shade(false);
+
+		object = m_object_manager->Get_Obj(L"mouse_model_0");
+		object->Set_Visible(false);
+		object->Set_Shade(false);
+
 		m_object_manager->Get_Obj(L"aim_circle")->Set_Visible(true);
 		m_object_manager->Get_Obj(L"timer")->Set_Visible(true);
 		m_object_manager->Get_Obj(L"attacked_ui")->Set_Visible(true);
@@ -2070,6 +2127,8 @@ void TestScene::Chg_Scene_State(Scene_State scene_state) {
 		//
 		m_sound_manager->Set_Channel_Paused(L"bgm", true);
 
+		
+
 		//
 		m_object_manager->Get_Obj(L"winner_is")->Set_Visible(true);
 		m_object_manager->Get_Obj(L"winner")->Set_Visible(true);
@@ -2117,19 +2176,7 @@ void TestScene::Chg_Scene_State(Scene_State scene_state) {
 
 		m_input_manager->Bind_Key_First_Down(VK_F1, BindingInfo(L"", Action::CHANGE_WIREFRAME_FLAG));
 
-		m_object_manager->RestorObjectMap();
 
-		for (int i = 0; i < CHEESE_NUM; ++i)
-		{
-			((VoxelCheese*)m_object_manager->Get_Obj(
-				L"cheese" + std::to_wstring(i)))->Rst_Voxel(
-					CHEESE_POS[i].x, 
-					CHEESE_POS[i].y, 
-					CHEESE_POS[i].z, 
-					1.0f, 
-					1
-				);
-		}
 		break;
 	default:
 		break;
@@ -2210,6 +2257,7 @@ void Select_Cat_UI_Function() {
 
 	NetworkManager& network_manager = NetworkManager::GetInstance();
 	network_manager.ChooseCharacter(true);
+	is_player_cat = true;
 	camera->Set_Freezing_Time(1.0f);
 }
 
@@ -2218,6 +2266,7 @@ void Select_Mouse_UI_Function() {
 
 	NetworkManager& network_manager = NetworkManager::GetInstance();
 	network_manager.ChooseCharacter(false);
+	is_player_cat = false;
 	camera->Set_Freezing_Time(1.0f);
 }
 
@@ -2334,3 +2383,13 @@ void TestScene::RebornUICount()
 {
 	m_is_reborn = true;
 }
+
+void TestScene::AttackedUI()
+{
+	if (false == m_attacked)
+	{
+		m_attacked = true;
+	}
+}
+
+

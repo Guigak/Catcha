@@ -28,4 +28,7 @@ public:
 
     // 환생 ui 이벤트
     virtual void RebornUICount() = 0;
+
+    // 타격시 효과
+    virtual void AttackedUI() = 0;
 };

@@ -34,5 +34,8 @@ public:
 
 	// 환생 ui 이벤트
 	void RebornUICount() {}
+
+	// 타격시 효과
+	void AttackedUI() {}
 };
 

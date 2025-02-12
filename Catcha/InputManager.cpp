@@ -85,20 +85,10 @@ void InputManager::Prcs_Input() {
 		m_previous_point.x = -1;
 		m_previous_point.y = -1;
 
-		if (m_captured) {
-			ReleaseCapture();
-			m_captured = false;
-		}
-
+		//
 		m_fix_cursor = false;
 		m_hide_cursor = false;
 		return;
-	}
-	else {
-		if (!m_captured) {
-			SetCapture(GetActiveWindow());
-			m_captured = true;
-		}
 	}
 
 	// NetworkManager ½Ì±ÛÅæ ÀÎ½ºÅÏ½º »ç¿ë
@@ -202,11 +192,23 @@ void InputManager::Prcs_Input() {
 			while (ShowCursor(false) >= 0);
 			m_cursor = false;
 		}
+
+		//
+		if (m_captured == false) {
+			SetCapture(GetActiveWindow());
+			m_captured = true;
+		}
 	}
 	else {
 		if (!m_cursor) {
 			while (ShowCursor(true) < 0);
 			m_cursor = true;
+		}
+
+		//
+		if (m_captured) {
+			ReleaseCapture();
+			m_captured = false;
 		}
 	}
 }

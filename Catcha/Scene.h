@@ -67,7 +67,7 @@ protected:
 	float m_radius = 15.0f;
 
 	//
-	DirectX::BoundingSphere m_shadow_bouding_sphere;
+	DirectX::BoundingSphere m_shadow_bounding_sphere;
 	std::unique_ptr<Shadowmap> m_shadow_map;
 
 	PassConstants m_shadow_pass_constant_buffer;

@@ -13,8 +13,6 @@
 UINT m_voxel_count = 0;
 bool m_render_silhouette = false;
 
-DirectX::BoundingSphere m_scene_sphere;
-
 //
 Scene_State m_scene_state = Scene_State::MAIN_STATE;
 Scene_State m_next_scene_state = Scene_State::MAIN_STATE;
@@ -84,8 +82,8 @@ void TestScene::Enter(D3DManager* d3d_manager) {
 	d3d_manager->Flush_Cmd_Q();
 
 	//
-	m_scene_sphere.Center = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
-	m_scene_sphere.Radius = std::sqrtf(650.0f * 650.0f + 650.0f * 650.0f);
+	m_shadow_bounding_sphere.Center = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
+	m_shadow_bounding_sphere.Radius = std::sqrtf(650.0f * 650.0f + 650.0f * 650.0f);
 
 	//
 	m_client_width = d3d_manager->Get_Client_Width();
@@ -254,8 +252,8 @@ void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
 	// shadow transform matrix
 	{
 		DirectX::XMVECTOR light_direction = DirectX::XMVectorSet(0.2f, -1.0f, 0.2f, 0.0f);
-		DirectX::XMVECTOR light_position = DirectX::XMVectorScale(light_direction, -2.0f * m_scene_sphere.Radius);
-		DirectX::XMVECTOR target_position = DirectX::XMLoadFloat3(&m_scene_sphere.Center);
+		DirectX::XMVECTOR light_position = DirectX::XMVectorScale(light_direction, -2.0f * m_shadow_bounding_sphere.Radius);
+		DirectX::XMVECTOR target_position = DirectX::XMLoadFloat3(&m_shadow_bounding_sphere.Center);
 		DirectX::XMVECTOR light_up = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 		DirectX::XMMATRIX light_view_matrix = DirectX::XMMatrixLookAtLH(light_position, target_position, light_up);
 
@@ -264,12 +262,12 @@ void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
 		DirectX::XMFLOAT3 sphere_center_lightspace;
 		DirectX::XMStoreFloat3(&sphere_center_lightspace, DirectX::XMVector3TransformCoord(target_position, light_view_matrix));
 
-		float left_x = sphere_center_lightspace.x - m_scene_sphere.Radius;
-		float bottom_y = sphere_center_lightspace.y - m_scene_sphere.Radius;
-		float near_z = sphere_center_lightspace.z - m_scene_sphere.Radius;
-		float right_x = sphere_center_lightspace.x + m_scene_sphere.Radius;
-		float top_y = sphere_center_lightspace.y + m_scene_sphere.Radius;
-		float far_z = sphere_center_lightspace.z + m_scene_sphere.Radius;
+		float left_x = sphere_center_lightspace.x - m_shadow_bounding_sphere.Radius;
+		float bottom_y = sphere_center_lightspace.y - m_shadow_bounding_sphere.Radius;
+		float near_z = sphere_center_lightspace.z - m_shadow_bounding_sphere.Radius;
+		float right_x = sphere_center_lightspace.x + m_shadow_bounding_sphere.Radius;
+		float top_y = sphere_center_lightspace.y + m_shadow_bounding_sphere.Radius;
+		float far_z = sphere_center_lightspace.z + m_shadow_bounding_sphere.Radius;
 
 		m_light_near_z = near_z;
 		m_light_far_z = far_z;
@@ -355,8 +353,8 @@ void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
 	m_main_pass_constant_buffer.lights[2].position = { light_position.x, light_position.y, light_position.z };
 	m_main_pass_constant_buffer.lights[2].direction = { light_direction.x, light_direction.y, light_direction.z };
 	m_main_pass_constant_buffer.lights[2].strength = { 1.0f, 0.0f, 0.0f };
-	m_main_pass_constant_buffer.lights[2].falloff_start = 500.0f;
-	m_main_pass_constant_buffer.lights[2].falloff_end = 1000.0f;
+	m_main_pass_constant_buffer.lights[2].falloff_start = 100.0f;
+	m_main_pass_constant_buffer.lights[2].falloff_end = 500.0f;
 	m_main_pass_constant_buffer.lights[2].spot_power = 16.0f;
 	//
 	transform_matrix = MathHelper::Multiply(MathHelper::Multiply(
@@ -367,8 +365,8 @@ void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
 	m_main_pass_constant_buffer.lights[3].position = { light_position.x, light_position.y, light_position.z };
 	m_main_pass_constant_buffer.lights[3].direction = { light_direction.x, light_direction.y, light_direction.z };
 	m_main_pass_constant_buffer.lights[3].strength = { 1.0f, 0.0f, 0.0f };
-	m_main_pass_constant_buffer.lights[3].falloff_start = 500.0f;
-	m_main_pass_constant_buffer.lights[3].falloff_end = 1000.0f;
+	m_main_pass_constant_buffer.lights[3].falloff_start = 100.0f;
+	m_main_pass_constant_buffer.lights[3].falloff_end = 500.0f;
 	m_main_pass_constant_buffer.lights[3].spot_power = 16.0f;
 
 	auto current_pass_constant_buffer = m_current_frameresource->pass_constant_buffer.get();

@@ -278,24 +278,6 @@ void InputManager::Prcs_Binding_Info(BindingInfo binding_info) {
 		case Action::PICKING:
 			m_scene->Picking(std::get<POINTF>(binding_info.value));
 			break;
-
-		//// [CS] 서버로 정한 캐릭터 전송
-		//// NetworkManager 싱글톤 인스턴스 사용
-		//NetworkManager& network_manager = NetworkManager::GetInstance();
-		//case Action::CHANGE_CAT:
-		//	if (false == network_manager.Choose)
-		//	{
-		//		network_manager.ChooseCharacter(true);
-		//		network_manager.Choose = true;
-		//	}
-		//	break;
-		//case Action::CHANGE_MOUSE:
-		//	if (false == network_manager.Choose)
-		//	{
-		//		network_manager.ChooseCharacter(false);
-		//		network_manager.Choose = true;
-		//	}
-		//	break;
 		default:
 			break;
 		}

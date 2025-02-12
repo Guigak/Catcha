@@ -25,4 +25,7 @@ public:
 
     // 게임 결과창 띄우기
     virtual void ShowingResultScene(bool is_cat_winner) = 0;
+
+    // 환생 ui 이벤트
+    virtual void RebornUICount() = 0;
 };

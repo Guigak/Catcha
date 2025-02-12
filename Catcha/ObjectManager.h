@@ -94,6 +94,9 @@ public:
 	// 캐릭터 수 Getter
 	UINT Get_Character_Count() { return m_character_count; }
 
+	// 게임이 끝나고 오브젝트 맵 복구
+	void RestorObjectMap();
+
 	//
 	void Move(std::wstring object_name, Action action, BYTE flag);
 	void Teleport(std::wstring object_name, Action action, float distance);

@@ -30,6 +30,20 @@ Object* ObjectManager::Get_Transparent_Obj(UINT object_number) {
     return m_transparent_objects[object_number];
 }
 
+void ObjectManager::RestorObjectMap()
+{
+    std::unordered_map<std::wstring, std::unique_ptr<Object>> temp_map;
+
+    for (auto& [key, obj] : m_object_map)
+    {
+
+        std::wstring curr_key = obj->Get_Name();
+        temp_map[curr_key] = std::move(obj);
+    }
+
+    m_object_map = std::move(temp_map);
+}
+
 void ObjectManager::Move(std::wstring object_name, Action action, BYTE flag) {
     Object* object = Get_Obj(object_name);
 
@@ -342,6 +356,7 @@ Object* ObjectManager::Add_Cam(std::wstring camera_name, std::wstring set_name, 
 
     object->Set_CB_Index(m_object_count++);
     object->Add_Mesh(m_mesh_manager.Get_Mesh(L"default_box"));
+    object->Set_Name(camera_name);
 
     m_object_map[camera_name] = std::move(object);
 
@@ -547,4 +562,5 @@ void ObjectManager::Set_Camera_Init_4_Server(std::wstring camera_name, DirectX::
     camera->Set_Rotate(rotate_quat);
     camera->SetTargetQuat(rotate_quat);
     camera->Update(0.0f);
+    camera->Set_Freezing_Time(1.0f);
 }

@@ -31,5 +31,8 @@ public:
 
 	// 게임 결과창 띄우기
 	void ShowingResultScene(bool is_cat_winner) {}
+
+	// 환생 ui 이벤트
+	void RebornUICount() {}
 };
 

@@ -21,6 +21,9 @@ void VoxelCheese::Rst_Voxel(float position_x, float position_y, float position_z
 	//m_instance_data_array.clear();
 	//m_instance_data_array.shrink_to_fit();
 
+	m_instance_max_count = CHEESE_VOXEL_COUNT * (UINT)std::pow(8, m_detail_level);
+	m_instance_count = 0;
+
 	m_instance_data_array = std::vector<InstanceData>();
 
 	DirectX::XMFLOAT3 position = DirectX::XMFLOAT3(position_x, position_y, position_z);

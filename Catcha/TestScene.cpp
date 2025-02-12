@@ -21,6 +21,8 @@ DirectX::BoundingSphere m_scene_sphere;
 Scene_State m_scene_state = Scene_State::MAIN_STATE;
 Scene_State m_next_scene_state = Scene_State::MAIN_STATE;
 
+Camera* camera;
+
 bool m_dissolve = false;
 
 constexpr float MAX_DISSOLVE_VALUE = 1.5f;
@@ -38,6 +40,10 @@ float m_camera_target_lagging = 1.0f;
 int m_observing_num = 0;
 
 bool m_is_cat_winner = false;		// true - cat win / false - mouse win
+
+bool m_is_reborn = false;
+constexpr float REBORN_RESPOWN_TIME = 5.0f;
+float m_reborn_timer_value = 0.0f;
 
 //
 bool m_attacked = false;
@@ -57,7 +63,6 @@ void Game_End_UI_Function();
 void To_Main_UI_Function();
 void Select_Cat_UI_Function();
 void Select_Mouse_UI_Function();
-void Observing_Function();
 
 // test //
 void Result_Test_UI_Function() {
@@ -213,6 +218,31 @@ void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
 			Camera_Lagging_Time = 0.0f;
 			m_camera_lagging_value = 0.0f;
 			m_camera_target_lagging = 1.0f;
+			m_object_manager->Get_Obj(L"player")->Set_Visible(false);
+		}
+	}
+
+	// 환생 ui 이벤트 설정
+	if (true == m_is_reborn)
+	{
+		if (m_reborn_timer_value < REBORN_RESPOWN_TIME)
+		{
+			m_object_manager->Get_Obj(L"reborn_comment")->Set_Visible(true);
+			m_object_manager->Get_Obj(L"reborn_timer")->Set_Visible(true);
+			((TextUIObject*)m_object_manager->Get_Obj(L"reborn_timer"))->
+				Set_Text(
+					std::to_wstring(
+						static_cast<int>(REBORN_RESPOWN_TIME - m_reborn_timer_value)
+					));
+
+			m_reborn_timer_value += elapsed_time;
+		}
+		else
+		{
+			m_object_manager->Get_Obj(L"reborn_comment")->Set_Visible(false);
+			m_object_manager->Get_Obj(L"reborn_timer")->Set_Visible(false);
+			m_is_reborn = false;
+			m_reborn_timer_value = 0.0f;
 		}
 	}
 
@@ -1305,19 +1335,10 @@ void TestScene::Build_O() {
 	
 	NetworkManager& network = NetworkManager::GetInstance();
 
-
-
-	int cheese_count = 0;
-	//m_object_manager->Add_Voxel_Cheese(L"cheese" + std::to_wstring(cheese_count++),
-	//	DirectX::XMFLOAT3(169.475f, 10.049f, 230.732f), 1.0f, 1);
-	m_object_manager->Add_Voxel_Cheese(L"cheese" + std::to_wstring(cheese_count++),
-		DirectX::XMFLOAT3(441.877f, 15.263f + 1.0f, 466.983f), 1.0f, 1);
-	m_object_manager->Add_Voxel_Cheese(L"cheese" + std::to_wstring(cheese_count++),
-		DirectX::XMFLOAT3(135.288f, 21.432f + 1.0f, -504.089f), 1.0f, 1);
-	m_object_manager->Add_Voxel_Cheese(L"cheese" + std::to_wstring(cheese_count++),
-		DirectX::XMFLOAT3(-550.68f, -8.712f + 1.0f, 468.083f), 1.0f, 1);
-	m_object_manager->Add_Voxel_Cheese(L"cheese" + std::to_wstring(cheese_count++),
-		DirectX::XMFLOAT3(-540.713f, -61.436f + 1.0f, -448.526f), 1.0f, 1);
+	for (int i = 0; i < CHEESE_NUM; ++i)
+	{
+		m_object_manager->Add_Voxel_Cheese(L"cheese" + std::to_wstring(i), CHEESE_POS[i], 1.0f, 1);
+	}
 
 	// main scene ui
 	object = m_object_manager->Add_Text_UI_Obj(L"game_start", -0.8f, -0.3f, 0.2f, 0.2f, true, true);
@@ -1360,6 +1381,13 @@ void TestScene::Build_O() {
 	object->Set_Color_Mul(0.0f, 0.0f, 0.0f, 1.0f);
 	((TextUIObject*)object)->Set_Text(L"대기중..");
 	network.SetTimeObject(*(TextUIObject*)object);
+
+	object = m_object_manager->Add_Text_UI_Obj(L"reborn_comment", -0.25f, 0.3f, 0.1f, 0.09f, false, false);
+	object->Set_Color_Mul(1.0f, 0.0f, 1.0f, 0.8f);
+	((TextUIObject*)object)->Set_Text(L"환생까지 남은 시간");
+	object = m_object_manager->Add_Text_UI_Obj(L"reborn_timer", 0.0f, 0.0f, 0.5f, 0.3f, false, false);
+	object->Set_Color_Mul(1.0f, 0.0f, 0.0f, 1.0f);
+	((TextUIObject*)object)->Set_Text(L"5");
 
 	object = m_object_manager->Add_UI_Obj(L"attacked_ui", 0.0f, 0.0f, 2.0f, 2.0f,
 		2880, 1755, 1080.0f, 0.0f, 1620, 960, false, false);
@@ -1440,6 +1468,7 @@ void TestScene::Build_C(D3DManager* d3d_manager) {
 	main_camera->Set_Lagging_Degree(1.0f);
 
 	m_main_camera = main_camera;
+	camera = main_camera;
 }
 
 void TestScene::Build_FR(ID3D12Device* device) {
@@ -1762,21 +1791,38 @@ void TestScene::Custom_Function_Two() {
 	}
 }
 
+// observing
 void TestScene::Custom_Function_Three()
 {
-	for (int i = m_observing_num; i < 8; i++) {
-		if (false == m_object_manager->Get_Selected_Obj_Arr()[i]->Get_Visible()) {
-			m_observing_num = (m_observing_num % 7) + 1;
-			i = m_observing_num;
-			continue;
-		}
-		else {
-			m_object_manager->Bind_Cam_2_Obj(L"maincamera", m_object_manager->Get_Selected_Obj_Arr()[i]->Get_Name(),
-				0.0f, 0.0f, 0.0f, 100.0f, ROTATE_SYNC_NONE);
+	const int num = 8;
+	int start = m_observing_num;
+	bool found = false;
+
+	for (int i = 0; i < num; ++i)
+	{
+		int idx = (start + i) % num;
+		auto selected = m_object_manager->Get_Selected_Obj_Arr()[idx];
+
+		if (selected->Get_Visible())
+		{
+			m_object_manager->Bind_Cam_2_Obj(
+				L"maincamera",
+				selected->Get_Name(),
+				0.0f, 0.0f, 0.0f, 100.0f,
+				ROTATE_SYNC_NONE
+			);
+
 			m_main_camera->Rst_Rotate();
-			m_observing_num = (m_observing_num % 7) + 1;
+
+			m_observing_num = (idx + 1) % num;
+			found = true;
 			break;
 		}
+	}
+
+	if (false == found)
+	{
+		m_observing_num = 0;
 	}
 }
 
@@ -1883,6 +1929,8 @@ void TestScene::Chg_Scene_State(Scene_State scene_state) {
 		m_object_manager->Get_Obj(L"game_end")->Set_Visible(true);
 		m_object_manager->Get_Obj(L"catcha_title")->Set_Visible(true);
 
+		m_main_camera->Set_Lagging_Degree(1.0f);
+
 		//
 		object = m_object_manager->Get_Obj(L"cat_model_0");
 		object->Set_Visible(true);
@@ -1954,8 +2002,15 @@ void TestScene::Chg_Scene_State(Scene_State scene_state) {
 		m_object_manager->Get_Obj(L"timer")->Set_Visible(true);
 		m_object_manager->Get_Obj(L"attacked_ui")->Set_Visible(true);
 		m_object_manager->Get_Obj(L"game_play_ui")->Set_Visible(true);
-		//m_object_manager->Get_Obj(L"cat_portrait")->Set_Visible(true);
-		m_object_manager->Get_Obj(L"mouse_portrait")->Set_Visible(true);
+
+		if (true == NetworkManager::GetInstance().IsPlayerCat())
+		{
+			m_object_manager->Get_Obj(L"cat_portrait")->Set_Visible(true);
+		}
+		else
+		{
+			m_object_manager->Get_Obj(L"mouse_portrait")->Set_Visible(true);
+		}
 
 		//m_object_manager->Get_Obj(L"player")->Set_Visible(false);
 
@@ -1983,10 +2038,6 @@ void TestScene::Chg_Scene_State(Scene_State scene_state) {
 		((TextUIObject*)m_object_manager->Get_Obj(L"timer"))->Set_Text(L"대기중..");
 
 		Custom_Function_One();
-		/*m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"player",
-			0.0f, 50.0f, 0.0f, 150.0f, ROTATE_SYNC_RPY);
-		m_main_camera->Rst_Rotate();*/
-		//m_main_camera->Rst_Rotate();
 
 		//
 		m_input_manager->Bind_Key_Down(VK_W, BindingInfo(L"player", Action::MOVE_FORWARD, MOVE_ONLY_XZ));
@@ -2065,6 +2116,20 @@ void TestScene::Chg_Scene_State(Scene_State scene_state) {
 			BindingInfo(), BindingInfo());
 
 		m_input_manager->Bind_Key_First_Down(VK_F1, BindingInfo(L"", Action::CHANGE_WIREFRAME_FLAG));
+
+		m_object_manager->RestorObjectMap();
+
+		for (int i = 0; i < CHEESE_NUM; ++i)
+		{
+			((VoxelCheese*)m_object_manager->Get_Obj(
+				L"cheese" + std::to_wstring(i)))->Rst_Voxel(
+					CHEESE_POS[i].x, 
+					CHEESE_POS[i].y, 
+					CHEESE_POS[i].z, 
+					1.0f, 
+					1
+				);
+		}
 		break;
 	default:
 		break;
@@ -2144,28 +2209,21 @@ void Select_Cat_UI_Function() {
 	m_next_scene_state = Scene_State::PLAY_STATE;
 
 	NetworkManager& network_manager = NetworkManager::GetInstance();
-	if (false == network_manager.Choose)
-	{
-		network_manager.ChooseCharacter(true);
-		network_manager.Choose = true;
-	}
+	network_manager.ChooseCharacter(true);
+	camera->Set_Freezing_Time(1.0f);
 }
 
 void Select_Mouse_UI_Function() {
 	m_next_scene_state = Scene_State::PLAY_STATE;
 
 	NetworkManager& network_manager = NetworkManager::GetInstance();
-	if (false == network_manager.Choose)
-	{
-		network_manager.ChooseCharacter(false);
-		network_manager.Choose = true;
-	}
+	network_manager.ChooseCharacter(false);
+	camera->Set_Freezing_Time(1.0f);
 }
 
 void TestScene::CharacterChange(bool is_cat, const std::wstring& key1, const std::wstring& key2)
 {
 	Camera* main_camera = reinterpret_cast<Camera*>(m_object_manager->Get_Obj(L"maincamera"));
-	main_camera->Set_Freezing_Time(0.9f);
 	TextUIObject* Aim = (TextUIObject*)m_object_manager->Get_Obj(L"aim_circle");
 	if (true == is_cat)
 	{
@@ -2184,6 +2242,7 @@ void TestScene::CharacterChange(bool is_cat, const std::wstring& key1, const std
 		m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"player", 0.0f, 4.0f, 0.0f, 0.1f, ROTATE_SYNC_RPY);
 		m_object_manager->Set_Camera_4_Server(L"maincamera", true);
 
+		m_object_manager->Get_Obj(L"player")->Set_Visible(true);
 		SetCameraLagging(1.0f, 2.0f);
 	}
 }
@@ -2248,14 +2307,13 @@ void TestScene::SetEscape()
 void TestScene::ObservingMode()
 {
 	m_object_manager->Rst_Selected_Obj_Arr();
+	NetworkManager& network = NetworkManager::GetInstance();
 	for (int i = 0; i < 8; ++i)
 	{
-		m_object_manager->Add_Selected_Obj(L"mouse" + std::to_wstring(i));
+		m_object_manager->Add_Selected_Obj(network.GetObj(i));
 	}
 
 	m_input_manager->Rst_Manager();
-	//m_input_manager->Set_Fix_Cursor(true);
-	//m_input_manager->Set_Hide_Cursor(true);
 	m_input_manager->Bind_Key_First_Down(VK_UP, BindingInfo(L"", Action::CUSTOM_FUNCTION_THREE));
 	m_input_manager->Bind_Key_First_Down(VK_DOWN, BindingInfo(L"", Action::CUSTOM_FUNCTION_THREE));
 	m_input_manager->Bind_Mouse_Move(BindingInfo(), BindingInfo(L"maincamera", Action::ROTATE_PITCH, 0.01f),
@@ -2268,5 +2326,11 @@ void TestScene::ShowingResultScene(bool is_cat_winner)
 {
 	m_is_cat_winner = is_cat_winner;
 	m_main_camera->Set_Lagging_Degree(1.0f);
+
 	Result_Test_UI_Function();
+}
+
+void TestScene::RebornUICount()
+{
+	m_is_reborn = true;
 }

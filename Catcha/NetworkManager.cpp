@@ -155,7 +155,6 @@ void NetworkManager::SendActionOne(const DirectX::XMFLOAT3& look)
 
 void NetworkManager::ChooseCharacter(bool IsCat)
 {
-	
 	CS_CHOOSE_CHARACTER_PACKET p;
 	p.size = sizeof(p);
 	p.type = CS_CHOOSE_CHARACTER;
@@ -522,20 +521,20 @@ void NetworkManager::ProcessPacket(char* ptr)
 	}
 	case SC_GAME_WIN_CAT:
 	{
+		EndSceneInitCharacters();
 		for (auto& observer : m_observers)
 		{
 			observer->ShowingResultScene(true);
 		}
-		EndSceneInitCharacters();
 		break;
 	}
 	case SC_GAME_WIN_MOUSE:
 	{
+		EndSceneInitCharacters();
 		for (auto& observer : m_observers)
 		{
 			observer->ShowingResultScene(false);
 		}
-		EndSceneInitCharacters();
 		break;
 	}
 	case SC_PLAYER_ESCAPE:
@@ -570,7 +569,10 @@ void NetworkManager::ProcessPacket(char* ptr)
 	}
 	case SC_PLAYER_REBORN:
 	{
-		// TODO : 텍스트 띄우기
+		for (auto& observer : m_observers)
+		{
+			observer->RebornUICount();
+		}
 		break;
 	}
 	case SC_PLAYER_DEAD:
@@ -606,7 +608,10 @@ void NetworkManager::ChangeOwnCharacter(int character_id, int new_number)
 
 			// 객체 이름 및 포인터 swap
 			// enum의 순서를 보장하기 위해 오브젝트 순서를 enum 순서에 맞춘다
-			//m_objects[character_id]->Set_Name(L"free_mode");
+			if (character_id == NUM_GHOST)
+			{
+				m_objects[character_id]->Set_Name(L"free_mode");
+			}
 
 			// 접속전 기본 캐릭터 안보이게 설정
 			if (m_objects[character_id]->Get_Character_Number() == NUM_GHOST)
@@ -618,11 +623,18 @@ void NetworkManager::ChangeOwnCharacter(int character_id, int new_number)
 			character->Set_Name(L"player");
 
 			// 쥐 1인칭이라 자기 캐릭터 안그리게 설정
-			if (!is_cat) 
+			if (false == is_cat) 
 			{
 				character->Set_Visible(false);
 				character->SetLerpDegree(4.0f);
 				character->SetTargetQuat(DirectX::XMFLOAT4{ 0.0f, 0.0f, 0.0f, 1.0f });
+				is_player_cat = false;
+			}
+			else
+			{
+				character->Set_Visible(true);
+				character->Set_Shade(true);
+				is_player_cat = true;
 			}
 
 			std::wstring new_name = is_cat ? L"cat" : L"mouse" + std::to_wstring(new_number);
@@ -659,19 +671,39 @@ void NetworkManager::InitialzeCharacters()
 
 void NetworkManager::EndSceneInitCharacters()
 {
-	for (int i = NUM_MOUSE1; i <= NUM_CAT; ++i)
+	for (int i = NUM_MOUSE1; i <= NUM_GHOST; ++i)
 	{
-		m_objects[i]->SetTargetPosition(DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f));
+		m_objects[i]->SetTargetPosition(DirectX::XMFLOAT3(0.0f, 999.0f, 0.0f));
 		m_objects[i]->Set_Position(DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f));
 		m_objects[i]->SetTargetQuat(DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f));
 		m_objects[i]->Rst_Rotate();
 		m_objects[i]->TP_Down(999.0f);
-		m_objects[i]->Set_Visible(false);
-		m_objects[i]->Set_Shade(false);
-		if (i > NUM_MOUSE4)
+		m_objects[i]->Set_Visible(true);
+		m_objects[i]->Set_Shade(true);
+		m_objects[i]->Set_State(Object_State::STATE_IDLE);
+		m_objects[i]->Set_Next_State(Object_State::STATE_IDLE);
+		m_objects[i]->Set_Camera_Need_Send(false);
+		m_objects[i]->SetLerpDegree(4.0f);
+		m_objects[i]->Set_Color_Mul(1.0f, 1.0f, 1.0f, 1.0f);
+
+		if (i < NUM_CAT)
 		{
-			m_objects[i]->TP_Up(999.0f + FLOOR_Y);
-			m_objects[i]->SetLerpDegree(50.0f);
+			m_objects[i]->Set_Name(L"mouse" + std::to_wstring(i));
 		}
+		else if (i == NUM_CAT)
+		{
+			m_objects[i]->Set_Name(L"cat");
+		}
+		else
+		{
+			m_objects[i]->Set_Name(L"player");
+		}
+	}
+
+	for (int i = NUM_AI1; i <= NUM_AI4; ++i)
+	{
+		m_objects[i]->TP_Up(999.0f + FLOOR_Y - 10.0f);
+		m_objects[i]->SetTargetPosition(DirectX::XMFLOAT3(0.0f, FLOOR_Y - 10.0f, 0.0f));
+		m_objects[i]->SetLerpDegree(50.0f);
 	}
 }

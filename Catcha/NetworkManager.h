@@ -46,6 +46,7 @@ private:
 	std::vector<UIObject*> m_cheese_ui_objects;			// 치즈 ui 오브젝트	- 치즈 번호
 	short m_game_time = 0;								// 게임 시간
 	Object* m_door_camera;								// 열리는 문 오브젝트
+	bool is_player_cat = false;							// 플레이어가 선택한게 쥐인지 고양이인지 (true = cat / false = mouse)
 
 	// 카메라 바인딩을 위한 오브젝트 매니져
 	std::vector<NetworkObserver*> m_observers;
@@ -58,8 +59,6 @@ public:
 	int m_myid;											// *자신의 서버 아이디(플레이어 순서) 번호
 	std::unordered_map<int, Client> characters;			// [key] *서버 아이디 번호 / [value]캐릭터 정보
 
-
-	bool Choose = false;								// 캐릭터 선택 여부 확인
 
 	static NetworkManager& GetInstance() 
 	{
@@ -88,20 +87,17 @@ public:
 		m_objects.emplace_back(&object);
 	}
 
+	Object* GetObj(int num)
+	{
+		return m_objects[num];
+	}
+
 	void AddCheese(VoxelCheese& cheese) {
 		m_cheeses.emplace_back(&cheese);
 	}
 
 	void AddParticleObject(ParticleObject& particle_object) {
 		m_particle_object = &particle_object;
-	}
-
-	void SetTotalTime(float& total_time) {
-		m_total_time = &total_time;
-	}
-
-	void SetTimeObject(TextUIObject& time) {
-		m_time_object = &time;
 	}
 
 	void AddMouseUIObject(UIObject& mouse) {
@@ -115,6 +111,16 @@ public:
 	void SetDoorObject(Object& door) {
 		m_door_camera = &door;
 	}
+
+	void SetTotalTime(float& total_time) {
+		m_total_time = &total_time;
+	}
+
+	void SetTimeObject(TextUIObject& time) {
+		m_time_object = &time;
+	}
+
+	bool IsPlayerCat() { return is_player_cat; }
 
 	// 옵저버 등록 함수
 	void RegisterObserver(NetworkObserver* observer) {

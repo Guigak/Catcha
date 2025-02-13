@@ -46,7 +46,7 @@ public:
 		DirectX::XMFLOAT3 up = { 0.0f,1.0f,0.0f }, DirectX::XMFLOAT3 velocity = { 0.0f, 0.0f, 0.0f });
 	void Set_Listener(DirectX::XMFLOAT3* position, DirectX::XMFLOAT3* look, DirectX::XMFLOAT3* up, DirectX::XMFLOAT3* velocity);
 
-	void Play_Sound(std::wstring channel_name, std::wstring file_name, DirectX::XMFLOAT3 position = { 0.0f, 0.0f, 0.0f }, DirectX::XMFLOAT3 velocity = { 0.0f, 0.0f, 0.0f });
-	void Play_Sound(std::wstring channel_name, std::wstring file_name, DirectX::XMFLOAT3* position, DirectX::XMFLOAT3* velocity);
+	void Play_Sound(std::wstring channel_name, std::wstring file_name, DirectX::XMFLOAT3 position = { 0.0f, 0.0f, 0.0f }, DirectX::XMFLOAT3 velocity = { 0.0f, 0.0f, 0.0f }, bool sound_override = true);
+	void Play_Sound(std::wstring channel_name, std::wstring file_name, DirectX::XMFLOAT3* position, DirectX::XMFLOAT3* velocity, bool sound_override = true);
 };
 

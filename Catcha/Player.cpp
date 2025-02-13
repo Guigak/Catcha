@@ -3,8 +3,8 @@
 #include "AnimationManager.h"
 #include "Camera.h"
 
-#define CHARGING_JUMP_FORCE 250.0f
-#define MAX_CHARGING_TIME 3.0f
+#define CHARGING_JUMP_FORCE 400.0f
+#define MAX_CHARGING_TIME 2.0f
 
 Player::Player(ObjectManager* object_manager, std::wstring object_name, Mesh_Info* mesh, DirectX::XMMATRIX world_matrix, UINT constant_buffer_index, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, bool physics, bool visible)
 	: Object(object_manager, object_name, mesh, world_matrix, constant_buffer_index, primitive_topology, physics, visible) {
@@ -17,7 +17,7 @@ void Player::Update(float elapsed_time) {
 
 		m_float_values[L"charging_time"] += elapsed_time;
 
-		m_float_values[L"charging_time"] = MathHelper::Max(m_float_values[L"charging_time"], MAX_CHARGING_TIME);
+		m_float_values[L"charging_time"] = MathHelper::Min(m_float_values[L"charging_time"], MAX_CHARGING_TIME);
 	}
 
 	Object::Update(elapsed_time);

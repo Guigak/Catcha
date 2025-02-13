@@ -130,8 +130,17 @@ void InputManager::Prcs_Input() {
 				Prcs_Binding_Info(binding_info);
 
 				// [CS] 키보드 입력이 끝났음을 알림
-				input_key_ = (static_cast<uint8_t>(binding_info.action) << 1) | false;
-				network_manager.SendInput(input_key_);
+				switch (binding_info.action) {
+				case Action::MOVE_FORWARD:
+				case Action::MOVE_BACK:
+				case Action::MOVE_LEFT:
+				case Action::MOVE_RIGHT:
+				case Action::ACTION_JUMP:
+				case Action::ACTION_ONE:
+					input_key_ = (static_cast<uint8_t>(binding_info.action) << 1) | false;
+					network_manager.SendInput(input_key_);
+					break;
+				}
 			}
 		}
 

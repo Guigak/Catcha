@@ -282,6 +282,11 @@ void ObjectManager::Bind_Cam_2_Obj(std::wstring camera_name, std::wstring object
     Camera* camera = (Camera*)Get_Obj(camera_name);
     Object* object = Get_Obj(object_name);
 
+    if (camera->Get_Bind_Obj())
+    {
+        camera->Get_Bind_Obj()->Reset_bind_Camera();
+    }
+
     object->Bind_Camera(camera);
     camera->Bind_Obj(object, offset_look, offset_up, offset_right, distance);
 

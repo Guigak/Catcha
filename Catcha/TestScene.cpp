@@ -1951,6 +1951,13 @@ void TestScene::Chg_Scene_State(Scene_State scene_state) {
 		object->Set_Shade(false);
 	}
 
+	m_is_reborn = false;
+	m_reborn_timer_value = 0.0f;
+	m_attacked = false;
+	m_attacked_value = 0.0f;
+
+	NetworkManager& network = NetworkManager::GetInstance();
+
 	switch (scene_state) {
 		//
 		m_sound_manager->Restart_Channel(L"bgm");
@@ -1962,8 +1969,11 @@ void TestScene::Chg_Scene_State(Scene_State scene_state) {
 
 		m_main_camera->Set_Lagging_Degree(1.0f);
 
+		m_main_camera->Reset_bind_Camera();
 
-		NetworkManager::GetInstance().EndSceneInitCharacters();
+		network.EndSceneInitCharacters();
+		network.characters.clear();
+
 		m_object_manager->RestorObjectMap();
 
 		for (int i = 0; i < CHEESE_NUM; ++i)
@@ -2159,7 +2169,10 @@ void TestScene::Chg_Scene_State(Scene_State scene_state) {
 			((TextUIObject*)m_object_manager->Get_Obj(L"winner"))->Set_Text(L"Áã!");
 		}
 
-		
+
+		network.SetObjectsVisible(false);
+		m_render_silhouette = false;
+		m_main_camera->Set_Camera_Need_Send(false);
 
 		//
 		m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"end_scene_object",

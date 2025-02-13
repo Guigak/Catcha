@@ -306,6 +306,7 @@ public:
 
 	//
 	void Set_Cam_Rotate_Flag(BYTE flag) { m_camera_rotate_synchronization_flag = flag; }
+	void Reset_bind_Camera() { if(m_camera)	m_camera = nullptr; }
 
 	//
 	bool Get_Processable_Input() { return m_processable_input; }

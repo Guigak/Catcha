@@ -530,7 +530,7 @@ void NetworkManager::ProcessPacket(char* ptr)
 	}
 	case SC_GAME_WIN_CAT:
 	{
-		//EndSceneInitCharacters();
+		EndSceneInitCharacters();
 		for (auto& observer : m_observers)
 		{
 			observer->ShowingResultScene(true);
@@ -539,7 +539,7 @@ void NetworkManager::ProcessPacket(char* ptr)
 	}
 	case SC_GAME_WIN_MOUSE:
 	{
-		//EndSceneInitCharacters();
+		EndSceneInitCharacters();
 		for (auto& observer : m_observers)
 		{
 			observer->ShowingResultScene(false);
@@ -716,6 +716,13 @@ void NetworkManager::EndSceneInitCharacters()
 		m_objects[i]->SetTargetPosition(DirectX::XMFLOAT3(0.0f, FLOOR_Y - 10.0f, 0.0f));
 		m_objects[i]->SetLerpDegree(50.0f);
 	}
+}
 
-	characters.clear();
+void NetworkManager::SetObjectsVisible(bool visible)
+{
+	for (auto& obj : m_objects)
+	{
+		obj->Set_Visible(visible);
+		obj->Set_Shade(visible);
+	}
 }

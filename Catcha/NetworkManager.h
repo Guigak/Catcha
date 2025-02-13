@@ -92,6 +92,8 @@ public:
 		return m_objects[num];
 	}
 
+	void SetObjectsVisible(bool visible);
+
 	void AddCheese(VoxelCheese& cheese) {
 		m_cheeses.emplace_back(&cheese);
 	}

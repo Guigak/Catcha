@@ -310,5 +310,10 @@ public:
 	DirectX::XMFLOAT3* Get_Velocity_Addr() { return &m_velocity; }	// Get Position Address
 	DirectX::XMFLOAT3* Get_Look_Addr() { return &m_look; }	// Get Position Address
 	DirectX::XMFLOAT3* Get_Up_Addr() { return &m_up; }	// Get Position Address
+
+	//
+	bool Get_Bool_Value(std::wstring value_name) { return m_bool_values[value_name]; }
+	int Get_Int_Value(std::wstring value_name) { return m_int_values[value_name]; }
+	float Get_Float_Value(std::wstring value_name) { return m_float_values[value_name]; };
 };
 

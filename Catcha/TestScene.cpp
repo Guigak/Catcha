@@ -480,6 +480,15 @@ void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
 	{
 		cat_object = m_object_manager->Get_Obj(L"player");
 		m_main_pass_constant_buffer.lights[1].strength = { 0.0f, 0.0f, 0.0f };
+		int gauge = static_cast<int>(cat_object->Get_Float_Value(L"charging_time") * 10);
+		for (int i = 0; i < gauge; ++i)
+		{
+			m_object_manager->Get_Obj(L"gauge_ui_" + std::to_wstring(i))->Set_Visible(true);
+		}
+		for (int i = gauge; i < 20; ++i)
+		{
+			m_object_manager->Get_Obj(L"gauge_ui_" + std::to_wstring(i))->Set_Visible(false);
+		}
 	}
 	else
 	{
@@ -1328,7 +1337,7 @@ void TestScene::Build_O() {
 	m_object_manager->Add_Obj(L"mouse5", L"mouse_mesh_edit.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
 	m_object_manager->Add_Obj(L"mouse6", L"mouse_mesh_edit.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
 	m_object_manager->Add_Obj(L"mouse7", L"mouse_mesh_edit.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
-	m_object_manager->Add_Obj(L"cat", L"cat_mesh_edit.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
+	m_object_manager->Add_Player(L"cat", L"cat_mesh_edit.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
 
 
 	m_object_manager->Set_Sklt_2_Obj(L"mouse0", L"mouse_mesh_edit.fbx");
@@ -1370,6 +1379,7 @@ void TestScene::Build_O() {
 	object->Bind_Anim_2_State(Object_State::STATE_JUMP_IDLE, Animation_Binding_Info(L"cat_jump_test_idle.fbx", 0.5f, 0.2f, LOOP_ANIMATION));
 	object->Bind_Anim_2_State(Object_State::STATE_JUMP_END, Animation_Binding_Info(L"cat_jump_test_end.fbx", 0.5f, 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE));
 	object->Bind_Anim_2_State(Object_State::STATE_ACTION_ONE, Animation_Binding_Info(L"cat_paw.fbx", 1.0f, 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE, Restriction_Option::Restrict_Move));
+	object->Bind_Anim_2_State(Object_State::STATE_ACTION_FOUR, Animation_Binding_Info(L"cat_jump_ready.fbx", 0.8f, 0.2f, ONCE_ANIMATION, Object_State::STATE_NONE, Restriction_Option::Restrict_Move));
 	object->Set_Animated(true);
 	object->Set_Phys(true);
 	object->TP_Down(999.0f);
@@ -2107,9 +2117,11 @@ void TestScene::Chg_Scene_State(Scene_State scene_state) {
 		m_object_manager->Get_Obj(L"attacked_ui")->Set_Visible(true);
 		m_object_manager->Get_Obj(L"game_play_ui")->Set_Visible(true);
 
-		if (true == NetworkManager::GetInstance().IsPlayerCat())
+		if (true == network.IsPlayerCat())
 		{
 			m_object_manager->Get_Obj(L"cat_portrait")->Set_Visible(true);
+			m_input_manager->Bind_Key_First_Down(VK_E, BindingInfo(L"player", Action::ACTION_FOUR));
+			m_input_manager->Bind_Key_Up(VK_E, BindingInfo(L"player", Action::ACTION_FIVE));
 		}
 		else
 		{
@@ -2122,8 +2134,14 @@ void TestScene::Chg_Scene_State(Scene_State scene_state) {
 		for (int i = 0; i < 20; ++i) {
 			object = m_object_manager->Get_Obj(L"gauge_ui_" + std::to_wstring(i));
 			object->Set_Visible(true);
-			//object->Set_Color_Mul(0.0f, 0.0f, 1.0f, 1.0f);
-			object->Set_Color_Mul(1.0f, 0.0f, 0.0f, 1.0f);
+			if (true == network.IsPlayerCat())
+			{
+				object->Set_Color_Mul(0.0f, 0.0f, 1.0f, 1.0f);
+			}
+			else
+			{
+				object->Set_Color_Mul(1.0f, 0.0f, 0.0f, 1.0f);
+			}
 		}
 
 		for (int i = 0; i < 8; ++i) {
@@ -2162,6 +2180,7 @@ void TestScene::Chg_Scene_State(Scene_State scene_state) {
 		m_input_manager->Bind_Key_Up(VK_S, BindingInfo(L"player", Action::MOVE_BACK, MOVE_ONLY_XZ));
 		m_input_manager->Bind_Key_Up(VK_A, BindingInfo(L"player", Action::MOVE_LEFT, MOVE_ONLY_XZ));
 		m_input_manager->Bind_Key_Up(VK_D, BindingInfo(L"player", Action::MOVE_RIGHT, MOVE_ONLY_XZ));
+
 
 		m_input_manager->Bind_Mouse_Move(BindingInfo(), BindingInfo(L"maincamera", Action::ROTATE_PITCH, 0.01f),
 			BindingInfo(L"maincamera", Action::ROTATE_RIGHT, 0.01f));

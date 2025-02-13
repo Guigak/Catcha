@@ -115,6 +115,7 @@ void InputManager::Prcs_Input() {
 					case Action::MOVE_BACK:
 					case Action::MOVE_LEFT:
 					case Action::MOVE_RIGHT:
+					case Action::ACTION_FOUR:
 						input_key_ = (static_cast<uint8_t>(binding_info.action) << 1) | true;
 						network_manager.SendInput(input_key_);
 						break;
@@ -137,6 +138,7 @@ void InputManager::Prcs_Input() {
 				case Action::MOVE_RIGHT:
 				case Action::ACTION_JUMP:
 				case Action::ACTION_ONE:
+				case Action::ACTION_FIVE:
 					input_key_ = (static_cast<uint8_t>(binding_info.action) << 1) | false;
 					network_manager.SendInput(input_key_);
 					break;

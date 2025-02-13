@@ -115,6 +115,11 @@ protected:
 	//
 	bool m_shade = true;
 
+	//
+	std::unordered_map<std::wstring, bool> m_bool_values;
+	std::unordered_map<std::wstring, int> m_int_values;
+	std::unordered_map<std::wstring, float> m_float_values;
+
 	//////////////////////////////////////////////////////////////////
 	// [SC] 위치 보간을 위한 변수
 	DirectX::XMFLOAT3 m_target_position{ 0, -999.0f, 0 };				// 서버에서 받은 Position
@@ -265,6 +270,8 @@ public:
 	virtual void Act_One();
 	virtual void Act_Two();
 	virtual void Act_Three();
+	virtual void Act_Four();
+	virtual void Act_Five();
 
 	// [SC] 회전 보간을 위한 함수
 	void SetLerpDegree(float degree) { m_lerp_degree = degree; }
@@ -362,5 +369,10 @@ public:
 	DirectX::XMFLOAT3* Get_Velocity_Addr() { return &m_velocity; }	// Get Position Address
 	DirectX::XMFLOAT3* Get_Look_Addr() { return &m_look; }	// Get Position Address
 	DirectX::XMFLOAT3* Get_Up_Addr() { return &m_up; }	// Get Position Address
+
+	//
+	bool Get_Bool_Value(std::wstring value_name) { return m_bool_values[value_name]; }
+	int Get_Int_Value(std::wstring value_name) { return m_int_values[value_name]; }
+	float Get_Float_Value(std::wstring value_name) { return m_float_values[value_name]; };
 };
 

@@ -138,6 +138,12 @@ public:
 		bool physics = false, bool visible = true);
 
 	//
+	Object* Add_Player(std::wstring object_name, std::wstring mesh_name, std::wstring set_name = L"Object",
+		DirectX::XMMATRIX world_matrix = DirectX::XMMatrixIdentity(),
+		D3D12_PRIMITIVE_TOPOLOGY primitive_topology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType object_type = ObjectType::OPAQUE_OBJECT,
+		bool physics = false, bool visible = true);
+
+	//
 	void Build_BV(ID3D12Device* device, ID3D12GraphicsCommandList* command_list);
 
 	//

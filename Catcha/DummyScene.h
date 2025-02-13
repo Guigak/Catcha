@@ -37,5 +37,8 @@ public:
 
 	// 타격시 효과
 	void AttackedUI() {}
+
+	// 고양이 종소리 타이머
+	void ActiveRingingBell() {}
 };
 

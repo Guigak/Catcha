@@ -3,6 +3,7 @@
 #include "ParticleObject.h"
 #include "TextUIObject.h"
 #include "UIObject.h"
+#include "SoundManager.h"
 
 constexpr DirectX::XMFLOAT3 CHARACTER_POS[9] =
 {
@@ -105,6 +106,9 @@ void NetworkManager::InitSocket()
 	strcpy_s(p.name, m_name.c_str());
 	strcpy_s(p.password, m_password.c_str());
 	DoSend(&p);
+
+
+	m_sound_manager = SoundManager::Get_Inst();
 }
 
 
@@ -284,9 +288,41 @@ void NetworkManager::ProcessPacket(char* ptr)
 		characters[id].pitch = p->player_pitch;
 		Object_State state = static_cast<Object_State>(p->state >> 1);
 		bool cat_attacked = (p->state & 1) != 0;
+		int curr_hp = static_cast<int>(p->curr_hp) / 5;
 
 		// 공통 동기화
 		m_objects[characters[id].character_id]->SetTargetPosition(coord);
+		
+		// 고양이 방울 소리 재생
+		if (characters[id].character_id == NUM_CAT)
+		{
+			DirectX::XMVECTOR pos = DirectX::XMLoadFloat3(&coord);
+			float distance = DirectX::XMVectorGetX(DirectX::XMVector3Length(
+				DirectX::XMVectorSubtract(
+					m_objects[characters[id].character_id]->Get_Position_V(), pos)));
+			if (distance > 10.0f)
+			{
+				for (auto& observer : m_observers)
+				{
+					observer->ActiveRingingBell();
+				}
+			}
+		}
+		else
+		{
+			if (id == m_myid)
+			{
+				for (int i = 0; i < curr_hp; ++i)
+				{
+					m_gauge_ui_objects[i]->Set_Visible(true);
+				}
+				for (int i = curr_hp; i < 20; ++i)
+				{
+					m_gauge_ui_objects[i]->Set_Visible(false);
+				}
+			}
+		}
+
 
 		// 애니메이션 동기화 정보
 		if (m_objects[characters[id].character_id]->Get_State() != state)
@@ -302,6 +338,13 @@ void NetworkManager::ProcessPacket(char* ptr)
 		if (true == cat_attacked)
 		{
 			m_objects[characters[id].character_id]->Set_Color_Mul(1.0f, 0.0f, 0.0f, 1.0f);
+			// 타격당한 캐릭터 소리 재생
+			m_sound_manager->Play_Sound(L"hit_sound", L"hit_sound.mp3", 
+				m_objects[characters[id].character_id]->Get_Position_Addr(), nullptr, false);
+			// 고양이 타격 소리 재생
+			m_sound_manager->Play_Sound(L"swing_sound", L"swing_sound.wav",
+				m_objects[NUM_CAT]->Get_Position_Addr(), nullptr, false);
+
 			m_particle_object->Add_Particle(
 				m_objects[characters[id].character_id]->Get_Position_3f(),
 				DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f),
@@ -452,6 +495,9 @@ void NetworkManager::ProcessPacket(char* ptr)
 		bool is_removed_all = (p->cheese_num & 1) != 0;
 		DirectX::XMFLOAT3 sphere_center {p->center_x, p->center_y, p->center_z};
 		float radius = 10.0f;
+
+		m_sound_manager->Play_Sound(L"eating_sound", L"eating_sound.wav",
+			&sphere_center, nullptr, false);
 
 		// 치즈 전부 삭제되었을시
 		if (true == is_removed_all)

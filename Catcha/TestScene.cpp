@@ -51,6 +51,12 @@ bool m_attacked = false;
 constexpr float MAX_ATTACKED_VALUE = 0.5f;
 float m_attacked_value = 0.0f;
 
+// 고양이 종소리 타이머
+bool m_is_ringing_bell = false;
+constexpr float MAX_RINGING_BELL = 2.0f;
+float m_ringing_bell_value = 0.0f;
+
+
 //
 constexpr float MAX_PICKING_DISTANCE = 1.0f;
 
@@ -132,9 +138,9 @@ void TestScene::Enter(D3DManager* d3d_manager) {
 	m_sound_manager->Add_Sound(L"bell_sound.wav", FMOD_3D);
 	m_sound_manager->Add_Sound(L"eating_sound.wav", FMOD_3D);
 	m_sound_manager->Add_Sound(L"swing_sound.wav", FMOD_3D);
-	//m_sound_manager->Play_Sound(L"bgm", L"Work_of_a_cat.mp3");
 
 	m_sound_manager->Set_Listener(m_main_camera->Get_Position_Addr(), m_main_camera->Get_Look_Addr(), m_main_camera->Get_Up_Addr(), nullptr);
+	m_sound_manager->Play_Sound(L"bgm", L"bgm.mp3");
 }
 
 void TestScene::Exit(D3DManager* d3d_manager) {
@@ -194,6 +200,8 @@ void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
 				100,
 				m_total_time
 			);
+			m_sound_manager->Play_Sound(L"victory_sound", L"victory_sound.mp3");
+
 			m_door_open = false;
 			m_door_open_time_value = 0.0f;
 		}
@@ -239,6 +247,32 @@ void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
 			m_object_manager->Get_Obj(L"reborn_timer")->Set_Visible(false);
 			m_is_reborn = false;
 			m_reborn_timer_value = 0.0f;
+		}
+	}
+
+	// 고양이 종소리 타이머
+	if (true == m_is_ringing_bell)
+	{
+		if (m_ringing_bell_value < MAX_RINGING_BELL)
+		{
+			m_ringing_bell_value += elapsed_time;
+		}
+		else
+		{
+			if (true == is_player_cat)
+			{
+				m_sound_manager->Play_Sound(L"bell_sound", L"bell_sound.wav",
+					m_object_manager->Get_Obj(L"player")->Get_Position_Addr(), nullptr, false);
+			}
+			else
+			{
+				m_sound_manager->Play_Sound(L"bell_sound", L"bell_sound.wav",
+					m_object_manager->Get_Obj(L"cat")->Get_Position_Addr(), nullptr, false);
+			}
+			
+
+			m_is_ringing_bell = false;
+			m_ringing_bell_value = 0.0f;
 		}
 	}
 
@@ -1423,6 +1457,7 @@ void TestScene::Build_O() {
 	for (int i = 0; i < 20; ++i) {
 		object = m_object_manager->Add_UI_Obj(L"gauge_ui_" + std::to_wstring(i), -1.0f + 0.22f + (float)i * 0.02f, -1.0f + ((100.0f + 1.0f) / 540.0f), 15.0f / 960.0f, 70.0f / 540.0f,
 			2880, 1755, 425.0f, 1940.0f, 426.0f, 1941.0f, false, false);
+		network.AddGaugeUIObject(*(UIObject*)object);
 	}
 
 	object = m_object_manager->Add_UI_Obj(L"cat_portrait", -1.0f + (100.0f / 960.0f), -1.0f + ((100.0f + 1.0f) / 540.0f), 300.0f / 960.0f, 300.0f / 540.0f,
@@ -1967,6 +2002,8 @@ void TestScene::Chg_Scene_State(Scene_State scene_state) {
 		m_object_manager->Get_Obj(L"game_end")->Set_Visible(true);
 		m_object_manager->Get_Obj(L"catcha_title")->Set_Visible(true);
 
+		m_sound_manager->Play_Sound(L"bgm", L"bgm.mp3");
+
 		m_main_camera->Set_Lagging_Degree(1.0f);
 
 		m_main_camera->Reset_bind_Camera();
@@ -2080,6 +2117,7 @@ void TestScene::Chg_Scene_State(Scene_State scene_state) {
 		}
 
 		//m_object_manager->Get_Obj(L"player")->Set_Visible(false);
+		m_sound_manager->Set_Channel_Paused(L"bgm", true);
 
 		for (int i = 0; i < 20; ++i) {
 			object = m_object_manager->Get_Obj(L"gauge_ui_" + std::to_wstring(i));
@@ -2137,7 +2175,7 @@ void TestScene::Chg_Scene_State(Scene_State scene_state) {
 		//
 		m_sound_manager->Set_Channel_Paused(L"bgm", true);
 
-		
+		m_sound_manager->Play_Sound(L"victory_sound", L"victory_sound.mp3");
 
 		//
 		m_object_manager->Get_Obj(L"winner_is")->Set_Visible(true);
@@ -2404,5 +2442,15 @@ void TestScene::AttackedUI()
 		m_attacked = true;
 	}
 }
+
+void TestScene::ActiveRingingBell()
+{
+	if (false == m_is_ringing_bell)
+	{
+		m_is_ringing_bell = true;
+	}
+}
+
+
 
 

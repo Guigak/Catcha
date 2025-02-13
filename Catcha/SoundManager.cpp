@@ -155,23 +155,50 @@ void SoundManager::Set_Listener(DirectX::XMFLOAT3* position, DirectX::XMFLOAT3* 
 	m_fmod_system->set3DListenerAttributes(0, &listener_position, &listener_velocity, &listener_look, &listener_up);
 }
 
-void SoundManager::Play_Sound(std::wstring channel_name, std::wstring file_name, DirectX::XMFLOAT3 position, DirectX::XMFLOAT3 velocity) {
+void SoundManager::Play_Sound(std::wstring channel_name, std::wstring file_name, DirectX::XMFLOAT3 position, DirectX::XMFLOAT3 velocity, bool sound_override) {
 	FMOD_VECTOR sound_position = { position.x, position.y, position.z };
 	FMOD_VECTOR sound_velocity = { velocity.x, velocity.y, velocity.z };
 
 	FMOD::Channel* channel = nullptr;
-	m_fmod_system->playSound(m_sound_map[file_name], nullptr, false, &channel);
-	channel->set3DAttributes(&sound_position, &sound_velocity);
 
 	if (channel_name == L"") {
+		m_fmod_system->playSound(m_sound_map[file_name], nullptr, false, &channel);
+		channel->set3DAttributes(&sound_position, &sound_velocity);
+
 		m_channel_info_array.emplace_back(channel, false, nullptr, nullptr);
 	}
 	else {
-		m_named_channel_info_array[channel_name] = Channel_Info(channel, false, nullptr, nullptr);
+		bool playing = false;
+		FMOD::Channel* channel_pointer = nullptr;
+
+		if (m_named_channel_info_array.count(channel_name)) {
+			channel_pointer = m_named_channel_info_array[channel_name].channel_pointer;
+			channel_pointer->isPlaying(&playing);
+		}
+
+		if (playing) {
+			Channel_Info channel_info = m_named_channel_info_array[channel_name];
+			channel_info.channel_position = nullptr;
+			channel_info.channel_velocity = nullptr;
+			channel_info.linked = false;
+
+			if (sound_override) {
+				Restart_Channel(channel_name);
+			}
+			else {
+				return;
+			}
+		}
+		else {
+			m_fmod_system->playSound(m_sound_map[file_name], nullptr, false, &channel);
+			channel->set3DAttributes(&sound_position, &sound_velocity);
+
+			m_named_channel_info_array[channel_name] = Channel_Info(channel, false, nullptr, nullptr);
+		}
 	}
 }
 
-void SoundManager::Play_Sound(std::wstring channel_name, std::wstring file_name, DirectX::XMFLOAT3* position, DirectX::XMFLOAT3* velocity) {
+void SoundManager::Play_Sound(std::wstring channel_name, std::wstring file_name, DirectX::XMFLOAT3* position, DirectX::XMFLOAT3* velocity, bool sound_override) {
 	FMOD_VECTOR sound_position = { 0.0f, 0.0f, 0.0f };
 	FMOD_VECTOR sound_velocity = { 0.0f, 0.0f, 0.0f };
 
@@ -183,13 +210,40 @@ void SoundManager::Play_Sound(std::wstring channel_name, std::wstring file_name,
 	}
 
 	FMOD::Channel* channel = nullptr;
-	m_fmod_system->playSound(m_sound_map[file_name], nullptr, false, &channel);
-	channel->set3DAttributes(&sound_position, &sound_velocity);
 
 	if (channel_name == L"") {
+		m_fmod_system->playSound(m_sound_map[file_name], nullptr, false, &channel);
+		channel->set3DAttributes(&sound_position, &sound_velocity);
+
 		m_channel_info_array.emplace_back(channel, true, position, velocity);
 	}
 	else {
-		m_named_channel_info_array[channel_name] = Channel_Info(channel, true, position, velocity);
+		bool playing = false;
+		FMOD::Channel* channel_pointer = nullptr;
+
+		if (m_named_channel_info_array.count(channel_name)) {
+			channel_pointer = m_named_channel_info_array[channel_name].channel_pointer;
+			channel_pointer->isPlaying(&playing);
+		}
+
+		if (playing) {
+			Channel_Info channel_info = m_named_channel_info_array[channel_name];
+			channel_info.channel_position = position;
+			channel_info.channel_velocity = velocity;
+			channel_info.linked = true;
+
+			if (sound_override) {
+				Restart_Channel(channel_name);
+			}
+			else {
+				return;
+			}
+		}
+		else {
+			m_fmod_system->playSound(m_sound_map[file_name], nullptr, false, &channel);
+			channel->set3DAttributes(&sound_position, &sound_velocity);
+
+			m_named_channel_info_array[channel_name] = Channel_Info(channel, true, position, velocity);
+		}
 	}
 }

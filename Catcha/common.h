@@ -207,7 +207,7 @@ enum CHARACTER_NUMBER
 	NUM_CAT,
 	NUM_GHOST
 };
-
+constexpr int CAT_ATTACK_DAMAGE = 50;
 constexpr int CHEESE_NUM = 4;
 const DirectX::XMFLOAT3 CHEESE_POS[CHEESE_NUM] =
 {

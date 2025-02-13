@@ -20,6 +20,7 @@ class VoxelCheese;
 class ParticleObject;
 class TextUIObject;
 class UIObject;
+class SoundManager;
 
 class NetworkManager {
 private:
@@ -44,9 +45,12 @@ private:
 	TextUIObject* m_time_object;						// 시간 오브젝트
 	std::vector<UIObject*> m_mouse_ui_objects;			// mouse ui 오브젝트	- [character_id]
 	std::vector<UIObject*> m_cheese_ui_objects;			// 치즈 ui 오브젝트	- 치즈 번호
+	std::vector<UIObject*> m_gauge_ui_objects;			// mouse ui 오브젝트	- [character_id]
 	short m_game_time = 0;								// 게임 시간
 	Object* m_door_camera;								// 열리는 문 오브젝트
 	bool is_player_cat = false;							// 플레이어가 선택한게 쥐인지 고양이인지 (true = cat / false = mouse)
+	SoundManager* m_sound_manager;						// 사운드 매니져 싱글톤
+
 
 	// 카메라 바인딩을 위한 오브젝트 매니져
 	std::vector<NetworkObserver*> m_observers;
@@ -108,6 +112,10 @@ public:
 
 	void AddCheeseUIObject(UIObject& cheese) {
 		m_cheese_ui_objects.emplace_back(&cheese);
+	}
+
+	void AddGaugeUIObject(UIObject& gauge) {
+		m_gauge_ui_objects.emplace_back(&gauge);
 	}
 
 	void SetDoorObject(Object& door) {

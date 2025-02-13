@@ -66,7 +66,9 @@ void Object::Calc_Delta(float elapsed_time) {
 				float deceleration = m_deceleration * elapsed_time;
 				float new_speed = MathHelper::Max(m_speed - deceleration, 0.0f);
 
-				m_velocity = MathHelper::Multiply(Get_Vel(), new_speed / m_speed);
+				DirectX::XMFLOAT3 calculated_velocity = MathHelper::Multiply(Get_Vel(), new_speed / m_speed);
+				m_velocity.x = calculated_velocity.x;
+				m_velocity.z = calculated_velocity.z;
 			}
 		}
 
@@ -78,13 +80,17 @@ void Object::Calc_Delta(float elapsed_time) {
 		}
 
 		// Calc friction
-		float speed = MathHelper::Length(delta);
+		float force = MathHelper::Length_XZ(delta);
 
-		if (speed > 0.0f) {
-			float deceleration = m_deceleration * elapsed_time;
-			float new_speed = MathHelper::Max(speed - deceleration, 0.0f);
+		if (m_grounded) {
+			if (force > 0.0f) {
+				float friction = m_friction * elapsed_time;
+				float new_force = MathHelper::Max(force - friction, 0.0f);
 
-			m_force = MathHelper::Multiply(Get_Force(), new_speed / speed);
+				DirectX::XMFLOAT3 calculated_force = MathHelper::Multiply(Get_Force(), new_force / force);
+				m_force.x = calculated_force.x;
+				m_force.z = calculated_force.z;
+			}
 		}
 
 		// Move
@@ -94,6 +100,7 @@ void Object::Calc_Delta(float elapsed_time) {
 		if (m_position.y < -61.592f) {
 			m_position.y = -61.592f;
 			m_velocity.y = 0.0f;
+			m_force.y = 0;
 
 			m_grounded = true;
 
@@ -616,6 +623,14 @@ void Object::Act_Two() {
 
 void Object::Act_Three() {
 	m_next_state = Object_State::STATE_ACTION_THREE;
+}
+
+void Object::Act_Four() {
+	m_next_state = Object_State::STATE_ACTION_FOUR;
+}
+
+void Object::Act_Five() {
+	m_next_state = Object_State::STATE_ACTION_FIVE;
 }
 
 void Object::Bind_Camera(Camera* camera) {

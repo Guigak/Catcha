@@ -114,6 +114,11 @@ protected:
 	//
 	bool m_shade = true;
 
+	//
+	std::unordered_map<std::wstring, bool> m_bool_values;
+	std::unordered_map<std::wstring, int> m_int_values;
+	std::unordered_map<std::wstring, float> m_float_values;
+
 public:
 	Object() {}
 	Object(ObjectManager* object_manager, std::wstring object_name, Mesh_Info* mesh, DirectX::XMMATRIX world_matrix, UINT constant_buffer_index, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, bool physics, bool visible);
@@ -231,6 +236,8 @@ public:
 	virtual void Act_One();
 	virtual void Act_Two();
 	virtual void Act_Three();
+	virtual void Act_Four();
+	virtual void Act_Five();
 
 	//
 	void Bind_Camera(Camera* camera);

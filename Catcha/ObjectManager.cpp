@@ -7,6 +7,7 @@
 #include "TextUIObject.h"
 #include "UIObject.h"
 #include "ParticleObject.h"
+#include "Player.h"
 
 Object* ObjectManager::Get_Obj(std::wstring object_name) {
     return m_object_map[object_name].get();
@@ -127,6 +128,12 @@ void ObjectManager::Actions(std::wstring object_name, Action action) {
         break;
     case Action::ACTION_THREE:
         object->Act_Three();
+        break;
+    case Action::ACTION_FOUR:
+        object->Act_Four();
+        break;
+    case Action::ACTION_FIVE:
+        object->Act_Five();
         break;
     default:
         break;
@@ -254,6 +261,27 @@ Object* ObjectManager::Add_Obj(std::wstring object_name, std::vector<Mesh>& mesh
     m_object_set_map[set_name].emplace_back(object_pointer);
 
     return m_object_map[object_name].get();
+}
+
+Object* ObjectManager::Add_Player(std::wstring object_name, std::wstring mesh_name, std::wstring set_name,
+    DirectX::XMMATRIX world_matrix,
+    D3D12_PRIMITIVE_TOPOLOGY primitive_topology, ObjectType object_type,
+    bool physics, bool visible)
+{
+    std::unique_ptr<Object> object;
+    object = std::make_unique<Player>(this, object_name, m_mesh_manager.Get_Mesh(mesh_name), world_matrix, m_object_count++, primitive_topology, physics, visible);
+
+    m_object_map[object_name] = std::move(object);
+
+    Object* object_pointer = m_object_map[object_name].get();
+    m_objects.emplace_back(object_pointer);
+
+    m_opaque_objects.emplace_back(object_pointer);
+
+    m_object_set_map[set_name].emplace_back(object_pointer);
+
+    return m_object_map[object_name].get();
+
 }
 
 void ObjectManager::Build_BV(ID3D12Device* device, ID3D12GraphicsCommandList* command_list) {

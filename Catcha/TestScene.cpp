@@ -1141,10 +1141,10 @@ void TestScene::Build_O() {
 	object->Set_Position(-80.0f, 0.0f, -450.0f);
 	object->Set_Visible(false);
 
-	m_object_manager->Add_Obj(L"player", L"mouse_mesh_edit.fbx");
-	m_object_manager->Set_Sklt_2_Obj(L"player", L"mouse_mesh_edit.fbx");
-	//m_object_manager->Add_Obj(L"player", L"cat_mesh_edit.fbx");
-	//m_object_manager->Set_Sklt_2_Obj(L"player", L"cat_mesh_edit.fbx");
+	//m_object_manager->Add_Player(L"player", L"mouse_mesh_edit.fbx");
+	//m_object_manager->Set_Sklt_2_Obj(L"player", L"mouse_mesh_edit.fbx");
+	m_object_manager->Add_Player(L"player", L"cat_mesh_edit.fbx");
+	m_object_manager->Set_Sklt_2_Obj(L"player", L"cat_mesh_edit.fbx");
 
 	for (int i = 0; i < 2; ++i) {
 		m_object_manager->Add_Obj(L"cat_model_" + std::to_wstring(i), L"cat_mesh_edit.fbx")->Set_Visible(true);
@@ -1157,18 +1157,19 @@ void TestScene::Build_O() {
 	}
 
 	object = m_object_manager->Get_Obj(L"player");
-	object->Bind_Anim_2_State(Object_State::STATE_IDLE, Animation_Binding_Info(L"mouse_idle.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
-	object->Bind_Anim_2_State(Object_State::STATE_MOVE, Animation_Binding_Info(L"mouse_walk.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
-	object->Bind_Anim_2_State(Object_State::STATE_JUMP_START, Animation_Binding_Info(L"mouse_jump_start.fbx", 1.0f, 0.2f, ONCE_ANIMATION, Object_State::STATE_JUMP_IDLE));
-	object->Bind_Anim_2_State(Object_State::STATE_JUMP_IDLE, Animation_Binding_Info(L"mouse_jump_idle.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
-	object->Bind_Anim_2_State(Object_State::STATE_JUMP_END, Animation_Binding_Info(L"mouse_jump_end.fbx", 1.0f, 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE));
-	object->Bind_Anim_2_State(Object_State::STATE_ACTION_ONE, Animation_Binding_Info(L"mouse_hit.fbx", 1.0f, 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE, Restriction_Option::Restrict_Move));
-	//object->Bind_Anim_2_State(Object_State::STATE_IDLE, Animation_Binding_Info(L"cat_idle.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
-	//object->Bind_Anim_2_State(Object_State::STATE_MOVE, Animation_Binding_Info(L"cat_walk.fbx", 2.0f, 0.2f, LOOP_ANIMATION));
-	//object->Bind_Anim_2_State(Object_State::STATE_JUMP_START, Animation_Binding_Info(L"cat_jump_test_start.fbx", 1.0f, 0.2f, ONCE_ANIMATION, Object_State::STATE_JUMP_IDLE));
-	//object->Bind_Anim_2_State(Object_State::STATE_JUMP_IDLE, Animation_Binding_Info(L"cat_jump_test_idle.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
-	//object->Bind_Anim_2_State(Object_State::STATE_JUMP_END, Animation_Binding_Info(L"cat_jump_test_end.fbx", 1.0f, 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE, Restriction_Option::Restrict_Move));
-	//object->Bind_Anim_2_State(Object_State::STATE_ACTION_ONE, Animation_Binding_Info(L"cat_paw.fbx", 2.0f, 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE, Restriction_Option::Restrict_Move));
+	//object->Bind_Anim_2_State(Object_State::STATE_IDLE, Animation_Binding_Info(L"mouse_idle.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
+	//object->Bind_Anim_2_State(Object_State::STATE_MOVE, Animation_Binding_Info(L"mouse_walk.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
+	//object->Bind_Anim_2_State(Object_State::STATE_JUMP_START, Animation_Binding_Info(L"mouse_jump_start.fbx", 1.0f, 0.2f, ONCE_ANIMATION, Object_State::STATE_JUMP_IDLE));
+	//object->Bind_Anim_2_State(Object_State::STATE_JUMP_IDLE, Animation_Binding_Info(L"mouse_jump_idle.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
+	//object->Bind_Anim_2_State(Object_State::STATE_JUMP_END, Animation_Binding_Info(L"mouse_jump_end.fbx", 1.0f, 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE));
+	//object->Bind_Anim_2_State(Object_State::STATE_ACTION_ONE, Animation_Binding_Info(L"mouse_hit.fbx", 1.0f, 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE, Restriction_Option::Restrict_Move));
+	object->Bind_Anim_2_State(Object_State::STATE_IDLE, Animation_Binding_Info(L"cat_idle.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
+	object->Bind_Anim_2_State(Object_State::STATE_MOVE, Animation_Binding_Info(L"cat_walk.fbx", 2.0f, 0.2f, LOOP_ANIMATION));
+	object->Bind_Anim_2_State(Object_State::STATE_JUMP_START, Animation_Binding_Info(L"cat_jump_test_start.fbx", 1.0f, 0.2f, ONCE_ANIMATION, Object_State::STATE_JUMP_IDLE));
+	object->Bind_Anim_2_State(Object_State::STATE_JUMP_IDLE, Animation_Binding_Info(L"cat_jump_test_idle.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
+	object->Bind_Anim_2_State(Object_State::STATE_JUMP_END, Animation_Binding_Info(L"cat_jump_test_end.fbx", 1.0f, 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE, Restriction_Option::Restrict_Move));
+	object->Bind_Anim_2_State(Object_State::STATE_ACTION_ONE, Animation_Binding_Info(L"cat_paw.fbx", 2.0f, 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE, Restriction_Option::Restrict_Move));
+	object->Bind_Anim_2_State(Object_State::STATE_ACTION_FOUR, Animation_Binding_Info(L"cat_jump_ready.fbx", 1.0f, 0.2f, ONCE_ANIMATION, Object_State::STATE_NONE, Restriction_Option::Restrict_Move));
 	object->Set_Animated(true);
 	object->Set_Phys(true);
 	//object->Set_Color_Mul(1.0f, 0.0f, 0.0f);
@@ -1819,7 +1820,8 @@ void TestScene::Chg_Scene_State(Scene_State scene_state) {
 		//m_object_manager->Get_Obj(L"cat_portrait")->Set_Visible(true);
 		m_object_manager->Get_Obj(L"mouse_portrait")->Set_Visible(true);
 
-		m_object_manager->Get_Obj(L"player")->Set_Visible(false);
+		m_object_manager->Get_Obj(L"player")->Set_Visible(true);
+		m_object_manager->Get_Obj(L"player")->Set_Shade(true);
 
 		for (int i = 0; i < 20; ++i) {
 			object = m_object_manager->Get_Obj(L"gauge_ui_" + std::to_wstring(i));
@@ -1837,10 +1839,10 @@ void TestScene::Chg_Scene_State(Scene_State scene_state) {
 		}
 
 		//
-		//m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"player",
-		//	0.0f, 50.0f, 0.0f, 150.0f, ROTATE_SYNC_RPY);
 		m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"player",
-			0.0f, 4.0f, 0.0f, 0.1f, ROTATE_SYNC_RPY);
+			0.0f, 50.0f, 0.0f, 150.0f, ROTATE_SYNC_RPY);
+		//m_object_manager->Bind_Cam_2_Obj(L"maincamera", L"player",
+		//	0.0f, 4.0f, 0.0f, 0.1f, ROTATE_SYNC_RPY);
 		m_main_camera->Rst_Rotate();
 
 		//
@@ -1851,6 +1853,9 @@ void TestScene::Chg_Scene_State(Scene_State scene_state) {
 
 		m_input_manager->Bind_Key_First_Down(VK_SPACE, BindingInfo(L"player", Action::ACTION_JUMP));
 		m_input_manager->Bind_Key_First_Down(VK_LBUTTON, BindingInfo(L"player", Action::ACTION_ONE));
+
+		m_input_manager->Bind_Key_First_Down(VK_E, BindingInfo(L"player", Action::ACTION_FOUR));
+		m_input_manager->Bind_Key_Up(VK_E, BindingInfo(L"player", Action::ACTION_FIVE));
 
 		m_input_manager->Bind_Mouse_Move(BindingInfo(), BindingInfo(L"maincamera", Action::ROTATE_PITCH, 0.01f),
 			BindingInfo(L"maincamera", Action::ROTATE_RIGHT, 0.01f));

@@ -138,6 +138,7 @@ void TestScene::Enter(D3DManager* d3d_manager) {
 	m_sound_manager->Add_Sound(L"bell_sound.wav", FMOD_3D);
 	m_sound_manager->Add_Sound(L"eating_sound.wav", FMOD_3D);
 	m_sound_manager->Add_Sound(L"swing_sound.wav", FMOD_3D);
+	m_sound_manager->Add_Sound(L"ai_attacked_sound.wav", FMOD_3D);
 
 	m_sound_manager->Set_Listener(m_main_camera->Get_Position_Addr(), m_main_camera->Get_Look_Addr(), m_main_camera->Get_Up_Addr(), nullptr);
 	m_sound_manager->Play_Sound(L"bgm", L"bgm.mp3");
@@ -1380,6 +1381,7 @@ void TestScene::Build_O() {
 	object->Bind_Anim_2_State(Object_State::STATE_JUMP_END, Animation_Binding_Info(L"cat_jump_test_end.fbx", 0.5f, 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE));
 	object->Bind_Anim_2_State(Object_State::STATE_ACTION_ONE, Animation_Binding_Info(L"cat_paw.fbx", 1.0f, 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE, Restriction_Option::Restrict_Move));
 	object->Bind_Anim_2_State(Object_State::STATE_ACTION_FOUR, Animation_Binding_Info(L"cat_jump_ready.fbx", 0.8f, 0.2f, ONCE_ANIMATION, Object_State::STATE_NONE, Restriction_Option::Restrict_Move));
+	object->Bind_Anim_2_State(Object_State::STATE_STUN, Animation_Binding_Info(L"cat_damage.fbx", 1.0f, 0.0f, ONCE_ANIMATION, Object_State::STATE_IDLE, Restriction_Option::Restrict_Move));
 	object->Set_Animated(true);
 	object->Set_Phys(true);
 	object->TP_Down(999.0f);

@@ -24,18 +24,23 @@ void Player::Update(float elapsed_time) {
 }
 
 void Player::Act_Four() { 
-	m_bool_values[L"jump_ready"] = true;
+	if (m_state == Object_State::STATE_IDLE 
+		|| m_state == Object_State::STATE_MOVE
+		|| m_state == Object_State::STATE_ACTION_FOUR)
+	{
+		m_bool_values[L"jump_ready"] = true;
 
-	m_next_state = Object_State::STATE_ACTION_FOUR;
-	m_animated_time = 0.0f;
+		m_next_state = Object_State::STATE_ACTION_FOUR;
+		m_animated_time = 0.0f;
 
-	m_float_values[L"charging_time"] = 0.0f;
+		m_float_values[L"charging_time"] = 0.0f;
+	}
 }
 
 void Player::Act_Five() {
 	m_bool_values[L"jump_ready"] = false;
 
-	m_next_state = Object_State::STATE_JUMP_START;
+	//m_next_state = Object_State::STATE_JUMP_START;
 
 	if (m_camera) {
 		m_force = MathHelper::Add(m_force, MathHelper::Multiply(

@@ -332,6 +332,10 @@ void NetworkManager::ProcessPacket(char* ptr)
 			{
 				m_mouse_ui_objects[characters[id].character_id]->Set_Color_Mul(0.1f, 0.1f, 0.1f, 1.0f);
 			}
+			if (state == Object_State::STATE_ACTION_FOUR)
+			{
+				m_objects[characters[id].character_id]->Act_Four();
+			}
 		}
 
 		// 타격시 색 변화 정보
@@ -524,6 +528,27 @@ void NetworkManager::ProcessPacket(char* ptr)
 		SC_AI_MOVE_PACKET* p = reinterpret_cast<SC_AI_MOVE_PACKET*>(ptr);
 		int AI_id = p->id;
 		DirectX::XMFLOAT3 coord = { static_cast<float>(p->x), FLOOR_Y, static_cast<float>(p->z) };
+		bool is_attacked = p->attacked;
+
+		if (true == is_attacked)
+		{
+			m_particle_object->Add_Particle(
+				m_objects[AI_id]->Get_Position_3f(),
+				DirectX::XMFLOAT3(2.0f, 2.0f, 2.0f),
+				DirectX::XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f),
+				50,
+				*m_total_time
+			);
+
+			// 고양이 타격 소리 재생
+			m_sound_manager->Play_Sound(L"swing_sound", L"swing_sound.wav",
+				m_objects[NUM_CAT]->Get_Position_Addr(), nullptr, false);
+
+			// AI 타격 소리 재생
+			m_sound_manager->Play_Sound(L"ai_attacked_sound", L"ai_attacked_sound.wav",
+				m_objects[AI_id]->Get_Position_Addr(), nullptr, false);
+		}
+
 		m_objects[AI_id]->SetTargetPosition(coord);
 		
 		DirectX::XMVECTOR prev_pos = m_objects[AI_id]->Get_Position_V();

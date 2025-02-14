@@ -498,7 +498,7 @@ void NetworkManager::ProcessPacket(char* ptr)
 		int cheese_num = static_cast<int>(p->cheese_num >> 1);
 		bool is_removed_all = (p->cheese_num & 1) != 0;
 		DirectX::XMFLOAT3 sphere_center {p->center_x, p->center_y, p->center_z};
-		float radius = 10.0f;
+		float radius = 3.0f;
 
 		m_sound_manager->Play_Sound(L"eating_sound", L"eating_sound.wav",
 			&sphere_center, nullptr, false);

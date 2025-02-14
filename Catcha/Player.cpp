@@ -24,6 +24,10 @@ void Player::Update(float elapsed_time) {
 }
 
 void Player::Act_Four() {
+	if (!(m_state == Object_State::STATE_IDLE || m_state == Object_State::STATE_MOVE)) {
+		return;
+	}
+
 	m_bool_values[L"jump_ready"] = true;
 
 	m_next_state = Object_State::STATE_ACTION_FOUR;

@@ -75,7 +75,7 @@ public:
 
 	void DoSend(void* packet);
 	void SendInput(uint8_t& input_key);
-	void SendRotate(float& pitch);
+	void SendRotate(const float& pitch, const float& yaw);
 	void SendActionOne(const DirectX::XMFLOAT3& look);
 	void ChooseCharacter(bool IsCat);
 	void DoRecv();

@@ -1379,7 +1379,7 @@ void TestScene::Build_O() {
 	object->Bind_Anim_2_State(Object_State::STATE_JUMP_START, Animation_Binding_Info(L"cat_jump_test_start.fbx", 0.5f, 0.2f, ONCE_ANIMATION, Object_State::STATE_JUMP_IDLE));
 	object->Bind_Anim_2_State(Object_State::STATE_JUMP_IDLE, Animation_Binding_Info(L"cat_jump_test_idle.fbx", 0.5f, 0.2f, LOOP_ANIMATION));
 	object->Bind_Anim_2_State(Object_State::STATE_JUMP_END, Animation_Binding_Info(L"cat_jump_test_end.fbx", 0.5f, 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE));
-	object->Bind_Anim_2_State(Object_State::STATE_ACTION_ONE, Animation_Binding_Info(L"cat_paw.fbx", 1.0f, 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE, Restriction_Option::Restrict_Move));
+	object->Bind_Anim_2_State(Object_State::STATE_ACTION_ONE, Animation_Binding_Info(L"cat_paw.fbx", 1.0f, 0.0f, ONCE_ANIMATION, Object_State::STATE_IDLE, Restriction_Option::Restrict_Move));
 	object->Bind_Anim_2_State(Object_State::STATE_ACTION_FOUR, Animation_Binding_Info(L"cat_jump_ready.fbx", 0.8f, 0.2f, ONCE_ANIMATION, Object_State::STATE_NONE, Restriction_Option::Restrict_Move));
 	object->Bind_Anim_2_State(Object_State::STATE_STUN, Animation_Binding_Info(L"cat_damage.fbx", 1.0f, 0.0f, ONCE_ANIMATION, Object_State::STATE_IDLE, Restriction_Option::Restrict_Move));
 	object->Set_Animated(true);

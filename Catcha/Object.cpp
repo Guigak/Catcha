@@ -681,7 +681,7 @@ void Object::Rotate_Pitch(float degree) {
 
 	if (true == Get_Camera_Need_Send())
 	{
-		SendRotate(degree);
+		SendRotate(degree, 0.0f);
 	}
 }
 
@@ -697,7 +697,16 @@ void Object::Rotate_Right(float degree) {
 	m_rotate_right += degree;
 
 	//m_rotate_right = MathHelper::Min(RIGHT_ANGLE_RADIAN, MathHelper::Max(m_rotate_right, -RIGHT_ANGLE_RADIAN));
+	// 
+	// [CS] 고양이일때 회전값
 
+	
+	if (true == Get_Camera_Need_Send()
+		&& true == NetworkManager::GetInstance().IsPlayerCat())
+	{
+		SendRotate(0.0f, degree);
+	}
+	
 	m_dirty = true;
 }
 
@@ -759,7 +768,7 @@ void Object::Act_Five() {
 	m_next_state = Object_State::STATE_ACTION_FIVE;
 }
 
-void Object::SendRotate(float degree)
+void Object::SendRotate(float pitch_degree, float yaw_degree)
 {
 	// [CS] 시간이 지날때만 시야각 보냄
 	if (false == Get_Camera_Need_Send())
@@ -769,17 +778,17 @@ void Object::SendRotate(float degree)
 
 	auto current_time = std::chrono::high_resolution_clock::now();
 	float delta_time = std::chrono::duration<float>(current_time - m_last_sent_time).count();
-	total_pitch += degree;
+	total_pitch += pitch_degree;
+	total_yaw += yaw_degree;
 
 
 	if (delta_time >= m_pitch_send_delay)
 	{
 		// [CS] 시야각 보냄
-		float pitch = (total_pitch);
-
 		NetworkManager& network_manager = NetworkManager::GetInstance();
-		network_manager.SendRotate(pitch);
+		network_manager.SendRotate(total_pitch, total_yaw);
 		total_pitch = 0.0f;
+		total_yaw = 0.0f;
 		//OutputDebugStringA("Send Rotate\n");
 
 		m_last_sent_time = current_time;

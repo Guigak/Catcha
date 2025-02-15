@@ -135,7 +135,8 @@ protected:
 	DirectX::XMFLOAT4 m_target_quat = { 0.0f, 0.0f, 0.0f, 1.0f };		// 목표 Pitch 값
     float m_lerp_pitch_progress = 1.0f;									// Rotation 선형 보간 진행도 (0.0~1.0)
 	bool m_change_pitch = false;										// Rotation 바꿔야하는지 여부
-	float total_pitch = 0.0f;											// 각도 변화량의 합	
+	float total_pitch = 0.0f;											// pitch 각도 변화량의 합	
+	float total_yaw = 0.0f;												// yaw 각도 변화량의 합	
 
 	// [SC] 캐릭터 번호
 	int m_character_number = -1;										// 캐릭터 번호 (0~3 쥐, 4~7 ai, 8 고양이) - 고정된 캐릭터의 번호임
@@ -275,7 +276,7 @@ public:
 
 	// [SC] 회전 보간을 위한 함수
 	void SetLerpDegree(float degree) { m_lerp_degree = degree; }
-	void SendRotate(float degree);
+	void SendRotate(float pitch_degree, float yaw_degree);
 	void LerpRotate(float deltaTime);
 	void SetTargetPitch(float newpitch);
 	void SetTargetQuat(const DirectX::XMFLOAT4& newQuat);

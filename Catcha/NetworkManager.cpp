@@ -137,12 +137,13 @@ void NetworkManager::SendInput(uint8_t& input_key)
 	DoSend(&p);
 }
 
-void NetworkManager::SendRotate(float& pitch)
+void NetworkManager::SendRotate(const float& pitch, const float& yaw)
 {
 	CS_ROTATE_PACKET p;
 	p.size = sizeof(p);
 	p.type = CS_ROTATE;
 	p.player_pitch = pitch;
+	p.player_yaw = yaw;
 	DoSend(&p);
 }
 
@@ -331,10 +332,10 @@ void NetworkManager::ProcessPacket(char* ptr)
 			if (state == Object_State::STATE_DEAD)
 			{
 				m_mouse_ui_objects[characters[id].character_id]->Set_Color_Mul(0.1f, 0.1f, 0.1f, 1.0f);
-			}
-			if (state == Object_State::STATE_ACTION_FOUR)
+			} 
+			if (id == m_myid && state == Object_State::STATE_ACTION_FOUR)
 			{
-				m_objects[characters[id].character_id]->Act_Four();
+				m_objects[NUM_CAT]->Act_Four();
 			}
 		}
 
@@ -386,29 +387,17 @@ void NetworkManager::ProcessPacket(char* ptr)
 		if (id == m_myid)
 		{
 			// 자신의 받은 움직임과 look
-			
 			characters[m_myid].Location = coord;
 			m_objects[characters[m_myid].character_id]->SetTargetPosition(coord);
+			m_objects[characters[m_myid].character_id]->Rst_Rotate();
 			m_objects[characters[m_myid].character_id]->Set_Rotate(quat);
-			for (auto& observer : m_observers)
+			m_objects[characters[m_myid].character_id]->SetTargetQuat(quat);
+			m_objects[characters[m_myid].character_id]->Calc_Rotate();
+			/*for (auto& observer : m_observers)
 			{
 				observer->InitCamera(quat);
-			}
+			}*/
 
-			// 다시 서버로 동기화 패킷 전송
-			CS_SYNC_PLAYER_PACKET sync;
-			sync.x = m_objects[characters[m_myid].character_id]->Get_Position_3f().x;
-			sync.y = m_objects[characters[m_myid].character_id]->Get_Position_3f().y;
-			sync.z = m_objects[characters[m_myid].character_id]->Get_Position_3f().z;
-			sync.quat_x = m_objects[characters[m_myid].character_id]->Get_Rotate_RPY_4f().x;
-			sync.quat_y = m_objects[characters[m_myid].character_id]->Get_Rotate_RPY_4f().y;
-			sync.quat_z = m_objects[characters[m_myid].character_id]->Get_Rotate_RPY_4f().z;
-			sync.quat_w = m_objects[characters[m_myid].character_id]->Get_Rotate_RPY_4f().w;
-
-			sync.size = sizeof(sync);
-			sync.type = CS_SYNC_PLAYER;
-			sync.id = m_myid;
-			DoSend(&sync);
 		}
 		else
 		{
@@ -498,7 +487,7 @@ void NetworkManager::ProcessPacket(char* ptr)
 		int cheese_num = static_cast<int>(p->cheese_num >> 1);
 		bool is_removed_all = (p->cheese_num & 1) != 0;
 		DirectX::XMFLOAT3 sphere_center {p->center_x, p->center_y, p->center_z};
-		float radius = 3.0f;
+		float radius = 4.0f;
 
 		m_sound_manager->Play_Sound(L"eating_sound", L"eating_sound.wav",
 			&sphere_center, nullptr, false);
@@ -601,20 +590,20 @@ void NetworkManager::ProcessPacket(char* ptr)
 	}
 	case SC_GAME_WIN_CAT:
 	{
-		EndSceneInitCharacters();
 		for (auto& observer : m_observers)
 		{
 			observer->ShowingResultScene(true);
 		}
+		EndSceneInitCharacters();
 		break;
 	}
 	case SC_GAME_WIN_MOUSE:
 	{
-		EndSceneInitCharacters();
 		for (auto& observer : m_observers)
 		{
 			observer->ShowingResultScene(false);
 		}
+		EndSceneInitCharacters();
 		break;
 	}
 	case SC_PLAYER_ESCAPE:
@@ -787,6 +776,7 @@ void NetworkManager::EndSceneInitCharacters()
 		m_objects[i]->SetTargetPosition(DirectX::XMFLOAT3(0.0f, FLOOR_Y - 10.0f, 0.0f));
 		m_objects[i]->SetLerpDegree(50.0f);
 	}
+	is_player_cat = false;
 }
 
 void NetworkManager::SetObjectsVisible(bool visible)

@@ -22,7 +22,7 @@ Scene_State m_next_scene_state = Scene_State::MAIN_STATE;
 Camera* camera;
 
 bool is_player_cat = false;		// 고양이 조명을 위한 변수 true - cat / false - mouse
-
+bool is_game_start = false;
 
 bool m_dissolve = false;
 
@@ -477,24 +477,40 @@ void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
 	DirectX::XMFLOAT4 light_position;
 	DirectX::XMFLOAT4 light_direction;
 
-	if (true == is_player_cat)
+	DirectX::XMFLOAT3 Cat_Eye_Light_Strength = { 1.0f, 0.0f, 0.0f };
+
+	if (true == is_game_start)
 	{
-		cat_object = m_object_manager->Get_Obj(L"player");
-		m_main_pass_constant_buffer.lights[1].strength = { 0.0f, 0.0f, 0.0f };
-		int gauge = static_cast<int>(cat_object->Get_Float_Value(L"charging_time") * 10);
-		for (int i = 0; i < gauge; ++i)
+		if (true == is_player_cat)
 		{
-			m_object_manager->Get_Obj(L"gauge_ui_" + std::to_wstring(i))->Set_Visible(true);
+			cat_object = m_object_manager->Get_Obj(L"player");
+			m_main_pass_constant_buffer.lights[1].strength = { 0.0f, 0.0f, 0.0f };
+			Cat_Eye_Light_Strength = { 1.0f, 0.0f, 0.0f };
+			int gauge = static_cast<int>(cat_object->Get_Float_Value(L"charging_time") * 10);
+			for (int i = 0; i < gauge; ++i)
+			{
+				m_object_manager->Get_Obj(L"gauge_ui_" + std::to_wstring(i))->Set_Visible(true);
+			}
+			for (int i = gauge; i < 20; ++i)
+			{
+				m_object_manager->Get_Obj(L"gauge_ui_" + std::to_wstring(i))->Set_Visible(false);
+			}
 		}
-		for (int i = gauge; i < 20; ++i)
+		else
 		{
-			m_object_manager->Get_Obj(L"gauge_ui_" + std::to_wstring(i))->Set_Visible(false);
+			cat_object = m_object_manager->Get_Obj(L"cat");
+			m_main_pass_constant_buffer.lights[1].strength = { 0.75f, 0.75f, 0.75f };
 		}
 	}
 	else
 	{
-		cat_object = m_object_manager->Get_Obj(L"cat");
-		m_main_pass_constant_buffer.lights[1].strength = { 0.75f, 0.75f, 0.75f };
+		cat_object = m_object_manager->Get_Obj(L"player");
+		m_main_pass_constant_buffer.lights[1].strength = { 0.0f, 0.0f, 0.0f };
+		Cat_Eye_Light_Strength = { 0.0f, 0.0f, 0.0f };
+		for (int i = 0; i < 20; ++i)
+		{
+			m_object_manager->Get_Obj(L"gauge_ui_" + std::to_wstring(i))->Set_Visible(false);
+		}
 	}
 
 
@@ -505,7 +521,7 @@ void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
 
 	m_main_pass_constant_buffer.lights[2].position = { light_position.x, light_position.y, light_position.z };
 	m_main_pass_constant_buffer.lights[2].direction = { light_direction.x, light_direction.y, light_direction.z };
-	m_main_pass_constant_buffer.lights[2].strength = { 1.0f, 0.0f, 0.0f };
+	m_main_pass_constant_buffer.lights[2].strength = Cat_Eye_Light_Strength;
 	m_main_pass_constant_buffer.lights[2].falloff_start = 100.0f;
 	m_main_pass_constant_buffer.lights[2].falloff_end = 500.0f;
 	m_main_pass_constant_buffer.lights[2].spot_power = 16.0f;
@@ -1497,10 +1513,10 @@ void TestScene::Build_O() {
 	}
 
 	// test //
-	object = m_object_manager->Add_Text_UI_Obj(L"result_test", 0.0f, 0.0f, 0.1f, 0.1f, true, true);
-	object->Set_Color_Mul(1.0f, 1.0f, 0.0f, 1.0f);
-	object->Set_Custom_Fuction_One(Result_Test_UI_Function);
-	((TextUIObject*)object)->Set_Text(L"결과 테스트");
+	//object = m_object_manager->Add_Text_UI_Obj(L"result_test", 0.0f, 0.0f, 0.1f, 0.1f, true, true);
+	//object->Set_Color_Mul(1.0f, 1.0f, 0.0f, 1.0f);
+	//object->Set_Custom_Fuction_One(Result_Test_UI_Function);
+	//((TextUIObject*)object)->Set_Text(L"결과 테스트");
 
 	// game end scene
 	object = m_object_manager->Add_Text_UI_Obj(L"winner_is", -0.9f, 0.85f, 0.15f, 0.15f, false, false);
@@ -1983,6 +1999,8 @@ void TestScene::Chg_Scene_State(Scene_State scene_state) {
 
 	m_input_manager->Rst_Manager();
 
+	is_game_start = false;
+
 	//
 	Object* object = nullptr;
 
@@ -2114,6 +2132,7 @@ void TestScene::Chg_Scene_State(Scene_State scene_state) {
 
 		//
 	case Scene_State::PLAY_STATE:
+		is_game_start = true;
 		object = m_object_manager->Get_Obj(L"cat_model_0");
 		object->Set_Visible(false);
 		object->Set_Shade(false);

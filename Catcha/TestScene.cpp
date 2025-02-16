@@ -1875,7 +1875,7 @@ void TestScene::Custom_Function_Three()
 		int idx = (start + i) % num;
 		auto selected = m_object_manager->Get_Selected_Obj_Arr()[idx];
 
-		if (selected->Get_Visible())
+		if (true == selected->Get_Visible())
 		{
 			m_object_manager->Bind_Cam_2_Obj(
 				L"maincamera",
@@ -1998,10 +1998,18 @@ void TestScene::Chg_Scene_State(Scene_State scene_state) {
 		object->Set_Shade(false);
 	}
 
+	for (int i = 0; i < 20; ++i)
+	{
+		m_object_manager->Get_Obj(L"gauge_ui_" + std::to_wstring(i))->Set_Visible(false);
+	}
+
 	m_is_reborn = false;
 	m_reborn_timer_value = 0.0f;
 	m_attacked = false;
 	m_attacked_value = 0.0f;
+
+	m_input_manager->Set_Fix_Cursor(false);
+	m_input_manager->Set_Hide_Cursor(false);
 
 	NetworkManager& network = NetworkManager::GetInstance();
 
@@ -2135,7 +2143,7 @@ void TestScene::Chg_Scene_State(Scene_State scene_state) {
 
 		for (int i = 0; i < 20; ++i) {
 			object = m_object_manager->Get_Obj(L"gauge_ui_" + std::to_wstring(i));
-			object->Set_Visible(true);
+			object->Set_Visible(false);
 			if (true == network.IsPlayerCat())
 			{
 				object->Set_Color_Mul(0.0f, 0.0f, 1.0f, 1.0f);
@@ -2191,6 +2199,9 @@ void TestScene::Chg_Scene_State(Scene_State scene_state) {
 		m_input_manager->Bind_Key_First_Down(VK_F2, BindingInfo(L"", Action::CHANGE_BOUNDINGBOX_FLAG));
 
 		m_input_manager->Bind_Key_First_Down(VK_TAB, BindingInfo(L"", Action::HIDE_AND_FIX_CURSOR));
+
+		m_input_manager->Set_Fix_Cursor(true);
+		m_input_manager->Set_Hide_Cursor(true);
 		break;
 	case Scene_State::END_STATE:
 		//

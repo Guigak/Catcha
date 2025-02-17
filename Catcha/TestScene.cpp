@@ -2088,6 +2088,10 @@ void TestScene::Chg_Scene_State(Scene_State scene_state) {
 			BindingInfo(), BindingInfo());
 
 		m_input_manager->Bind_Key_First_Down(VK_F1, BindingInfo(L"", Action::CHANGE_WIREFRAME_FLAG));
+
+
+		m_input_manager->Set_Fix_Cursor(false);
+		m_input_manager->Set_Hide_Cursor(false);
 		break;
 		//
 		m_sound_manager->Restart_Channel(L"bgm");
@@ -2127,8 +2131,8 @@ void TestScene::Chg_Scene_State(Scene_State scene_state) {
 		m_sound_manager->Set_Channel_Paused(L"bgm", true);
 
 		//
-		m_input_manager->Set_Fix_Cursor(true);
-		m_input_manager->Set_Hide_Cursor(true);
+		m_input_manager->Set_Fix_Cursor(false);
+		m_input_manager->Set_Hide_Cursor(false);
 
 		//
 	case Scene_State::PLAY_STATE:
@@ -2277,6 +2281,12 @@ void TestScene::Chg_Scene_State(Scene_State scene_state) {
 			BindingInfo(), BindingInfo());
 
 		m_input_manager->Bind_Key_First_Down(VK_F1, BindingInfo(L"", Action::CHANGE_WIREFRAME_FLAG));
+
+		m_input_manager->Bind_Key_First_Down(VK_TAB, BindingInfo(L"", Action::HIDE_AND_FIX_CURSOR));
+
+
+		m_input_manager->Set_Fix_Cursor(false);
+		m_input_manager->Set_Hide_Cursor(false);
 
 
 		break;

@@ -344,10 +344,10 @@ void NetworkManager::ProcessPacket(char* ptr)
 		{
 			m_objects[characters[id].character_id]->Set_Color_Mul(1.0f, 0.0f, 0.0f, 1.0f);
 			// 타격당한 캐릭터 소리 재생
-			m_sound_manager->Play_Sound(L"hit_sound", L"hit_sound.mp3", 
+			m_sound_manager->Play_Sound(L"hit_sound", L"sound\\hit_sound.mp3", 
 				m_objects[characters[id].character_id]->Get_Position_Addr(), nullptr, false);
 			// 고양이 타격 소리 재생
-			m_sound_manager->Play_Sound(L"swing_sound", L"swing_sound.wav",
+			m_sound_manager->Play_Sound(L"swing_sound", L"sound\\swing_sound.wav",
 				m_objects[NUM_CAT]->Get_Position_Addr(), nullptr, false);
 
 			m_particle_object->Add_Particle(
@@ -489,7 +489,7 @@ void NetworkManager::ProcessPacket(char* ptr)
 		DirectX::XMFLOAT3 sphere_center {p->center_x, p->center_y, p->center_z};
 		float radius = 4.0f;
 
-		m_sound_manager->Play_Sound(L"eating_sound", L"eating_sound.wav",
+		m_sound_manager->Play_Sound(L"eating_sound", L"sound\\eating_sound.wav",
 			&sphere_center, nullptr, false);
 
 		// 치즈 전부 삭제되었을시
@@ -530,11 +530,11 @@ void NetworkManager::ProcessPacket(char* ptr)
 			);
 
 			// 고양이 타격 소리 재생
-			m_sound_manager->Play_Sound(L"swing_sound", L"swing_sound.wav",
+			m_sound_manager->Play_Sound(L"swing_sound", L"sound\\swing_sound.wav",
 				m_objects[NUM_CAT]->Get_Position_Addr(), nullptr, false);
 
 			// AI 타격 소리 재생
-			m_sound_manager->Play_Sound(L"ai_attacked_sound", L"ai_attacked_sound.wav",
+			m_sound_manager->Play_Sound(L"ai_attacked_sound", L"sound\\ai_attacked_sound.wav",
 				m_objects[AI_id]->Get_Position_Addr(), nullptr, false);
 		}
 

@@ -132,16 +132,16 @@ void TestScene::Enter(D3DManager* d3d_manager) {
 
 	//
 	m_sound_manager = SoundManager::Get_Inst();
-	m_sound_manager->Add_Sound(L"bgm.mp3", FMOD_2D | FMOD_LOOP_NORMAL | FMOD_CREATESTREAM);
-	m_sound_manager->Add_Sound(L"victory_sound.mp3", FMOD_2D);
-	m_sound_manager->Add_Sound(L"hit_sound.mp3", FMOD_3D);
-	m_sound_manager->Add_Sound(L"bell_sound.wav", FMOD_3D);
-	m_sound_manager->Add_Sound(L"eating_sound.wav", FMOD_3D);
-	m_sound_manager->Add_Sound(L"swing_sound.wav", FMOD_3D);
-	m_sound_manager->Add_Sound(L"ai_attacked_sound.wav", FMOD_3D);
+	m_sound_manager->Add_Sound(L"sound\\bgm.mp3", FMOD_2D | FMOD_LOOP_NORMAL | FMOD_CREATESTREAM);
+	m_sound_manager->Add_Sound(L"sound\\victory_sound.mp3", FMOD_2D);
+	m_sound_manager->Add_Sound(L"sound\\hit_sound.mp3", FMOD_3D);
+	m_sound_manager->Add_Sound(L"sound\\bell_sound.wav", FMOD_3D);
+	m_sound_manager->Add_Sound(L"sound\\eating_sound.wav", FMOD_3D);
+	m_sound_manager->Add_Sound(L"sound\\swing_sound.wav", FMOD_3D);
+	m_sound_manager->Add_Sound(L"sound\\ai_attacked_sound.wav", FMOD_3D);
 
 	m_sound_manager->Set_Listener(m_main_camera->Get_Position_Addr(), m_main_camera->Get_Look_Addr(), m_main_camera->Get_Up_Addr(), nullptr);
-	m_sound_manager->Play_Sound(L"bgm", L"bgm.mp3");
+	m_sound_manager->Play_Sound(L"bgm", L"sound\\bgm.mp3");
 }
 
 void TestScene::Exit(D3DManager* d3d_manager) {
@@ -201,7 +201,7 @@ void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
 				100,
 				m_total_time
 			);
-			m_sound_manager->Play_Sound(L"victory_sound", L"victory_sound.mp3");
+			m_sound_manager->Play_Sound(L"victory_sound", L"sound\\victory_sound.mp3");
 
 			m_door_open = false;
 			m_door_open_time_value = 0.0f;
@@ -262,12 +262,12 @@ void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
 		{
 			if (true == is_player_cat)
 			{
-				m_sound_manager->Play_Sound(L"bell_sound", L"bell_sound.wav",
+				m_sound_manager->Play_Sound(L"bell_sound", L"sound\\bell_sound.wav",
 					m_object_manager->Get_Obj(L"player")->Get_Position_Addr(), nullptr, false);
 			}
 			else
 			{
-				m_sound_manager->Play_Sound(L"bell_sound", L"bell_sound.wav",
+				m_sound_manager->Play_Sound(L"bell_sound", L"sound\\bell_sound.wav",
 					m_object_manager->Get_Obj(L"cat")->Get_Position_Addr(), nullptr, false);
 			}
 			
@@ -473,7 +473,7 @@ void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
 	m_main_pass_constant_buffer.lights[1].falloff_end = 200.0f;
 	m_main_pass_constant_buffer.lights[1].spot_power = 64;
 	//
-	Skeleton_Info* skeleton_info = m_object_manager->Get_Skeleton_Manager().Get_Skeleton(L"cat_mesh_edit.fbx");
+	Skeleton_Info* skeleton_info = m_object_manager->Get_Skeleton_Manager().Get_Skeleton(L"fbx\\cat_mesh_edit.fbx");
 	DirectX::XMFLOAT4 light_position;
 	DirectX::XMFLOAT4 light_direction;
 
@@ -1093,7 +1093,7 @@ void TestScene::Prcs_Input_Msg(HWND hwnd, UINT message, WPARAM wparam, LPARAM lp
 void TestScene::Load_Texture(ID3D12Device* device, ID3D12GraphicsCommandList* command_list) {
 	auto unicode_texture = std::make_unique<Texture_Info>();
 	unicode_texture->name = L"unicode_texture";
-	unicode_texture->file_name = L"unicode_texture.dds";
+	unicode_texture->file_name = L"texture\\unicode_texture.dds";
 	unicode_texture->buffer_index = (UINT)m_texture_map.size();
 	Throw_If_Failed(TextureLoader::Create_DDS_Texture_From_File(
 		device, command_list,
@@ -1104,9 +1104,9 @@ void TestScene::Load_Texture(ID3D12Device* device, ID3D12GraphicsCommandList* co
 	//
 	auto ui_texture = std::make_unique<Texture_Info>();
 	ui_texture->name = L"test_ui";
-	ui_texture->file_name = L"ui_texture_r.dds";
-	//ui_texture->file_name = L"ui_texture.dds";
-	//ui_texture->file_name = L"ui_sample.dds";
+	ui_texture->file_name = L"texture\\ui_texture_r.dds";
+	//ui_texture->file_name = L"texture\\ui_texture.dds";
+	//ui_texture->file_name = L"texture\\ui_sample.dds";
 	ui_texture->buffer_index = (UINT)m_texture_map.size();
 	Throw_If_Failed(TextureLoader::Create_DDS_Texture_From_File(
 		device, command_list,
@@ -1251,35 +1251,35 @@ void TestScene::Build_Mesh(ID3D12Device* device, ID3D12GraphicsCommandList* comm
 
 	mesh_info = m_object_manager->Get_Mesh_Manager().Crt_Point_Mesh(L"point");
 
-	m_object_manager->Ipt_From_FBX(L"cat_mesh_edit.fbx", true, false, true, MESH_INFO | SKELETON_INFO | MATERIAL_INFO);
-	m_object_manager->Ipt_From_FBX(L"cat_walk.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
-	m_object_manager->Ipt_From_FBX(L"cat_run.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
-	m_object_manager->Ipt_From_FBX(L"cat_idle.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
-	m_object_manager->Ipt_From_FBX(L"cat_jump_test.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
-	m_object_manager->Ipt_From_FBX(L"cat_bite.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
-	m_object_manager->Ipt_From_FBX(L"cat_paw.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
-	m_object_manager->Ipt_From_FBX(L"cat_jump_ready.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
-	m_object_manager->Ipt_From_FBX(L"cat_jump_test_start.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
-	m_object_manager->Ipt_From_FBX(L"cat_jump_test_idle.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
-	m_object_manager->Ipt_From_FBX(L"cat_jump_test_end.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
-	m_object_manager->Ipt_From_FBX(L"cat_damage.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
-	m_object_manager->Ipt_From_FBX(L"cat_win_0.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
-	m_object_manager->Ipt_From_FBX(L"cat_lose_0.fbx", true, false, true, ANIMATION_INFO, L"cat_mesh_edit.fbx");
+	m_object_manager->Ipt_From_FBX(L"fbx\\cat_mesh_edit.fbx", true, false, true, MESH_INFO | SKELETON_INFO | MATERIAL_INFO);
+	m_object_manager->Ipt_From_FBX(L"fbx\\cat_walk.fbx", true, false, true, ANIMATION_INFO, L"fbx\\cat_mesh_edit.fbx");
+	m_object_manager->Ipt_From_FBX(L"fbx\\cat_run.fbx", true, false, true, ANIMATION_INFO, L"fbx\\cat_mesh_edit.fbx");
+	m_object_manager->Ipt_From_FBX(L"fbx\\cat_idle.fbx", true, false, true, ANIMATION_INFO, L"fbx\\cat_mesh_edit.fbx");
+	m_object_manager->Ipt_From_FBX(L"fbx\\cat_jump_test.fbx", true, false, true, ANIMATION_INFO, L"fbx\\cat_mesh_edit.fbx");
+	m_object_manager->Ipt_From_FBX(L"fbx\\cat_bite.fbx", true, false, true, ANIMATION_INFO, L"fbx\\cat_mesh_edit.fbx");
+	m_object_manager->Ipt_From_FBX(L"fbx\\cat_paw.fbx", true, false, true, ANIMATION_INFO, L"fbx\\cat_mesh_edit.fbx");
+	m_object_manager->Ipt_From_FBX(L"fbx\\cat_jump_ready.fbx", true, false, true, ANIMATION_INFO, L"fbx\\cat_mesh_edit.fbx");
+	m_object_manager->Ipt_From_FBX(L"fbx\\cat_jump_test_start.fbx", true, false, true, ANIMATION_INFO, L"fbx\\cat_mesh_edit.fbx");
+	m_object_manager->Ipt_From_FBX(L"fbx\\cat_jump_test_idle.fbx", true, false, true, ANIMATION_INFO, L"fbx\\cat_mesh_edit.fbx");
+	m_object_manager->Ipt_From_FBX(L"fbx\\cat_jump_test_end.fbx", true, false, true, ANIMATION_INFO, L"fbx\\cat_mesh_edit.fbx");
+	m_object_manager->Ipt_From_FBX(L"fbx\\cat_damage.fbx", true, false, true, ANIMATION_INFO, L"fbx\\cat_mesh_edit.fbx");
+	m_object_manager->Ipt_From_FBX(L"fbx\\cat_win_0.fbx", true, false, true, ANIMATION_INFO, L"fbx\\cat_mesh_edit.fbx");
+	m_object_manager->Ipt_From_FBX(L"fbx\\cat_lose_0.fbx", true, false, true, ANIMATION_INFO, L"fbx\\cat_mesh_edit.fbx");
 
-	m_object_manager->Ipt_From_FBX(L"mouse_mesh_edit.fbx", true, false, true, MESH_INFO | SKELETON_INFO | MATERIAL_INFO);
-	m_object_manager->Ipt_From_FBX(L"mouse_death.fbx", true, false, true, ANIMATION_INFO, L"mouse_mesh_edit.fbx");
-	m_object_manager->Ipt_From_FBX(L"mouse_hit.fbx", true, false, true, ANIMATION_INFO, L"mouse_mesh_edit.fbx");
-	//m_object_manager->Ipt_From_FBX(L"mouse_jump.fbx", true, false, true, ANIMATION_INFO, L"mouse_mesh_edit.fbx");
-	m_object_manager->Ipt_From_FBX(L"mouse_run.fbx", true, false, true, ANIMATION_INFO, L"mouse_mesh_edit.fbx");
-	m_object_manager->Ipt_From_FBX(L"mouse_walk.fbx", true, false, true, ANIMATION_INFO, L"mouse_mesh_edit.fbx");
-	m_object_manager->Ipt_From_FBX(L"mouse_idle.fbx", true, false, true, ANIMATION_INFO, L"mouse_mesh_edit.fbx");
-	m_object_manager->Ipt_From_FBX(L"mouse_jump_start.fbx", true, false, true, ANIMATION_INFO, L"mouse_mesh_edit.fbx");
-	m_object_manager->Ipt_From_FBX(L"mouse_jump_idle.fbx", true, false, true, ANIMATION_INFO, L"mouse_mesh_edit.fbx");
-	m_object_manager->Ipt_From_FBX(L"mouse_jump_end.fbx", true, false, true, ANIMATION_INFO, L"mouse_mesh_edit.fbx");
-	m_object_manager->Ipt_From_FBX(L"mouse_win_0.fbx", true, false, true, ANIMATION_INFO, L"mouse_mesh_edit.fbx");
-	m_object_manager->Ipt_From_FBX(L"mouse_lose_0.fbx", true, false, true, ANIMATION_INFO, L"mouse_mesh_edit.fbx");
+	m_object_manager->Ipt_From_FBX(L"fbx\\mouse_mesh_edit.fbx", true, false, true, MESH_INFO | SKELETON_INFO | MATERIAL_INFO);
+	m_object_manager->Ipt_From_FBX(L"fbx\\mouse_death.fbx", true, false, true, ANIMATION_INFO, L"fbx\\mouse_mesh_edit.fbx");
+	m_object_manager->Ipt_From_FBX(L"fbx\\mouse_hit.fbx", true, false, true, ANIMATION_INFO, L"fbx\\mouse_mesh_edit.fbx");
+	//m_object_manager->Ipt_From_FBX(L"fbx\\mouse_jump.fbx", true, false, true, ANIMATION_INFO, L"fbx\\mouse_mesh_edit.fbx");
+	m_object_manager->Ipt_From_FBX(L"fbx\\mouse_run.fbx", true, false, true, ANIMATION_INFO, L"fbx\\mouse_mesh_edit.fbx");
+	m_object_manager->Ipt_From_FBX(L"fbx\\mouse_walk.fbx", true, false, true, ANIMATION_INFO, L"fbx\\mouse_mesh_edit.fbx");
+	m_object_manager->Ipt_From_FBX(L"fbx\\mouse_idle.fbx", true, false, true, ANIMATION_INFO, L"fbx\\mouse_mesh_edit.fbx");
+	m_object_manager->Ipt_From_FBX(L"fbx\\mouse_jump_start.fbx", true, false, true, ANIMATION_INFO, L"fbx\\mouse_mesh_edit.fbx");
+	m_object_manager->Ipt_From_FBX(L"fbx\\mouse_jump_idle.fbx", true, false, true, ANIMATION_INFO, L"fbx\\mouse_mesh_edit.fbx");
+	m_object_manager->Ipt_From_FBX(L"fbx\\mouse_jump_end.fbx", true, false, true, ANIMATION_INFO, L"fbx\\mouse_mesh_edit.fbx");
+	m_object_manager->Ipt_From_FBX(L"fbx\\mouse_win_0.fbx", true, false, true, ANIMATION_INFO, L"fbx\\mouse_mesh_edit.fbx");
+	m_object_manager->Ipt_From_FBX(L"fbx\\mouse_lose_0.fbx", true, false, true, ANIMATION_INFO, L"fbx\\mouse_mesh_edit.fbx");
 
-	m_object_manager->Ipt_From_FBX(L"housee.fbx", false, true, false, MESH_INFO | MATERIAL_INFO);
+	m_object_manager->Ipt_From_FBX(L"fbx\\housee.fbx", false, true, false, MESH_INFO | MATERIAL_INFO);
 	m_object_manager->Get_Obj(L"Ceiling")->Set_Shade(false);
 
 	m_object_manager->Build_BV(device, command_list);
@@ -1307,13 +1307,13 @@ void TestScene::Build_O() {
 
 
 	for (int i = 0; i < 2; ++i) {
-		m_object_manager->Add_Obj(L"cat_model_" + std::to_wstring(i), L"cat_mesh_edit.fbx")->Set_Visible(true);
-		m_object_manager->Set_Sklt_2_Obj(L"cat_model_" + std::to_wstring(i), L"cat_mesh_edit.fbx");
+		m_object_manager->Add_Obj(L"cat_model_" + std::to_wstring(i), L"fbx\\cat_mesh_edit.fbx")->Set_Visible(true);
+		m_object_manager->Set_Sklt_2_Obj(L"cat_model_" + std::to_wstring(i), L"fbx\\cat_mesh_edit.fbx");
 	}
 
 	for (int i = 0; i < 9; ++i) {
-		m_object_manager->Add_Obj(L"mouse_model_" + std::to_wstring(i), L"mouse_mesh_edit.fbx")->Set_Visible(true);
-		m_object_manager->Set_Sklt_2_Obj(L"mouse_model_" + std::to_wstring(i), L"mouse_mesh_edit.fbx");
+		m_object_manager->Add_Obj(L"mouse_model_" + std::to_wstring(i), L"fbx\\mouse_mesh_edit.fbx")->Set_Visible(true);
+		m_object_manager->Set_Sklt_2_Obj(L"mouse_model_" + std::to_wstring(i), L"fbx\\mouse_mesh_edit.fbx");
 	}
 
 
@@ -1321,13 +1321,13 @@ void TestScene::Build_O() {
 	object = m_object_manager->Get_Obj(L"cat_model_0");
 	object->Set_Position(100.0f, -61.592f, 200.0f);
 	object->Rotate_Pitch(4.0f);
-	object->Bind_Anim_2_State(Object_State::STATE_IDLE, Animation_Binding_Info(L"cat_idle.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
+	object->Bind_Anim_2_State(Object_State::STATE_IDLE, Animation_Binding_Info(L"fbx\\cat_idle.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
 	object->Set_Animated(true);
 
 	object = m_object_manager->Get_Obj(L"cat_model_1");
 	object->Set_Position(-30.0f, -61.592f, -350.0f);
 	object->Rotate_Pitch(4.0f);
-	object->Bind_Anim_2_State(Object_State::STATE_IDLE, Animation_Binding_Info(L"cat_win_0.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
+	object->Bind_Anim_2_State(Object_State::STATE_IDLE, Animation_Binding_Info(L"fbx\\cat_win_0.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
 	object->Set_Animated(true);
 	object->Set_Visible(false);
 	object->Set_Shade(false);
@@ -1335,49 +1335,49 @@ void TestScene::Build_O() {
 	object = m_object_manager->Get_Obj(L"mouse_model_0");
 	object->Set_Position(80.0f, -61.592f, 200.0f);
 	object->Rotate_Pitch(4.0f);
-	object->Bind_Anim_2_State(Object_State::STATE_IDLE, Animation_Binding_Info(L"mouse_idle.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
+	object->Bind_Anim_2_State(Object_State::STATE_IDLE, Animation_Binding_Info(L"fbx\\mouse_idle.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
 	object->Set_Animated(true);
 	for (int i = 1; i < 9; ++i) {
 		object = m_object_manager->Get_Obj(L"mouse_model_" + std::to_wstring(i));
 		object->Set_Position(-30.0f, -61.592f + (float)(i - 1) * 4.0f, -350.0f);
 		object->Rotate_Pitch(4.0f);
-		object->Bind_Anim_2_State(Object_State::STATE_IDLE, Animation_Binding_Info(L"mouse_idle.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
+		object->Bind_Anim_2_State(Object_State::STATE_IDLE, Animation_Binding_Info(L"fbx\\mouse_idle.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
 		object->Set_Animated(true);
 	}
 
 
-	m_object_manager->Add_Obj(L"mouse0", L"mouse_mesh_edit.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
-	m_object_manager->Add_Obj(L"mouse1", L"mouse_mesh_edit.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
-	m_object_manager->Add_Obj(L"mouse2", L"mouse_mesh_edit.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
-	m_object_manager->Add_Obj(L"mouse3", L"mouse_mesh_edit.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
-	m_object_manager->Add_Obj(L"mouse4", L"mouse_mesh_edit.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
-	m_object_manager->Add_Obj(L"mouse5", L"mouse_mesh_edit.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
-	m_object_manager->Add_Obj(L"mouse6", L"mouse_mesh_edit.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
-	m_object_manager->Add_Obj(L"mouse7", L"mouse_mesh_edit.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
-	m_object_manager->Add_Player(L"cat", L"cat_mesh_edit.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
+	m_object_manager->Add_Obj(L"mouse0", L"fbx\\mouse_mesh_edit.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
+	m_object_manager->Add_Obj(L"mouse1", L"fbx\\mouse_mesh_edit.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
+	m_object_manager->Add_Obj(L"mouse2", L"fbx\\mouse_mesh_edit.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
+	m_object_manager->Add_Obj(L"mouse3", L"fbx\\mouse_mesh_edit.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
+	m_object_manager->Add_Obj(L"mouse4", L"fbx\\mouse_mesh_edit.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
+	m_object_manager->Add_Obj(L"mouse5", L"fbx\\mouse_mesh_edit.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
+	m_object_manager->Add_Obj(L"mouse6", L"fbx\\mouse_mesh_edit.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
+	m_object_manager->Add_Obj(L"mouse7", L"fbx\\mouse_mesh_edit.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
+	m_object_manager->Add_Player(L"cat", L"fbx\\cat_mesh_edit.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
 
 
-	m_object_manager->Set_Sklt_2_Obj(L"mouse0", L"mouse_mesh_edit.fbx");
-	m_object_manager->Set_Sklt_2_Obj(L"mouse1", L"mouse_mesh_edit.fbx");
-	m_object_manager->Set_Sklt_2_Obj(L"mouse2", L"mouse_mesh_edit.fbx");
-	m_object_manager->Set_Sklt_2_Obj(L"mouse3", L"mouse_mesh_edit.fbx");
-	m_object_manager->Set_Sklt_2_Obj(L"mouse4", L"mouse_mesh_edit.fbx");
-	m_object_manager->Set_Sklt_2_Obj(L"mouse5", L"mouse_mesh_edit.fbx");
-	m_object_manager->Set_Sklt_2_Obj(L"mouse6", L"mouse_mesh_edit.fbx");
-	m_object_manager->Set_Sklt_2_Obj(L"mouse7", L"mouse_mesh_edit.fbx");
-	m_object_manager->Set_Sklt_2_Obj(L"cat", L"cat_mesh_edit.fbx");
+	m_object_manager->Set_Sklt_2_Obj(L"mouse0", L"fbx\\mouse_mesh_edit.fbx");
+	m_object_manager->Set_Sklt_2_Obj(L"mouse1", L"fbx\\mouse_mesh_edit.fbx");
+	m_object_manager->Set_Sklt_2_Obj(L"mouse2", L"fbx\\mouse_mesh_edit.fbx");
+	m_object_manager->Set_Sklt_2_Obj(L"mouse3", L"fbx\\mouse_mesh_edit.fbx");
+	m_object_manager->Set_Sklt_2_Obj(L"mouse4", L"fbx\\mouse_mesh_edit.fbx");
+	m_object_manager->Set_Sklt_2_Obj(L"mouse5", L"fbx\\mouse_mesh_edit.fbx");
+	m_object_manager->Set_Sklt_2_Obj(L"mouse6", L"fbx\\mouse_mesh_edit.fbx");
+	m_object_manager->Set_Sklt_2_Obj(L"mouse7", L"fbx\\mouse_mesh_edit.fbx");
+	m_object_manager->Set_Sklt_2_Obj(L"cat", L"fbx\\cat_mesh_edit.fbx");
 
 
 	for (int i = 0; i < 8; i++)
 	{
 		object = m_object_manager->Get_Obj(L"mouse" + std::to_wstring(i));
-		object->Bind_Anim_2_State(Object_State::STATE_IDLE, Animation_Binding_Info(L"mouse_idle.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
-		object->Bind_Anim_2_State(Object_State::STATE_MOVE, Animation_Binding_Info(L"mouse_walk.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
-		object->Bind_Anim_2_State(Object_State::STATE_JUMP_START, Animation_Binding_Info(L"mouse_jump_start.fbx", 0.5f, 0.2f, ONCE_ANIMATION, Object_State::STATE_JUMP_IDLE));
-		object->Bind_Anim_2_State(Object_State::STATE_JUMP_IDLE, Animation_Binding_Info(L"mouse_jump_idle.fbx", 0.5f, 0.2f, LOOP_ANIMATION));
-		object->Bind_Anim_2_State(Object_State::STATE_JUMP_END, Animation_Binding_Info(L"mouse_jump_end.fbx", 0.5f, 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE));
-		object->Bind_Anim_2_State(Object_State::STATE_ACTION_ONE, Animation_Binding_Info(L"mouse_hit.fbx", 0.5f, 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE));
-		object->Bind_Anim_2_State(Object_State::STATE_DEAD, Animation_Binding_Info(L"mouse_death.fbx", 0.5f, 0.2f, ONCE_ANIMATION, Object_State::STATE_NONE, Restriction_Option::Restrict_All));
+		object->Bind_Anim_2_State(Object_State::STATE_IDLE, Animation_Binding_Info(L"fbx\\mouse_idle.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
+		object->Bind_Anim_2_State(Object_State::STATE_MOVE, Animation_Binding_Info(L"fbx\\mouse_walk.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
+		object->Bind_Anim_2_State(Object_State::STATE_JUMP_START, Animation_Binding_Info(L"fbx\\mouse_jump_start.fbx", 0.5f, 0.2f, ONCE_ANIMATION, Object_State::STATE_JUMP_IDLE));
+		object->Bind_Anim_2_State(Object_State::STATE_JUMP_IDLE, Animation_Binding_Info(L"fbx\\mouse_jump_idle.fbx", 0.5f, 0.2f, LOOP_ANIMATION));
+		object->Bind_Anim_2_State(Object_State::STATE_JUMP_END, Animation_Binding_Info(L"fbx\\mouse_jump_end.fbx", 0.5f, 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE));
+		object->Bind_Anim_2_State(Object_State::STATE_ACTION_ONE, Animation_Binding_Info(L"fbx\\mouse_hit.fbx", 0.5f, 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE));
+		object->Bind_Anim_2_State(Object_State::STATE_DEAD, Animation_Binding_Info(L"fbx\\mouse_death.fbx", 0.5f, 0.2f, ONCE_ANIMATION, Object_State::STATE_NONE, Restriction_Option::Restrict_All));
 		object->Set_Animated(true);
 		object->Set_Phys(true);
 		object->TP_Down(999.0f);
@@ -1390,20 +1390,20 @@ void TestScene::Build_O() {
 	}
 
 	object = m_object_manager->Get_Obj(L"cat");
-	object->Bind_Anim_2_State(Object_State::STATE_IDLE, Animation_Binding_Info(L"cat_idle.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
-	object->Bind_Anim_2_State(Object_State::STATE_MOVE, Animation_Binding_Info(L"cat_walk.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
-	object->Bind_Anim_2_State(Object_State::STATE_JUMP_START, Animation_Binding_Info(L"cat_jump_test_start.fbx", 0.5f, 0.2f, ONCE_ANIMATION, Object_State::STATE_JUMP_IDLE));
-	object->Bind_Anim_2_State(Object_State::STATE_JUMP_IDLE, Animation_Binding_Info(L"cat_jump_test_idle.fbx", 0.5f, 0.2f, LOOP_ANIMATION));
-	object->Bind_Anim_2_State(Object_State::STATE_JUMP_END, Animation_Binding_Info(L"cat_jump_test_end.fbx", 0.5f, 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE));
-	object->Bind_Anim_2_State(Object_State::STATE_ACTION_ONE, Animation_Binding_Info(L"cat_paw.fbx", 1.0f, 0.0f, ONCE_ANIMATION, Object_State::STATE_IDLE, Restriction_Option::Restrict_Move));
-	object->Bind_Anim_2_State(Object_State::STATE_ACTION_FOUR, Animation_Binding_Info(L"cat_jump_ready.fbx", 0.8f, 0.2f, ONCE_ANIMATION, Object_State::STATE_NONE, Restriction_Option::Restrict_Move));
-	object->Bind_Anim_2_State(Object_State::STATE_STUN, Animation_Binding_Info(L"cat_damage.fbx", 1.0f, 0.0f, ONCE_ANIMATION, Object_State::STATE_IDLE, Restriction_Option::Restrict_Move));
+	object->Bind_Anim_2_State(Object_State::STATE_IDLE, Animation_Binding_Info(L"fbx\\cat_idle.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
+	object->Bind_Anim_2_State(Object_State::STATE_MOVE, Animation_Binding_Info(L"fbx\\cat_walk.fbx", 1.0f, 0.2f, LOOP_ANIMATION));
+	object->Bind_Anim_2_State(Object_State::STATE_JUMP_START, Animation_Binding_Info(L"fbx\\cat_jump_test_start.fbx", 0.5f, 0.2f, ONCE_ANIMATION, Object_State::STATE_JUMP_IDLE));
+	object->Bind_Anim_2_State(Object_State::STATE_JUMP_IDLE, Animation_Binding_Info(L"fbx\\cat_jump_test_idle.fbx", 0.5f, 0.2f, LOOP_ANIMATION));
+	object->Bind_Anim_2_State(Object_State::STATE_JUMP_END, Animation_Binding_Info(L"fbx\\cat_jump_test_end.fbx", 0.5f, 0.2f, ONCE_ANIMATION, Object_State::STATE_IDLE));
+	object->Bind_Anim_2_State(Object_State::STATE_ACTION_ONE, Animation_Binding_Info(L"fbx\\cat_paw.fbx", 1.0f, 0.0f, ONCE_ANIMATION, Object_State::STATE_IDLE, Restriction_Option::Restrict_Move));
+	object->Bind_Anim_2_State(Object_State::STATE_ACTION_FOUR, Animation_Binding_Info(L"fbx\\cat_jump_ready.fbx", 0.8f, 0.2f, ONCE_ANIMATION, Object_State::STATE_NONE, Restriction_Option::Restrict_Move));
+	object->Bind_Anim_2_State(Object_State::STATE_STUN, Animation_Binding_Info(L"fbx\\cat_damage.fbx", 1.0f, 0.0f, ONCE_ANIMATION, Object_State::STATE_IDLE, Restriction_Option::Restrict_Move));
 	object->Set_Animated(true);
 	object->Set_Phys(true);
 	object->TP_Down(999.0f);
 
-	m_object_manager->Add_Obj(L"player", L"mouse_mesh_edit.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
-	m_object_manager->Set_Sklt_2_Obj(L"player", L"mouse_mesh_edit.fbx");
+	m_object_manager->Add_Obj(L"player", L"fbx\\mouse_mesh_edit.fbx", L"Object", DirectX::XMMatrixIdentity(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, ObjectType::CHARACTER_OBJECT, true);
+	m_object_manager->Set_Sklt_2_Obj(L"player", L"fbx\\mouse_mesh_edit.fbx");
 
 	m_object_manager->Get_Obj(L"player")->Set_Visible(false);
 
@@ -2040,7 +2040,7 @@ void TestScene::Chg_Scene_State(Scene_State scene_state) {
 		m_object_manager->Get_Obj(L"game_end")->Set_Visible(true);
 		m_object_manager->Get_Obj(L"catcha_title")->Set_Visible(true);
 
-		m_sound_manager->Play_Sound(L"bgm", L"bgm.mp3");
+		m_sound_manager->Play_Sound(L"bgm", L"sound\\bgm.mp3");
 
 		m_main_camera->Set_Lagging_Degree(1.0f);
 
@@ -2230,7 +2230,7 @@ void TestScene::Chg_Scene_State(Scene_State scene_state) {
 		//
 		m_sound_manager->Set_Channel_Paused(L"bgm", true);
 
-		m_sound_manager->Play_Sound(L"victory_sound", L"victory_sound.mp3");
+		m_sound_manager->Play_Sound(L"victory_sound", L"sound\\victory_sound.mp3");
 
 		//
 		m_object_manager->Get_Obj(L"winner_is")->Set_Visible(true);

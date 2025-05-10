@@ -490,7 +490,7 @@ void NetworkManager::ProcessPacket(char* ptr)
 		float radius = 4.0f;
 
 		m_sound_manager->Play_Sound(L"eating_sound", L"sound\\eating_sound.wav",
-			&sphere_center, nullptr, false);
+			sphere_center, DirectX::XMFLOAT3(), false);
 
 		// 치즈 전부 삭제되었을시
 		if (true == is_removed_all)

@@ -317,7 +317,7 @@ void TestScene::Update(D3DManager* d3d_manager, float elapsed_time) {
 		WaitForSingleObject(event_handle, INFINITE);
 		CloseHandle(event_handle);
 	}
-
+	//m_object_manager->Update_Col_OBB_Obj(L"cat", L"player", cat_object->Get_Position_3f(), cat_object->Get_Rotate_4f());
 	// object
 	auto current_object_constant_buffer = m_current_frameresource->object_constant_buffer.get();
 	auto current_animation_constant_buffer = m_current_frameresource->animation_constant_buffer.get();
@@ -1288,7 +1288,7 @@ void TestScene::Build_Mesh(ID3D12Device* device, ID3D12GraphicsCommandList* comm
 void TestScene::Build_Material() {
 	//
 	m_object_manager->Get_Mesh_Manager().Crt_Default_Box();
-	m_object_manager->Get_Material_Manager().Add_Material(L"boundingbox", Material_Factor(DirectX::XMFLOAT4(DirectX::Colors::LightGreen)));
+	m_object_manager->Get_Material_Manager().Add_Material(L"boundingbox", Material_Factor(DirectX::XMFLOAT4(DirectX::Colors::Red)));
 	m_object_manager->Get_Material_Manager().Add_Material(L"cheese", Material_Factor(DirectX::XMFLOAT4(DirectX::Colors::Yellow)));
 	m_object_manager->Get_Material_Manager().Add_Material(L"ui", Material_Factor(DirectX::XMFLOAT4(DirectX::Colors::White)));
 }
